@@ -6,7 +6,7 @@ import dev.staticsanches.kge.utils.toUByte
 import kotlin.math.pow
 
 /**
- * Extensible service capable of handling with [Pixel] manipulations.
+ * Extensible service capable of handling [Pixel] manipulations.
  */
 interface PixelService : KGESPIExtensible {
 

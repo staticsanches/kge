@@ -2,12 +2,13 @@
 
 package dev.staticsanches.kge.image
 
-import dev.staticsanches.kge.image.service.PixelService
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.types.vector.Float2D
 import dev.staticsanches.kge.types.vector.Int2D
 import dev.staticsanches.kge.utils.toUByte
-import java.nio.ByteBuffer
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
@@ -16,53 +17,28 @@ import kotlin.math.min
 
 /**
  * Representation of an image in KGE.
- *
- * Uses a [PixelBuffer.RGBA] to store and manipulate the image data.
  */
-abstract class Sprite(val pixmap: PixelBuffer.RGBA, var sampleMode: SampleMode = SampleMode.NORMAL) :
-	Sequence<Pixel> by pixmap, KGEResource by pixmap {
-
-	val width: Int
-		get() = pixmap.width
-	val height: Int
-		get() = pixmap.height
-	val size: Int2D
-		get() = pixmap.size
+open class Sprite(
+	@KGESensitiveAPI
+	val pixmap: RGBABuffer,
+	var sampleMode: SampleMode = SampleMode.NORMAL
+) : PixelMap by pixmap, KGEResource by pixmap {
 
 	fun getPixel(x: Int, y: Int): Pixel = this[x, y]
-	fun getPixel(position: Int2D): Pixel = this[position]
-
-	operator fun get(x: Int, y: Int): Pixel = when (sampleMode) {
-		SampleMode.NORMAL -> if (x in 0..<width && y in 0..<height) uncheckedGet(x, y) else Colors.BLANK
-		SampleMode.PERIODIC -> uncheckedGet(abs(x % width), abs(y % height))
-		SampleMode.CLAMP -> uncheckedGet(max(0, min(x, width - 1)), max(0, min(y, height - 1)))
-	}
-
-	operator fun get(position: Int2D): Pixel = this[position.x, position.y]
-
-	fun uncheckedGet(x: Int, y: Int): Pixel = pixmap.uncheckedGet(x, y)
-
 	fun setPixel(x: Int, y: Int, pixel: Pixel): Boolean = set(x, y, pixel)
 
+	fun getPixel(position: Int2D): Pixel = this[position]
 	fun setPixel(position: Int2D, pixel: Pixel): Boolean = set(position, pixel)
 
-	operator fun set(x: Int, y: Int, pixel: Pixel): Boolean =
-		x in 0..<width && y in 0..<height && uncheckedSet(x, y, pixel)
-
+	operator fun get(position: Int2D): Pixel = this[position.x, position.y]
 	operator fun set(position: Int2D, pixel: Pixel): Boolean = set(position.x, position.y, pixel)
 
-	fun uncheckedSet(x: Int, y: Int, pixel: Pixel): Boolean {
-		pixmap.uncheckedSet(x, y, pixel)
-		return true
-	}
-
-	fun clear(pixel: Pixel) {
-		pixmap.clear(pixel)
-	}
-
-	fun clear(pixelByXY: (x: Int, y: Int) -> Pixel) {
-		pixmap.clear(pixelByXY)
-	}
+	override operator fun get(x: Int, y: Int): Pixel =
+		when (sampleMode) {
+			SampleMode.NORMAL -> super.get(x, y)
+			SampleMode.PERIODIC -> uncheckedGet(abs(x % width), abs(y % height))
+			SampleMode.CLAMP -> uncheckedGet(max(0, min(x, width - 1)), max(0, min(y, height - 1)))
+		}
 
 	fun sample(x: Float, y: Float): Pixel =
 		this[min((x * width).toInt(), width - 1), min((y * height).toInt(), height - 1)]
@@ -104,90 +80,8 @@ abstract class Sprite(val pixmap: PixelBuffer.RGBA, var sampleMode: SampleMode =
 		)
 	}
 
+	@OptIn(KGESensitiveAPI::class)
 	override fun toString(): String = "Sprite $pixmap"
-
-	/**
-	 * Available [Sprite] types.
-	 */
-	sealed interface Type {
-
-		/**
-		 * Represents images with 4-channels.
-		 */
-		data object RGBA : Type {
-
-			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height * 4
-
-		}
-
-		/**
-		 * Represents images with 3-channels.
-		 *
-		 * [defaultAlpha] is used when converting [RGB] -> [RGBA].
-		 *
-		 * [matteBackground] must be a matte color since its [Pixel.a] is
-		 * discarded by [PixelService.toRGB] when converting [RGBA] -> [RGB].
-		 */
-		data class RGB(val defaultAlpha: UByte = 0xFFu, val matteBackground: Pixel = Colors.WHITE) : Type {
-
-			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height * 3
-
-		}
-
-		/**
-		 * Represents images with 1-channel.
-		 *
-		 * [PixelService.toGrayscale] is used when converting [RGBA] -> [Grayscale].
-		 *
-		 * [PixelService.fromGrayscale] and [defaultAlpha] are used when converting [Grayscale] -> [RGBA].
-		 */
-		data class Grayscale(val defaultAlpha: UByte = 0xFFu) : Type {
-
-			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height
-
-		}
-
-		/**
-		 * Represents images with 1 bit per pixel (aka Black and White).
-		 *
-		 * [foreground] and [background] are used when converting [Bitmap] -> [RGBA].
-		 *
-		 * [PixelService.toRGB] and [PixelService.distance2] and [matteBackground] are used
-		 * when converting [RGBA] -> [Bitmap].
-		 */
-		data class Bitmap(
-			val foreground: Pixel = Colors.BLACK,
-			val background: Pixel = Colors.WHITE,
-			val matteBackground: Pixel = Colors.WHITE,
-			val negativePitch: Boolean = false,
-			val disableEvenPitch: Boolean = false
-		) : Type {
-
-			/**
-			 * The expected number of bytes in a row.
-			 */
-			fun expectedAbsolutePitch(width: Int): Int {
-				var pitch = width / 8
-				if (width % 8 == 0) {
-					pitch++
-				}
-				if (!disableEvenPitch && pitch % 2 == 1) {
-					pitch++
-				}
-				return pitch
-			}
-
-			override fun expectedBufferCapacity(width: Int, height: Int): Int =
-				expectedAbsolutePitch(width) * height
-
-		}
-
-		/**
-		 * The expected [ByteBuffer.capacity] for this [Type].
-		 */
-		fun expectedBufferCapacity(width: Int, height: Int): Int
-
-	}
 
 	enum class SampleMode { NORMAL, PERIODIC, CLAMP }
 

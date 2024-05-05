@@ -2,6 +2,7 @@
 
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.utils.or
 import dev.staticsanches.kge.utils.shl
 import dev.staticsanches.kge.utils.toUByte
@@ -15,7 +16,7 @@ import kotlin.math.min
  *
  * Since KGE works with low-level libraries, [nativeRGBA] stores the RGBA color using
  * [ByteOrder.nativeOrder] to minimize the number of conversions needed when working
- * with [PixelBuffer.RGBA].
+ * with [RGBABuffer].
  */
 @JvmInline
 value class Pixel(val nativeRGBA: Int) {
@@ -39,6 +40,11 @@ value class Pixel(val nativeRGBA: Int) {
 		get() = (if (isLittleEndian) nativeRGBA shr 24 else nativeRGBA).toUByte()
 	val rgba: UInt
 		get() = if (isLittleEndian) Integer.reverseBytes(nativeRGBA).toUInt() else nativeRGBA.toUInt()
+
+	operator fun component0(): UByte = r
+	operator fun component1(): UByte = g
+	operator fun component2(): UByte = b
+	operator fun component3(): UByte = a
 
 	fun inv(): Pixel = !this
 
@@ -71,10 +77,11 @@ value class Pixel(val nativeRGBA: Int) {
 		a
 	)
 
-	fun toString(format: Format): String = when (format) {
-		Format.RGBA -> "rgba($r, $g, $b, $a)"
-		Format.HEX -> "#" + rgba.toString(16).uppercase().padStart(8, '0')
-	}
+	fun toString(format: Format): String =
+		when (format) {
+			Format.RGBA -> "rgba($r, $g, $b, $a)"
+			Format.HEX -> "#" + rgba.toString(16).uppercase().padStart(8, '0')
+		}
 
 	override fun toString(): String = toString(Format.HEX)
 
