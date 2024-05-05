@@ -1,0 +1,15 @@
+[versions]
+kotlin = "1.9.23"
+lwjgl = "3.3.3"
+
+[libraries]
+lwjgl-bom = { group = "org.lwjgl", name = "lwjgl-bom", version.ref = "lwjgl" }
+lwjgl = { group = "org.lwjgl", name = "lwjgl" }
+lwjgl-glfw = { group = "org.lwjgl", name = "lwjgl-glfw" }
+lwjgl-opengl = { group = "org.lwjgl", name = "lwjgl-opengl" }
+lwjgl-stb = { group = "org.lwjgl", name = "lwjgl-stb" }
+
+kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+
+[bundles]
+lwjgl = ["lwjgl", "lwjgl-glfw", "lwjgl-opengl", "lwjgl-stb"]
