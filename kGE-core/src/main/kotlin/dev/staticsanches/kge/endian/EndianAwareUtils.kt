@@ -8,10 +8,13 @@ import java.nio.ByteOrder
 sealed interface EndianAwareUtils {
 
 	/**
-	 * Since KGE works with low-level libraries, [Pixel.nativeRGBA] stores the RGBA color using
+	 * Given that KGE works with C libraries, [Pixel.nativeRGBA] stores the RGBA color using
 	 * [ByteOrder.nativeOrder] to minimize the number of conversions needed when working with [RGBABuffer].
 	 *
-	 * If [ByteOrder.nativeOrder] is [ByteOrder.BIG_ENDIAN] then [Pixel.nativeRGBA] is structured as:
+	 * This problem rises since Java uses [ByteOrder.BIG_ENDIAN] to load data and if the system's endian
+	 * is [ByteOrder.LITTLE_ENDIAN] some conversions are necessary.
+	 *
+	 * If [ByteOrder.nativeOrder] is [ByteOrder.BIG_ENDIAN] then [Pixel.nativeRGBA] must be structured as:
 	 * | 8 bits | 8 bits | 8 bits | 8 bits |
 	 * |  Red   | Green  |  Blue  | Alpha  |
 	 *
