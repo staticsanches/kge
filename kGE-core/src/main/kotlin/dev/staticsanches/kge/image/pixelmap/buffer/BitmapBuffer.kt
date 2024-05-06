@@ -25,8 +25,7 @@ class BitmapBuffer(
 	private val pitch = type.expectedAbsolutePitch(width)
 
 	override fun uncheckedGet(x: Int, y: Int): Pixel =
-		if (getBit(x, y)) type.foreground
-		else type.background
+		if (getBit(x, y)) type.foreground else type.background
 
 	override fun uncheckedSet(x: Int, y: Int, pixel: Pixel): Boolean {
 		val index = getIndex(x, y)

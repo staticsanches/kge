@@ -8,7 +8,6 @@ import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.types.vector.Float2D
 import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.utils.toUByte
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.max
@@ -40,14 +39,16 @@ open class Sprite(
 			SampleMode.CLAMP -> uncheckedGet(max(0, min(x, width - 1)), max(0, min(y, height - 1)))
 		}
 
-	fun sample(x: Float, y: Float): Pixel =
-		this[min((x * width).toInt(), width - 1), min((y * height).toInt(), height - 1)]
+	fun sample(uv: Float2D): Pixel = sample(uv.x, uv.y)
 
-	fun sample(position: Float2D): Pixel = sample(position.x, position.y)
+	fun sample(u: Float, v: Float): Pixel =
+		this[min((u * width).toInt(), width - 1), min((v * height).toInt(), height - 1)]
+
+	fun sampleBL(uv: Float2D): Pixel = sampleBL(uv.x, uv.y)
 
 	fun sampleBL(u: Float, v: Float): Pixel {
 		val computedU = u * width - 0.5f
-		val computedV = v * width - 0.5f
+		val computedV = v * height - 0.5f
 
 		val x = floor(computedU).toInt()
 		val y = floor(computedV).toInt()
@@ -66,18 +67,16 @@ open class Sprite(
 		val p3 = this[x0, y1]
 		val p4 = this[x1, y1]
 
-		fun calculateComponent(componentGetter: (Pixel) -> UByte): UByte {
-			val v1 = componentGetter(p1).toInt()
-			val v2 = componentGetter(p2).toInt()
-			val v3 = componentGetter(p3).toInt()
-			val v4 = componentGetter(p4).toInt()
+		fun calculateComponent(componentGetter: (Pixel) -> IntColorComponent): Int {
+			val v1 = componentGetter(p1)
+			val v2 = componentGetter(p2)
+			val v3 = componentGetter(p3)
+			val v4 = componentGetter(p4)
 
-			return ((v1 * uOpposite + v2 * uRatio) * vOpposite + (v3 * uOpposite + v4 * uRatio) * vRatio).toUByte()
+			return ((v1 * uOpposite + v2 * uRatio) * vOpposite + (v3 * uOpposite + v4 * uRatio) * vRatio).toInt()
 		}
 
-		return Pixel(
-			calculateComponent(Pixel::r), calculateComponent(Pixel::g), calculateComponent(Pixel::b)
-		)
+		return Pixel.rgba(calculateComponent(Pixel::r), calculateComponent(Pixel::g), calculateComponent(Pixel::b))
 	}
 
 	@OptIn(KGESensitiveAPI::class)

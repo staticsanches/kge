@@ -19,7 +19,7 @@ class GrayscaleBuffer(
 	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
 
 	override fun uncheckedGet(x: Int, y: Int): Pixel =
-		PixelService.fromGrayscale(internalBuffer.get(y * width + x).toUByte(), type.defaultAlpha)
+		PixelService.fromGrayscale(internalBuffer.get(y * width + x).toInt(), type.defaultAlpha)
 
 	override fun uncheckedSet(x: Int, y: Int, pixel: Pixel): Boolean {
 		internalBuffer.put(y * width + x, PixelService.toGrayscale(pixel).toByte())

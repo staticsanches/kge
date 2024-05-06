@@ -2,6 +2,7 @@ package dev.staticsanches.kge.image.pixelmap.buffer
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.image.Colors
+import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.PixelMap
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
@@ -19,11 +20,11 @@ import java.nio.ByteOrder
  */
 @OptIn(KGESensitiveAPI::class)
 sealed class PixelBuffer<T : Type>(
-	final override inline val width: Int,
-	final override inline val height: Int,
+	final override val width: Int,
+	final override val height: Int,
 	val type: T,
 	@KGESensitiveAPI
-	val internalBuffer: ByteBuffer
+	val internalBuffer: ByteBuffer,
 ) : PixelMap, KGEResource {
 
 	init {
@@ -74,7 +75,7 @@ sealed class PixelBuffer<T : Type>(
 		 *
 		 * @see RGBBuffer
 		 */
-		data class RGB(val defaultAlpha: UByte = 0xFFu, val matteBackground: Pixel = Colors.WHITE) : Type {
+		data class RGB(val defaultAlpha: IntColorComponent = 0xFF, val matteBackground: Pixel = Colors.WHITE) : Type {
 
 			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height * 3
 
@@ -89,7 +90,7 @@ sealed class PixelBuffer<T : Type>(
 		 *
 		 * @see GrayscaleBuffer
 		 */
-		data class Grayscale(val defaultAlpha: UByte = 0xFFu) : Type {
+		data class Grayscale(val defaultAlpha: IntColorComponent = 0xFF) : Type {
 
 			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height
 

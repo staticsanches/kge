@@ -1,8 +1,8 @@
 package dev.staticsanches.kge.image.service
 
+import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.spi.KGESPIExtensible
-import dev.staticsanches.kge.utils.toUByte
 import kotlin.math.pow
 
 /**
@@ -16,8 +16,8 @@ interface PixelService : KGESPIExtensible {
 	 */
 	fun toRGB(pixel: Pixel, matteBackground: Pixel): Pixel
 
-	fun toGrayscale(pixel: Pixel): UByte
-	fun fromGrayscale(grayscale: UByte, alpha: UByte): Pixel
+	fun toGrayscale(pixel: Pixel): IntColorComponent
+	fun fromGrayscale(grayscale: IntColorComponent, alpha: IntColorComponent): Pixel
 
 	fun distance2(rgb1: Pixel, rgb2: Pixel): Float
 
@@ -31,19 +31,16 @@ internal class DefaultPixelService : PixelService {
 
 	override fun toRGB(pixel: Pixel, matteBackground: Pixel): Pixel =
 		when (pixel.a) {
-			UByte.MAX_VALUE -> pixel
-			UByte.MIN_VALUE -> matteBackground
-			else -> {
-				val alpha = pixel.a.toFloat() / 255.0f
-				pixel * alpha + matteBackground * (1 - alpha)
-			}
+			255 -> pixel
+			0 -> matteBackground
+			else -> matteBackground.lerp(pixel, pixel.a / 255f) // uses linear interpolation
 		}
 
-	override fun toGrayscale(pixel: Pixel): UByte =
-		(pixel.r.toFloat() * 0.299f + pixel.g.toFloat() * 0.587f + pixel.b.toFloat() * 0.114f).toUByte()
+	override fun toGrayscale(pixel: Pixel): IntColorComponent =
+		(pixel.r * 0.299f + pixel.g * 0.587f + pixel.b * 0.114f).toInt()
 
-	override fun fromGrayscale(grayscale: UByte, alpha: UByte): Pixel =
-		Pixel(grayscale, grayscale, grayscale, alpha)
+	override fun fromGrayscale(grayscale: IntColorComponent, alpha: IntColorComponent): Pixel =
+		Pixel.rgba(grayscale, grayscale, grayscale, alpha)
 
 	override fun distance2(rgb1: Pixel, rgb2: Pixel): Float {
 		if (rgb1.r == rgb2.r && rgb1.g == rgb2.g && rgb1.b == rgb2.b) {

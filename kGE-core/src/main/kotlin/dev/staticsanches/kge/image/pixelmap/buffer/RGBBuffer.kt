@@ -17,12 +17,13 @@ class RGBBuffer(width: Int, height: Int, type: Type.RGB, buffer: ByteBuffer, buf
 
 	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
 
-	override fun uncheckedGet(x: Int, y: Int): Pixel = Pixel(
-		internalBuffer.position((y * width + x) * 3).get().toUByte(),
-		internalBuffer.get().toUByte(),
-		internalBuffer.get().toUByte(),
-		type.defaultAlpha
-	)
+	override fun uncheckedGet(x: Int, y: Int): Pixel =
+		Pixel.rgba(
+			internalBuffer.position((y * width + x) * 3).get().toInt(),
+			internalBuffer.get().toInt(),
+			internalBuffer.get().toInt(),
+			type.defaultAlpha
+		)
 
 	override fun uncheckedSet(x: Int, y: Int, pixel: Pixel): Boolean {
 		val (r, g, b) = PixelService.toRGB(pixel, type.matteBackground)
