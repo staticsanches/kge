@@ -7,7 +7,6 @@ import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.KGECleaner
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 /**
  * [PixelBuffer] associated with [Type.Bitmap].
@@ -29,12 +28,12 @@ class BitmapBuffer(
 
 	override fun uncheckedSet(x: Int, y: Int, pixel: Pixel): Boolean {
 		val index = getIndex(x, y)
-		this[index] = internalBuffer[index].toInt() or pixel.toMaskedByte(x)
+		this[index] = internalBuffer[index].toInt() or pixel.toBitMask(x)
 		return true
 	}
 
 	override fun clear(pixel: Pixel) {
-		val newValue: Byte = (if (pixel.toMaskedByte(0) > 0) 0xFF else 0x00).toByte()
+		val newValue: Byte = (if (pixel.toBitMask(0) > 0) 0xFF else 0x00).toByte()
 		internalBuffer.clear()
 		while (internalBuffer.hasRemaining()) {
 			internalBuffer.put(newValue)
@@ -48,7 +47,7 @@ class BitmapBuffer(
 				var x = blockStart
 				for (index in 0..<8) {
 					if (x == width) break
-					byte = byte or pixelByXY(x, y).toMaskedByte(x++)
+					byte = byte or pixelByXY(x, y).toBitMask(x++)
 				}
 				this[getIndex(blockStart, y)] = byte
 			}
@@ -60,33 +59,24 @@ class BitmapBuffer(
 		else y * pitch + x / 8
 
 	private fun getBit(x: Int, y: Int): Boolean =
-		internalBuffer[getIndex(x, y)].toInt() and getMaskedByte(x) > 0
+		internalBuffer[getIndex(x, y)].toInt() and getBitMask(x) > 0
 
-	private fun getMaskedByte(x: Int): Int =
-		if (isLittleEndian) 1 shl (7 - x % 8)
-		else 1 shr x % 8
+	private fun getBitMask(x: Int): Int = 1 shl (7 - x % 8)
 
 	private operator fun set(index: Int, byte: Int) =
-		if (isLittleEndian) internalBuffer.put(index, (byte shr 24).toByte())
-		else internalBuffer.put(index, byte.toByte())
+		internalBuffer.put(index, byte.toByte())
 
 	/**
 	 * For a rgb [Pixel], calculate the distance to [foregroundRGB] and [backgroundRGB],
 	 * returning true if it is closer to the [foregroundRGB].
 	 */
-	private fun Pixel.toMaskedByte(x: Int): Int {
+	private fun Pixel.toBitMask(x: Int): Int {
 		val rgb = PixelService.toRGB(this, type.matteBackground)
 		val foregroundDistance = PixelService.distance2(rgb, foregroundRGB)
 		val backgroundDistance = PixelService.distance2(rgb, backgroundRGB)
-		return if (foregroundDistance <= backgroundDistance) getMaskedByte(x) else 0
+		return if (foregroundDistance <= backgroundDistance) getBitMask(x) else 0
 	}
 
 	override fun close() = cleanable.clean()
-
-	private companion object {
-
-		private val isLittleEndian = ByteOrder.LITTLE_ENDIAN == ByteOrder.nativeOrder()
-
-	}
 
 }
