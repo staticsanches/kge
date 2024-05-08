@@ -1,13 +1,14 @@
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("unused")
 
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.endian.EndianAwareUtils
-import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.alphaFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.blueFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.greenFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.redFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.toNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.alphaFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.blueFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.greenFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.invNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.redFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.toNativeRGBA
 import dev.staticsanches.kge.endian.KGEEndianDependent
 
 
@@ -37,20 +38,26 @@ value class Pixel @KGEEndianDependent constructor(val nativeRGBA: Int) {
 		get() = blueFromNativeRGBA(nativeRGBA)
 	val a: IntColorComponent
 		get() = alphaFromNativeRGBA(nativeRGBA)
-	val rgba: Int
+	val rgba: UInt
 		get() = EndianAwareUtils.fromNativeRGBA(nativeRGBA)
 
-	operator fun component0(): IntColorComponent = r
-	operator fun component1(): IntColorComponent = g
-	operator fun component2(): IntColorComponent = b
-	operator fun component3(): IntColorComponent = a
+	operator fun component1(): IntColorComponent = r
+	operator fun component2(): IntColorComponent = g
+	operator fun component3(): IntColorComponent = b
+	operator fun component4(): IntColorComponent = a
 
-	fun inv(): Pixel = rgba(255 - r, 255 - g, 255 - b, a)
-	fun lerp(p1: Pixel, t: Float): Pixel = this * (1 - t) + p1 * t
+	fun inv(): Pixel = fromNativeRGBA(invNativeRGBA(nativeRGBA))
 
-	operator fun plus(other: Pixel): Pixel = rgba(r + other.r, g + other.g, b + other.b, a)
+	/**
+	 * Calculate the linear interpolation of this (start) and the informed [end].
+	 */
+	fun lerp(end: Pixel, t: Float): Pixel = this * (1 - t) + end * t
 
-	operator fun minus(other: Pixel): Pixel = rgba(r - other.r, g - other.g, b - other.b, a)
+	operator fun plus(other: Pixel): Pixel =
+		rgba(r + other.r, g + other.g, b + other.b, a)
+
+	operator fun minus(other: Pixel): Pixel =
+		rgba(r - other.r, g - other.g, b - other.b, a)
 
 	operator fun times(factor: Float): Pixel =
 		rgba((r * factor).toInt(), (g * factor).toInt(), (b * factor).toInt(), a)
@@ -58,22 +65,24 @@ value class Pixel @KGEEndianDependent constructor(val nativeRGBA: Int) {
 	operator fun div(factor: Float): Pixel =
 		rgba((r / factor).toInt(), (g / factor).toInt(), (b / factor).toInt(), a)
 
-	fun toString(format: Format): String =
-		when (format) {
-			Format.RGBA -> "rgba($r, $g, $b, $a)"
-			Format.HEX -> "#" + rgba.toString(16).uppercase().padStart(8, '0')
-		}
+	override fun toString(): String = Format.HEX(this)
 
-	override fun toString(): String = toString(Format.HEX)
+	enum class Format {
 
-	enum class Format { RGBA, HEX }
+		RGBA, HEX;
+
+		operator fun invoke(pixel: Pixel): String =
+			when (this) {
+				RGBA -> "rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})"
+				HEX -> "#" + pixel.rgba.toString(16).uppercase().padStart(8, '0')
+			}
+
+	}
 
 	@OptIn(KGEEndianDependent::class)
 	companion object {
 
-		fun uRGBA(rgba: UInt): Pixel = Pixel(toNativeRGBA(rgba.toInt()))
-
-		fun rgba(rgba: Int): Pixel = Pixel(toNativeRGBA(rgba))
+		fun rgba(rgba: UInt): Pixel = Pixel(toNativeRGBA(rgba.toInt()))
 
 		fun rgba(r: IntColorComponent, g: IntColorComponent, b: IntColorComponent, a: IntColorComponent = 0xFF): Pixel =
 			Pixel(toNativeRGBA(r, g, b, a))

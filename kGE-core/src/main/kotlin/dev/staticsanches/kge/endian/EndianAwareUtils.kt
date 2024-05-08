@@ -3,9 +3,15 @@ package dev.staticsanches.kge.endian
 import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
+import java.lang.Integer.toUnsignedLong
+import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.ByteOrder.BIG_ENDIAN
+import java.nio.ByteOrder.nativeOrder
+import kotlin.experimental.inv
 
-sealed interface EndianAwareUtils {
+
+internal sealed interface EndianAwareUtils {
 
 	/**
 	 * Given that KGE works with C libraries, [Pixel.nativeRGBA] stores the RGBA color using
@@ -32,7 +38,7 @@ sealed interface EndianAwareUtils {
 	/**
 	 * @see toNativeRGBA
 	 */
-	fun fromNativeRGBA(nativeRGBA: Int): IntColorComponent
+	fun fromNativeRGBA(nativeRGBA: Int): UInt
 
 	/**
 	 * @see toNativeRGBA
@@ -54,27 +60,50 @@ sealed interface EndianAwareUtils {
 	 */
 	fun alphaFromNativeRGBA(nativeRGBA: Int): IntColorComponent
 
-	companion object : EndianAwareUtils by instance
+	/**
+	 * Inverts RGB portion keeping the alpha channel untouched.
+	 */
+	fun invNativeRGBA(nativeRGBA: Int): Int
+
+	/**
+	 * Inverts RGB portion keeping the alpha channel untouched.
+	 */
+	fun invRGBABuffer(buffer: ByteBuffer)
+
+	companion object Instance :
+		EndianAwareUtils by if (nativeOrder() == BIG_ENDIAN) BigEndianAwareUtils else LittleEndianAwareUtils
 
 }
-
-private val instance: EndianAwareUtils =
-	if (ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN) BigEndianAwareUtils
-	else LittleEndianAwareUtils
 
 private data object BigEndianAwareUtils : EndianAwareUtils {
 
 	override fun toNativeRGBA(rgba: Int): Int = rgba
 
 	override fun toNativeRGBA(r: Int, g: Int, b: Int, a: Int): Int =
-		(r.toComponent() shl 24) and (g.toComponent() shl 16) and (b.toComponent() shl 8) and a.toComponent()
+		(r.toComponent() shl 24) or (g.toComponent() shl 16) or (b.toComponent() shl 8) or a.toComponent()
 
-	override fun fromNativeRGBA(nativeRGBA: Int): Int = nativeRGBA
+	override fun fromNativeRGBA(nativeRGBA: Int): UInt = nativeRGBA.toUInt()
 
-	override fun redFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA shr 24
-	override fun greenFromNativeRGBA(nativeRGBA: Int): IntColorComponent = (nativeRGBA shr 16) and 0xFF
-	override fun blueFromNativeRGBA(nativeRGBA: Int): IntColorComponent = (nativeRGBA shr 8) and 0xFF
+	override fun redFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA shr 24 and 0xFF
+	override fun greenFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA shr 16 and 0xFF
+	override fun blueFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA shr 8 and 0xFF
 	override fun alphaFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA and 0xFF
+
+	override fun invNativeRGBA(nativeRGBA: Int): Int = (toUnsignedLong(nativeRGBA) xor 0xFF_FF_FF_00L).toInt()
+
+	override fun invRGBABuffer(buffer: ByteBuffer) {
+		check(buffer.capacity() % 4 == 0)
+		for (i in 0..<buffer.capacity() step 4) {
+			val r = buffer.position(i).get()
+			val g = buffer.get()
+			val b = buffer.get()
+
+			buffer.position(i)
+				.put(r.inv())
+				.put(g.inv())
+				.put(b.inv())
+		}
+	}
 
 }
 
@@ -83,14 +112,30 @@ private data object LittleEndianAwareUtils : EndianAwareUtils {
 	override fun toNativeRGBA(rgba: Int): Int = Integer.reverseBytes(rgba)
 
 	override fun toNativeRGBA(r: Int, g: Int, b: Int, a: Int): Int =
-		r.toComponent() and (g.toComponent() shl 8) and (b.toComponent() shl 16) and (a.toComponent() shl 24)
+		r.toComponent() or (g.toComponent() shl 8) or (b.toComponent() shl 16) or (a.toComponent() shl 24)
 
-	override fun fromNativeRGBA(nativeRGBA: Int): Int = Integer.reverseBytes(nativeRGBA)
+	override fun fromNativeRGBA(nativeRGBA: Int): UInt = Integer.reverseBytes(nativeRGBA).toUInt()
 
 	override fun redFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA and 0xFF
-	override fun greenFromNativeRGBA(nativeRGBA: Int): IntColorComponent = (nativeRGBA shr 8) and 0xFF
-	override fun blueFromNativeRGBA(nativeRGBA: Int): IntColorComponent = (nativeRGBA shr 16) and 0xFF
-	override fun alphaFromNativeRGBA(nativeRGBA: Int): IntColorComponent = (nativeRGBA shr 24) and 0xFF
+	override fun greenFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA shr 8 and 0xFF
+	override fun blueFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA shr 16 and 0xFF
+	override fun alphaFromNativeRGBA(nativeRGBA: Int): IntColorComponent = nativeRGBA shr 24 and 0xFF
+
+	override fun invNativeRGBA(nativeRGBA: Int): Int = (toUnsignedLong(nativeRGBA) xor 0x00_FF_FF_FFL).toInt()
+
+	override fun invRGBABuffer(buffer: ByteBuffer) {
+		check(buffer.capacity() % 4 == 0)
+		for (i in 1..<buffer.capacity() step 4) {
+			val b = buffer.position(i).get()
+			val g = buffer.get()
+			val r = buffer.get()
+
+			buffer.position(i)
+				.put(b.inv())
+				.put(g.inv())
+				.put(r.inv())
+		}
+	}
 
 }
 

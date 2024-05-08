@@ -13,6 +13,7 @@ import dev.staticsanches.kge.types.vector.by
 import dev.staticsanches.kge.utils.humanReadableByteCountBin
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.experimental.inv
 
 
 /**
@@ -41,6 +42,12 @@ sealed class PixelBuffer<T : Type>(
 	}
 
 	final override val size: Int2D = width by height
+
+	override fun inv() {
+		for (i in 0..<internalBuffer.capacity()) {
+			internalBuffer.put(i, internalBuffer[i].inv())
+		}
+	}
 
 	protected val representation =
 		"${type::class.java.simpleName} ${width}x$height (${
