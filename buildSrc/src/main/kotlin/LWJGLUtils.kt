@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 object LWJGLUtils {
 
 	val lwjglNatives by lazy {

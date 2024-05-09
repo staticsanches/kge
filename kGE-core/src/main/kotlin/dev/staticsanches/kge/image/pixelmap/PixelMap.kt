@@ -99,6 +99,8 @@ interface PixelMap : Sequence<Pixel> {
 		return Pixel.rgba(calculateComponent(Pixel::r), calculateComponent(Pixel::g), calculateComponent(Pixel::b))
 	}
 
+	fun duplicate(): PixelMap
+
 	override fun iterator(): Iterator<Pixel> =
 		iterator {
 			for (y in 0..<height) {

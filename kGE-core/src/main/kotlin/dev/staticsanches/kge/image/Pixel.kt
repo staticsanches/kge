@@ -3,12 +3,12 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.endian.EndianAwareUtils
-import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.alphaFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.blueFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.greenFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.invNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.redFromNativeRGBA
-import dev.staticsanches.kge.endian.EndianAwareUtils.Instance.toNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.alphaFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.blueFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.greenFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.invNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.redFromNativeRGBA
+import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.toNativeRGBA
 import dev.staticsanches.kge.endian.KGEEndianDependent
 
 

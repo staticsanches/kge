@@ -21,11 +21,9 @@ interface PixelService : KGESPIExtensible {
 
 	fun distance2(rgb1: Pixel, rgb2: Pixel): Float
 
-	companion object : PixelService by instance
+	companion object : PixelService by KGESPIExtensible.getWithHigherPriority()
 
 }
-
-private val instance: PixelService = KGESPIExtensible.getWithHigherPriority()
 
 internal class DefaultPixelService : PixelService {
 

@@ -70,7 +70,7 @@ internal sealed interface EndianAwareUtils {
 	 */
 	fun invRGBABuffer(buffer: ByteBuffer)
 
-	companion object Instance :
+	companion object :
 		EndianAwareUtils by if (nativeOrder() == BIG_ENDIAN) BigEndianAwareUtils else LittleEndianAwareUtils
 
 }

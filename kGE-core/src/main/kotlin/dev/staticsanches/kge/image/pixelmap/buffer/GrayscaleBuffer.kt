@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 @OptIn(KGESensitiveAPI::class)
 class GrayscaleBuffer(
 	width: Int, height: Int, type: Type.Grayscale, buffer: ByteBuffer, bufferCleanAction: KGECleanAction
-) : PixelBuffer<Type.Grayscale>(width, height, type, buffer) {
+) : PixelBuffer<GrayscaleBuffer, Type.Grayscale>(width, height, type, buffer) {
 
 	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
 

@@ -13,7 +13,7 @@ import java.nio.ByteBuffer
  */
 @OptIn(KGESensitiveAPI::class)
 class RGBBuffer(width: Int, height: Int, type: Type.RGB, buffer: ByteBuffer, bufferCleanAction: KGECleanAction) :
-	PixelBuffer<Type.RGB>(width, height, type, buffer) {
+	PixelBuffer<RGBBuffer, Type.RGB>(width, height, type, buffer) {
 
 	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
 

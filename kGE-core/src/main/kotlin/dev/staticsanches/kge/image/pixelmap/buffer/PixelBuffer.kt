@@ -6,6 +6,7 @@ import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.PixelMap
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
+import dev.staticsanches.kge.image.service.PixelBufferService
 import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.types.vector.Int2D
@@ -20,7 +21,7 @@ import kotlin.experimental.inv
  * [ByteBuffer] wrapper to allow it to function as a [PixelMap].
  */
 @OptIn(KGESensitiveAPI::class)
-sealed class PixelBuffer<T : Type>(
+sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
 	final override val width: Int,
 	final override val height: Int,
 	val type: T,
@@ -49,6 +50,9 @@ sealed class PixelBuffer<T : Type>(
 		}
 	}
 
+	@Suppress("UNCHECKED_CAST")
+	override fun duplicate(): PB = PixelBufferService.duplicate(this as PB)
+
 	protected val representation =
 		"${type::class.java.simpleName} ${width}x$height (${
 			humanReadableByteCountBin(internalBuffer.capacity().toLong())
@@ -56,17 +60,39 @@ sealed class PixelBuffer<T : Type>(
 
 	override fun toString(): String = representation
 
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+
+		other as PixelBuffer<*, *>
+
+		if (width != other.width) return false
+		if (height != other.height) return false
+		if (type != other.type) return false
+		if (internalBuffer != other.internalBuffer) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = width
+		result = 31 * result + height
+		result = 31 * result + type.hashCode()
+		result = 31 * result + internalBuffer.clear().hashCode()
+		return result
+	}
+
 	/**
 	 * Available [PixelBuffer] types.
 	 */
-	sealed interface Type {
+	sealed class Type<PB : PixelBuffer<PB, T>, T : Type<PB, T>> {
 
 		/**
 		 * Represents images with 4-channels.
 		 *
 		 * @see RGBABuffer
 		 */
-		data object RGBA : Type {
+		data object RGBA : Type<RGBABuffer, RGBA>() {
 
 			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height * 4
 
@@ -82,7 +108,8 @@ sealed class PixelBuffer<T : Type>(
 		 *
 		 * @see RGBBuffer
 		 */
-		data class RGB(val defaultAlpha: IntColorComponent = 0xFF, val matteBackground: Pixel = Colors.WHITE) : Type {
+		data class RGB(val defaultAlpha: IntColorComponent = 0xFF, val matteBackground: Pixel = Colors.WHITE) :
+			Type<RGBBuffer, RGB>() {
 
 			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height * 3
 
@@ -97,7 +124,7 @@ sealed class PixelBuffer<T : Type>(
 		 *
 		 * @see GrayscaleBuffer
 		 */
-		data class Grayscale(val defaultAlpha: IntColorComponent = 0xFF) : Type {
+		data class Grayscale(val defaultAlpha: IntColorComponent = 0xFF) : Type<GrayscaleBuffer, Grayscale>() {
 
 			override fun expectedBufferCapacity(width: Int, height: Int): Int = width * height
 
@@ -119,7 +146,7 @@ sealed class PixelBuffer<T : Type>(
 			val matteBackground: Pixel = Colors.WHITE,
 			val negativePitch: Boolean = false,
 			val disableEvenPitch: Boolean = false
-		) : Type {
+		) : Type<BitmapBuffer, Bitmap>() {
 
 			/**
 			 * The expected number of bytes in a row.
@@ -143,7 +170,7 @@ sealed class PixelBuffer<T : Type>(
 		/**
 		 * The expected [ByteBuffer.capacity] for this [Type].
 		 */
-		fun expectedBufferCapacity(width: Int, height: Int): Int
+		abstract fun expectedBufferCapacity(width: Int, height: Int): Int
 
 	}
 

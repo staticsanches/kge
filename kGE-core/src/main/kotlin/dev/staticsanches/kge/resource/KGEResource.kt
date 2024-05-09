@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.resource
 
 import java.io.Closeable
@@ -23,7 +21,7 @@ inline fun <T : AutoCloseable?, R> T.closeIfFailed(crossinline block: (T) -> R):
 		throw e
 	}
 
-inline fun <T : AutoCloseable?, R> T.applyAndCloseIfFailed(crossinline block: (T) -> R): T =
+inline fun <T : AutoCloseable?> T.applyAndCloseIfFailed(crossinline block: (T) -> Any): T =
 	closeIfFailed {
 		block(it)
 		it

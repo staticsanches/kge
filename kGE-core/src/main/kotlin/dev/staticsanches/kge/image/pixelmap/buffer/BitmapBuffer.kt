@@ -14,7 +14,7 @@ import java.nio.ByteBuffer
 @OptIn(KGESensitiveAPI::class)
 class BitmapBuffer(
 	width: Int, height: Int, type: Type.Bitmap, buffer: ByteBuffer, bufferCleanAction: KGECleanAction
-) : PixelBuffer<Type.Bitmap>(width, height, type, buffer) {
+) : PixelBuffer<BitmapBuffer, Type.Bitmap>(width, height, type, buffer) {
 
 	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
 

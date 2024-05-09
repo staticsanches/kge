@@ -1,3 +1,3 @@
 rootProject.name = "kGE"
 
-include("kGE-core")
+include("kGE-core", "kGE-lwjgl")
