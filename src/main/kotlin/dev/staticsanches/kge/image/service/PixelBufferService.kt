@@ -5,6 +5,7 @@ import dev.staticsanches.kge.image.pixelmap.buffer.*
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.closeIfFailed
+import dev.staticsanches.kge.spi.KGESPIExtensible
 import org.lwjgl.stb.STBImage
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
@@ -12,6 +13,37 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.ByteBuffer
 
+
+interface PixelBufferService : KGESPIExtensible {
+
+	/**
+	 * Creates a new uninitialized [PixelBuffer].
+	 */
+	fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> create(type: T, width: Int, height: Int): PB
+
+	/**
+	 * Loads the image content in a [RGBABuffer].
+	 */
+	fun load(fileName: String): RGBABuffer
+
+	/**
+	 * Loads the image content in a [RGBABuffer].
+	 */
+	fun load(url: URL): RGBABuffer
+
+	/**
+	 * Loads the image content in a [RGBABuffer].
+	 */
+	fun load(isProvider: () -> InputStream): RGBABuffer
+
+	/**
+	 * Creates a copy of the informed buffer.
+	 */
+	fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> duplicate(original: PB): PB
+
+	companion object : PixelBufferService by KGESPIExtensible.getWithHigherPriority()
+
+}
 
 /**
  * Default implementation of a [PixelBufferService] that uses the stb_image.h.

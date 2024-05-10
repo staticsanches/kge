@@ -1,10 +1,9 @@
 plugins {
 	id("dev.staticsanches.kge.jvm")
+	id("org.jetbrains.kotlin.plugin.allopen") version libs.versions.kotlin
 }
 
 dependencies {
-	api(project(":kGE-core"))
-
 	implementation(platform(libs.lwjgl.bom))
 	implementation(libs.bundles.lwjgl)
 
@@ -13,4 +12,8 @@ dependencies {
 			classifier = LWJGLUtils.lwjglNatives
 		}
 	}
+}
+
+allOpen {
+	annotation("dev.staticsanches.kge.annotations.KGEAllOpen")
 }
