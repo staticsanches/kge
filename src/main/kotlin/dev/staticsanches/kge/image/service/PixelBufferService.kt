@@ -12,6 +12,10 @@ import org.lwjgl.system.MemoryUtil
 import java.io.InputStream
 import java.net.URL
 import java.nio.ByteBuffer
+import java.nio.file.Files
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.outputStream
 
 
 interface PixelBufferService : KGESPIExtensible {
@@ -75,20 +79,20 @@ internal class STBPixelBufferService : PixelBufferService {
 
 	override fun load(url: URL): RGBABuffer = load(url::openStream)
 
-	override fun load(isProvider: () -> InputStream): RGBABuffer = MemoryStack.stackPush().use { stack ->
-		val width = stack.mallocInt(1)
-		val height = stack.mallocInt(1)
-		val components = stack.mallocInt(1)
-
-		val bytes = isProvider().use { it.readAllBytes() }
-		return@use MemFreeAction(bytes.size).use { memFreeAction ->
-			STBFreeAction(
-				STBImage.stbi_load_from_memory(
-					memFreeAction.buffer.clear().put(bytes).flip(), width, height, components, 4
-				) ?: throw RuntimeException("Unable to load image")
-			).closeIfFailed { stbFreeAction -> RGBABuffer(width[0], height[0], stbFreeAction.buffer, stbFreeAction) }
+	override fun load(isProvider: () -> InputStream): RGBABuffer =
+		try {
+			isProvider().use {
+				val path = Files.createTempFile("image", ".tmp")
+				try {
+					it.transferTo(path.outputStream())
+					return@use load(path.absolutePathString())
+				} finally {
+					path.deleteExisting()
+				}
+			}
+		} catch (t: Throwable) {
+			throw RuntimeException("Unable to load image", t)
 		}
-	}
 
 	override fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> duplicate(original: PB): PB =
 		create(original.type, original.width, original.height).applyAndCloseIfFailed { copy ->
