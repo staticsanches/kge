@@ -10,6 +10,8 @@ import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.invNativeRGBA
 import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.redFromNativeRGBA
 import dev.staticsanches.kge.endian.EndianAwareUtils.Companion.toNativeRGBA
 import dev.staticsanches.kge.endian.KGEEndianDependent
+import kotlin.math.max
+import kotlin.math.min
 
 
 /**
@@ -66,6 +68,30 @@ value class Pixel @KGEEndianDependent constructor(val nativeRGBA: Int) {
 		rgba((r / factor).toInt(), (g / factor).toInt(), (b / factor).toInt(), a)
 
 	override fun toString(): String = Format.HEX(this)
+
+	sealed interface Mode {
+
+		data object Normal : Mode
+
+		data object Mask : Mode
+
+		@JvmInline
+		value class Alpha private constructor(val blendFactor: Float) : Mode {
+
+			constructor(
+				blendFactor: Float,
+				@Suppress("UNUSED_PARAMETER") parameterToAvoidPlatformDeclarationClash: Boolean = true
+			) : this(max(0f, min(1f, blendFactor)))
+
+		}
+
+		interface Custom : Mode {
+
+			operator fun invoke(x: Int, y: Int, newPixel: Pixel, oldPixel: Pixel): Pixel
+
+		}
+
+	}
 
 	enum class Format {
 

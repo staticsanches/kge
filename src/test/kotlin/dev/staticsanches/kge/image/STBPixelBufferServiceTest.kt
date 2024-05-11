@@ -11,6 +11,7 @@ import dev.staticsanches.kge.types.vector.by
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+
 class STBPixelBufferServiceTest {
 
 	@Test

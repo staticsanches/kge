@@ -5,7 +5,7 @@ import dev.staticsanches.kge.endian.EndianAwareUtils
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
 import dev.staticsanches.kge.resource.KGECleanAction
-import dev.staticsanches.kge.resource.KGECleaner
+import dev.staticsanches.kge.resource.KGELeakDetector
 import java.nio.ByteBuffer
 
 
@@ -16,7 +16,7 @@ import java.nio.ByteBuffer
 class RGBABuffer(width: Int, height: Int, buffer: ByteBuffer, bufferCleanAction: KGECleanAction) :
 	PixelBuffer<RGBABuffer, Type.RGBA>(width, height, Type.RGBA, buffer) {
 
-	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
+	private val cleanable = KGELeakDetector.register(this, representation, bufferCleanAction)
 
 	override fun uncheckedGet(x: Int, y: Int): Pixel =
 		Pixel.fromNativeRGBA(internalBuffer.getInt((y * width + x) * 4))

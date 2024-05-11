@@ -5,7 +5,7 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
 import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.resource.KGECleanAction
-import dev.staticsanches.kge.resource.KGECleaner
+import dev.staticsanches.kge.resource.KGELeakDetector
 import java.nio.ByteBuffer
 
 /**
@@ -16,7 +16,7 @@ class BitmapBuffer(
 	width: Int, height: Int, type: Type.Bitmap, buffer: ByteBuffer, bufferCleanAction: KGECleanAction
 ) : PixelBuffer<BitmapBuffer, Type.Bitmap>(width, height, type, buffer) {
 
-	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
+	private val cleanable = KGELeakDetector.register(this, representation, bufferCleanAction)
 
 	private val foregroundRGB = PixelService.toRGB(type.foreground, type.matteBackground)
 	private val backgroundRGB = PixelService.toRGB(type.background, type.matteBackground)

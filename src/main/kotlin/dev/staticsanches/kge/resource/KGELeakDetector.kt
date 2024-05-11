@@ -8,25 +8,26 @@ import java.lang.ref.Cleaner.Cleanable
 
 typealias KGECleanAction = () -> Unit
 
+interface KGECleanable : Cleanable {
+
+	val cleaned: Boolean
+
+}
+
 /**
- * Wrapper around [Cleaner] to help in the process of cleaning resources. Can help in resource leak detection.
+ * Wrapper around a [Cleaner] to help in the process of detecting resource leak.
  */
-object KGECleaner {
+object KGELeakDetector {
 
 	private val cleaner = Cleaner.create()
-
-	/**
-	 * @see [Cleaner.register]
-	 */
-	fun register(obj: Any, action: Runnable): Cleanable = cleaner.register(obj, action)
 
 	/**
 	 * Register a leak detector to the [obj].
 	 *
 	 * To properly work, [action] MUST NOT hold a reference to [obj].
 	 */
-	fun registerLeakDetector(obj: Any, objRepresentation: String, action: KGECleanAction): Cleanable =
-		KGELeakDetector(obj, objRepresentation, action)
+	fun register(obj: Any, objRepresentation: String, action: KGECleanAction): KGECleanable =
+		LeakDetectorAction(obj, objRepresentation, action, cleaner)
 
 }
 
@@ -54,11 +55,16 @@ private class KGECombinedCleanAction(val actions: MutableList<KGECleanAction>) :
 
 }
 
-private class KGELeakDetector(
-	obj: Any, private val objRepresentation: String, @Volatile private var action: KGECleanAction?
-) : Cleanable, Runnable {
+private class LeakDetectorAction(
+	obj: Any, private val objRepresentation: String,
+	@Volatile private var action: KGECleanAction?,
+	cleaner: Cleaner
+) : KGECleanable, Runnable {
 
-	private val selfCleanable = KGECleaner.register(obj, this)
+	private val selfCleanable = cleaner.register(obj, this)
+
+	override val cleaned: Boolean
+		get() = action == null
 
 	override fun clean() {
 		if (action == null) {

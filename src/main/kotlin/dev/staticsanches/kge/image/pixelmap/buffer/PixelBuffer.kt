@@ -22,11 +22,8 @@ import kotlin.experimental.inv
  */
 @OptIn(KGESensitiveAPI::class)
 sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
-	final override val width: Int,
-	final override val height: Int,
-	val type: T,
-	@KGESensitiveAPI
-	val internalBuffer: ByteBuffer,
+	final override val width: Int, final override val height: Int,
+	val type: T, @property:KGESensitiveAPI val internalBuffer: ByteBuffer,
 ) : PixelMap, KGEResource {
 
 	init {

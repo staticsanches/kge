@@ -5,7 +5,7 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
 import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.resource.KGECleanAction
-import dev.staticsanches.kge.resource.KGECleaner
+import dev.staticsanches.kge.resource.KGELeakDetector
 import java.nio.ByteBuffer
 
 /**
@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 class RGBBuffer(width: Int, height: Int, type: Type.RGB, buffer: ByteBuffer, bufferCleanAction: KGECleanAction) :
 	PixelBuffer<RGBBuffer, Type.RGB>(width, height, type, buffer) {
 
-	private val cleanable = KGECleaner.registerLeakDetector(this, representation, bufferCleanAction)
+	private val cleanable = KGELeakDetector.register(this, representation, bufferCleanAction)
 
 	override fun uncheckedGet(x: Int, y: Int): Pixel =
 		Pixel.rgba(

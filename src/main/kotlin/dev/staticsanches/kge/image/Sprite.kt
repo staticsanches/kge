@@ -24,8 +24,7 @@ import kotlin.math.min
 @KGEAllOpen
 @OptIn(KGESensitiveAPI::class)
 class Sprite(
-	@KGESensitiveAPI
-	val pixmap: RGBABuffer,
+	@property:KGESensitiveAPI val pixmap: RGBABuffer,
 	var sampleMode: SampleMode
 ) : PixelMap by pixmap, KGEResource by pixmap {
 

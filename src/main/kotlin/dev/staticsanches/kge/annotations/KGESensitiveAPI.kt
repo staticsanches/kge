@@ -8,5 +8,4 @@ package dev.staticsanches.kge.annotations
 	message = "This is a sensitive piece of the KGE. Use it cautiously."
 )
 @Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
 annotation class KGESensitiveAPI
