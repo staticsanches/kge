@@ -71,14 +71,12 @@ class Window @KGESensitiveAPI constructor(
 	private val extraInfoMap: MutableMap<ExtraInfoKey<*>, Any> = mutableMapOf()
 
 	@KGESensitiveAPI
-	fun <T : Any> registerExtraInfo(key: ExtraInfoKey<T>, extraInfo: T) {
-		extraInfoMap[key] = extraInfo
-	}
+	@Suppress("UNCHECKED_CAST")
+	fun <T : Any> putExtraInfo(key: ExtraInfoKey<T>, extraInfo: T): T? = extraInfoMap.put(key, extraInfo) as? T
 
 	@KGESensitiveAPI
 	@Suppress("UNCHECKED_CAST")
-	fun <T : Any> retrieveExtraInfo(key: ExtraInfoKey<T>): T =
-		extraInfoMap[key] as? T ?: throw RuntimeException("Missing extra info for the informed key: $key")
+	fun <T : Any> getExtraInfo(key: ExtraInfoKey<T>): T? = extraInfoMap[key] as? T
 
 	override fun toString(): String = glfwWindow.toString()
 

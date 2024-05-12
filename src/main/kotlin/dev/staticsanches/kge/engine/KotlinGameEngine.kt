@@ -21,6 +21,7 @@ import org.lwjgl.system.MemoryUtil
 @OptIn(KGESensitiveAPI::class)
 class KotlinGameEngine(val appName: String) :
 	CallbacksAddon,
+	DrawAddon,
 	ExtensionsAddon,
 	LayersAddon,
 	ScreenSizeAddon,
@@ -63,7 +64,7 @@ class KotlinGameEngine(val appName: String) :
 	}
 
 	@KGESensitiveAPI
-	fun Window.coreUpdate() {
+	private fun Window.coreUpdate() {
 		timeState.tick()
 
 		val blockedFrame = extensions.fold(false) { blocked, extension -> extension.onBeforeUserUpdate() || blocked }
@@ -135,6 +136,7 @@ class KotlinGameEngine(val appName: String) :
 		GLFW.glfwDefaultWindowHints()
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE)
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, if (resizable) GLFW.GLFW_TRUE else GLFW.GLFW_FALSE)
+		GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, if (enableRetina) GLFW.GLFW_TRUE else GLFW.GLFW_FALSE)
 		Renderer.beforeWindowCreation()
 
 		val windowWidth = screenWidth * pixelWidth
@@ -240,11 +242,6 @@ class KotlinGameEngine(val appName: String) :
 			inputState.keyboardModifiers = newModifiers
 			inputState.keyboardKeyState[keyboardKey] = keyboardKeyAction
 		}
-
-		GLFW.glfwSetWindowRefreshCallback(windowHandle) { window ->
-			check(window == windowHandle) { "Invalid window handle" }
-			coreUpdate()
-		}
 	}
 
 	private final val extensions = ArrayList<KGEX>()
@@ -254,8 +251,6 @@ class KotlinGameEngine(val appName: String) :
 	}
 
 	class Configurator {
-
-		var vSync: Boolean = false
 
 		var screenWidth: Int = 150
 		var screenHeight: Int = 100
@@ -269,6 +264,9 @@ class KotlinGameEngine(val appName: String) :
 		var resizable: Boolean = false
 		var keepAspectRatio: Boolean = false
 		var fullScreen: Boolean = false
+
+		var vSync: Boolean = false
+		var enableRetina: Boolean = false
 
 	}
 
