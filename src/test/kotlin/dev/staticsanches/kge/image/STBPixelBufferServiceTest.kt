@@ -10,7 +10,9 @@ import dev.staticsanches.kge.image.Colors.RED
 import dev.staticsanches.kge.image.Colors.YELLOW
 import dev.staticsanches.kge.image.service.PixelBufferService
 import dev.staticsanches.kge.types.vector.by
+import java.net.URL
 import java.nio.file.Files
+import kotlin.io.path.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -39,16 +41,10 @@ class STBPixelBufferServiceTest {
         }
 
     @Test
-    fun checkLoadFromMemory() =
-        Sprite.load(STBPixelBufferServiceTest::class.java.getResource("/xmas_5x5.png")!!).use {
-            it.fullCheck()
-        }
+    fun checkLoadFromMemory() = Sprite.load(xmas5x5URL).use { it.fullCheck() }
 
     @Test
-    fun checkLoadFromFileName() =
-        Sprite.load(STBPixelBufferServiceTest::class.java.getResource("/xmas_5x5.png")!!.file).use {
-            it.fullCheck()
-        }
+    fun checkLoadFromFileName() = Sprite.load(xmas5x5URL.toURI().toPath().toAbsolutePath().toString()).use { it.fullCheck() }
 
     private fun Sprite.fullCheck() {
         this.validateXmas5By5PngPixels()
@@ -129,4 +125,7 @@ class STBPixelBufferServiceTest {
             BLANK,
             BLANK,
         )
+
+    private val xmas5x5URL: URL
+        get() = STBPixelBufferServiceTest::class.java.getResource("/xmas_5x5.png")!!
 }

@@ -18,7 +18,6 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.file.Files
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.outputStream
 
@@ -102,7 +101,7 @@ internal data object STBPixelBufferService : PixelBufferService {
                 val path = Files.createTempFile("image", ".tmp")
                 try {
                     it.transferTo(path.outputStream())
-                    return@use load(path.absolutePathString())
+                    return@use load(path.toAbsolutePath().toString())
                 } finally {
                     path.deleteExisting()
                 }
