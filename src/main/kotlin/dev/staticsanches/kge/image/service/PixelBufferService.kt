@@ -7,6 +7,7 @@ import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.spi.KGESPIExtensible
 import org.lwjgl.stb.STBImage
+import org.lwjgl.stb.STBImageWrite.stbi_write_png
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStream
@@ -44,6 +45,11 @@ interface PixelBufferService : KGESPIExtensible {
 	 * Creates a copy of the informed buffer.
 	 */
 	fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> duplicate(original: PB): PB
+
+	/**
+	 * Writes the [buffer] content to a PNG file.
+	 */
+	fun writePNG(fileName: String, buffer: RGBABuffer): Boolean
 
 	companion object : PixelBufferService by KGESPIExtensible.getWithHigherPriority()
 
@@ -98,6 +104,9 @@ internal class STBPixelBufferService : PixelBufferService {
 		create(original.type, original.width, original.height).applyAndCloseIfFailed { copy ->
 			MemoryUtil.memCopy(original.internalBuffer.clear(), copy.internalBuffer.clear())
 		}
+
+	override fun writePNG(fileName: String, buffer: RGBABuffer): Boolean =
+		stbi_write_png(fileName, buffer.width, buffer.height, 4, buffer.internalBuffer.clear(), buffer.width * 4)
 
 	override val servicePriority: Int
 		get() = Int.MIN_VALUE

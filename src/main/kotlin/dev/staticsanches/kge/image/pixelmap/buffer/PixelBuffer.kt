@@ -66,7 +66,7 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
 		if (width != other.width) return false
 		if (height != other.height) return false
 		if (type != other.type) return false
-		if (internalBuffer != other.internalBuffer) return false
+		if (internalBuffer.clear() != other.internalBuffer.clear()) return false
 
 		return true
 	}

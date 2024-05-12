@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.image.Colors.BLACK
 import dev.staticsanches.kge.image.Colors.BLANK
 import dev.staticsanches.kge.image.Colors.BLUE
@@ -7,11 +8,15 @@ import dev.staticsanches.kge.image.Colors.LIME
 import dev.staticsanches.kge.image.Colors.ORANGE
 import dev.staticsanches.kge.image.Colors.RED
 import dev.staticsanches.kge.image.Colors.YELLOW
+import dev.staticsanches.kge.image.service.PixelBufferService
 import dev.staticsanches.kge.types.vector.by
+import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 
+@OptIn(KGESensitiveAPI::class)
 class STBPixelBufferServiceTest {
 
 	@Test
@@ -76,6 +81,15 @@ class STBPixelBufferServiceTest {
 		}
 		this.duplicate(1 by 2, 2 by 2).use { copy ->
 			assertEquals(listOf(LIME, LIME, RED, LIME), copy.toList())
+		}
+
+		val tempFile = Files.createTempFile("temp", ".png").toFile()
+		tempFile.deleteOnExit()
+		assertTrue(PixelBufferService.writePNG(tempFile.absolutePath, pixmap))
+
+		Sprite.load(tempFile.absolutePath).use {
+			it.validateXmas5By5PngPixels()
+			assertEquals(this, it)
 		}
 	}
 

@@ -16,12 +16,9 @@ import dev.staticsanches.kge.utils.invokeForAll
 import dev.staticsanches.kge.utils.invokeForAllRemoving
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW
-import org.lwjgl.opengl.GLCapabilities
 
 @OptIn(KGESensitiveAPI::class)
-class Window @KGESensitiveAPI constructor(
-	glfwHandle: Long, @property:KGESensitiveAPI val glCapabilities: GLCapabilities
-) : KGEInternalResource {
+class Window @KGESensitiveAPI constructor(glfwHandle: Long) : KGEInternalResource {
 
 	private val glfwWindow = IdentifiedResource("GLFW Window", { glfwHandle }, ::clearGLFWWindow)
 	private val boundResources = ArrayList<KGEResource>()
@@ -68,7 +65,7 @@ class Window @KGESensitiveAPI constructor(
 	@KGESensitiveAPI
 	override fun close() = boundResources.invokeForAllRemoving(KGEResource::close)
 
-	private val extraInfoMap: MutableMap<ExtraInfoKey<*>, Any> = mutableMapOf()
+	private val extraInfoMap = HashMap<ExtraInfoKey<*>, Any>()
 
 	@KGESensitiveAPI
 	@Suppress("UNCHECKED_CAST")

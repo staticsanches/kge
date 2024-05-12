@@ -154,7 +154,8 @@ class KotlinGameEngine(val appName: String) :
 		GLFW.glfwMakeContextCurrent(windowHandle)
 		GLFW.glfwSetInputMode(windowHandle, GLFW.GLFW_LOCK_KEY_MODS, GLFW.GLFW_TRUE)
 
-		val window = Window(windowHandle, GL.createCapabilities())
+		GL.createCapabilities()
+		val window = Window(windowHandle)
 
 		// Position the window
 		if (!fullScreen) {
