@@ -18,8 +18,6 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.file.Files
-import kotlin.io.path.deleteExisting
-import kotlin.io.path.outputStream
 
 interface PixelBufferService : KGESPIExtensible {
     /**
@@ -98,12 +96,12 @@ internal data object STBPixelBufferService : PixelBufferService {
     override fun load(isProvider: () -> InputStream): RGBABuffer =
         try {
             isProvider().use {
-                val path = Files.createTempFile("image", ".tmp")
+                val file = Files.createTempFile("image", ".tmp").toFile()
                 try {
-                    it.transferTo(path.outputStream())
-                    return@use load(path.toAbsolutePath().toString())
+                    it.transferTo(file.outputStream())
+                    return@use load(file.absolutePath)
                 } finally {
-                    path.deleteExisting()
+                    file.delete()
                 }
             }
         } catch (t: Throwable) {

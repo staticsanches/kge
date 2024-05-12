@@ -29,7 +29,7 @@ kotlin {
 tasks.named("compileKotlin", org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask::class.java) {
     compilerOptions {
         freeCompilerArgs.add("-Xcontext-receivers")
-        freeCompilerArgs.add("-Xopt-in=dev.staticsanches.kge.annotations.KGESensitiveAPI")
+        freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.annotations.KGESensitiveAPI")
     }
 }
 
