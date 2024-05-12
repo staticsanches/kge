@@ -8,34 +8,26 @@ import kotlin.test.Test
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
-
 class SimpleKotlinGameEngineTest {
+    @Test
+    @Timeout(10)
+    fun checkRun_GL11() = SimpleKotlinGameEngine().start { }
 
-	@Test
-	@Timeout(10)
-	fun checkRun_GL11() =
-		SimpleKotlinGameEngine().start { }
+    private class SimpleKotlinGameEngine : KotlinGameEngine("Simple Test") {
+        private val start = TimeSource.Monotonic.markNow()
 
-	private class SimpleKotlinGameEngine : KotlinGameEngine("Simple Test") {
+        context(Window)
+        override fun onUserUpdate(): Boolean {
+            (0..<screenSize.x).forEach { x ->
+                (0..<screenSize.y).forEach { y ->
+                    draw(x, y, Pixel.rgba(randomComponent(), randomComponent(), randomComponent()))
+                }
+            }
+            return (TimeSource.Monotonic.markNow() - start) < 2.seconds
+        }
 
-		private val start = TimeSource.Monotonic.markNow()
-
-		context(Window)
-		override fun onUserUpdate(): Boolean {
-			(0..<screenSize.x).forEach { x ->
-				(0..<screenSize.y).forEach { y ->
-					draw(x, y, Pixel.rgba(randomComponent(), randomComponent(), randomComponent()))
-				}
-			}
-			return (TimeSource.Monotonic.markNow() - start) < 5.seconds
-		}
-
-		companion object {
-
-			private fun randomComponent(): Int = Random.nextInt(0, 256)
-
-		}
-
-	}
-
+        companion object {
+            private fun randomComponent(): Int = Random.nextInt(0, 256)
+        }
+    }
 }

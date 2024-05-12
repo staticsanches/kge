@@ -13,48 +13,61 @@ import dev.staticsanches.kge.types.vector.FloatOneByOne
 import dev.staticsanches.kge.types.vector.FloatZeroByZero
 import dev.staticsanches.kge.utils.invokeForAll
 
-
 @OptIn(KGESensitiveAPI::class)
 class LayerDescriptor private constructor(
-	drawTarget: Decal,
-	var offset: Float2D, var scale: Float2D,
-	var show: Boolean, var update: Boolean,
-	val decalInstances: MutableList<DecalInstance>,
-	var tint: Pixel, var functionHook: ((LayerDescriptor) -> Unit)?
+    drawTarget: Decal,
+    var offset: Float2D,
+    var scale: Float2D,
+    var show: Boolean,
+    var update: Boolean,
+    val decalInstances: MutableList<DecalInstance>,
+    var tint: Pixel,
+    var functionHook: ((LayerDescriptor) -> Unit)?,
 ) : KGEInternalResource {
+    var drawTarget: Decal = drawTarget
+        private set
 
-	var drawTarget: Decal = drawTarget
-		private set
+    context(Window)
+    fun resize(
+        width: Int,
+        height: Int,
+    ) {
+        close() // free the previous target
+        drawTarget = Decal(width, height)
+        update = true
+    }
 
-	context(Window)
-	fun resize(width: Int, height: Int) {
-		close() // free the previous target
-		drawTarget = Decal(width, height)
-		update = true
-	}
+    @KGESensitiveAPI
+    override fun close() = invokeForAll(drawTarget.sprite, drawTarget) { it.close() }
 
-	@KGESensitiveAPI
-	override fun close() = invokeForAll(drawTarget.sprite, drawTarget) { it.close() }
+    companion object {
+        context(Window)
+        operator fun invoke(
+            width: Int,
+            height: Int,
+            offset: Float2D = FloatZeroByZero,
+            scale: Float2D = FloatOneByOne,
+            show: Boolean = false,
+            update: Boolean = false,
+            decalInstances: MutableList<DecalInstance> = mutableListOf(),
+            tint: Pixel = Colors.WHITE,
+            functionHook: ((LayerDescriptor) -> Unit)? = null,
+        ): LayerDescriptor =
+            LayerDescriptor(
+                Decal(width, height),
+                offset,
+                scale,
+                show,
+                update,
+                decalInstances,
+                tint,
+                functionHook,
+            ).apply { bindResource(this) }
 
-	companion object {
-
-		context(Window)
-		operator fun invoke(
-			width: Int, height: Int,
-			offset: Float2D = FloatZeroByZero,
-			scale: Float2D = FloatOneByOne,
-			show: Boolean = false, update: Boolean = false,
-			decalInstances: MutableList<DecalInstance> = mutableListOf(),
-			tint: Pixel = Colors.WHITE, functionHook: ((LayerDescriptor) -> Unit)? = null
-		): LayerDescriptor =
-			LayerDescriptor(
-				Decal(width, height), offset, scale, show, update, decalInstances, tint, functionHook
-			).apply { bindResource(this) }
-
-		context(Window)
-		private fun Decal(width: Int, height: Int): Decal =
-			Sprite.create(width, height).closeIfFailed { Decal(it, filtered = false, clamp = true) }
-
-	}
-
+        context(Window)
+        private fun Decal(
+            width: Int,
+            height: Int,
+        ): Decal = Sprite.create(width, height).closeIfFailed { Decal(it, filtered = false, clamp = true) }
+    }
 }

@@ -1,6 +1,7 @@
 [versions]
 kotlin = "1.9.23"
 lwjgl = "3.3.3"
+ktlint = "12.1.1"
 
 [libraries]
 lwjgl-bom = { group = "org.lwjgl", name = "lwjgl-bom", version.ref = "lwjgl" }
@@ -10,6 +11,7 @@ lwjgl-opengl = { group = "org.lwjgl", name = "lwjgl-opengl" }
 lwjgl-stb = { group = "org.lwjgl", name = "lwjgl-stb" }
 
 kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+ktlint-plugin = { group = "org.jlleitschuh.gradle", name = "ktlint-gradle", version.ref = "ktlint" }
 
 [bundles]
 lwjgl = ["lwjgl", "lwjgl-glfw", "lwjgl-opengl", "lwjgl-stb"]

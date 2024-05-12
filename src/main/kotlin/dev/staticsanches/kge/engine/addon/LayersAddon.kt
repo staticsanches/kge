@@ -6,12 +6,10 @@ import dev.staticsanches.kge.renderer.LayerDescriptor
 
 @OptIn(KGESensitiveAPI::class)
 interface LayersAddon {
-
-	context(Window)
-	fun createLayer(): Int {
-		val layer = LayerDescriptor(width = screenSize.x, height = screenSize.y)
-		layers.add(layer)
-		return layers.size - 1
-	}
-
+    context(Window)
+    fun createLayer(): Int {
+        val layer = LayerDescriptor(width = screenSize.x, height = screenSize.y)
+        layers.add(layer)
+        return layers.size - 1
+    }
 }

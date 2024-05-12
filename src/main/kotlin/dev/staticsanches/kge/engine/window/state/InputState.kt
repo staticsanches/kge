@@ -6,9 +6,7 @@ import dev.staticsanches.kge.input.KeyboardModifiers
 
 @OptIn(KGESensitiveAPI::class)
 class InputState {
-
-	val keyboardKeyState: KeyboardKeyState = KeyboardKeyState()
-	var keyboardModifiers: KeyboardModifiers = KeyboardModifiers(0)
-		@KGESensitiveAPI set
-
+    val keyboardKeyState: KeyboardKeyState = KeyboardKeyState()
+    var keyboardModifiers: KeyboardModifiers = KeyboardModifiers(0)
+        @KGESensitiveAPI set
 }

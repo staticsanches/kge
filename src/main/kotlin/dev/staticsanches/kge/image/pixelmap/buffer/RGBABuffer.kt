@@ -8,42 +8,45 @@ import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.KGELeakDetector
 import java.nio.ByteBuffer
 
-
 /**
  * [PixelBuffer] associated with [PixelBuffer.Type.RGBA].
  */
 @OptIn(KGESensitiveAPI::class)
 class RGBABuffer(width: Int, height: Int, buffer: ByteBuffer, bufferCleanAction: KGECleanAction) :
-	PixelBuffer<RGBABuffer, Type.RGBA>(width, height, Type.RGBA, buffer) {
+    PixelBuffer<RGBABuffer, Type.RGBA>(width, height, Type.RGBA, buffer) {
+    private val cleanable = KGELeakDetector.register(this, representation, bufferCleanAction)
 
-	private val cleanable = KGELeakDetector.register(this, representation, bufferCleanAction)
+    override fun uncheckedGet(
+        x: Int,
+        y: Int,
+    ): Pixel = Pixel.fromNativeRGBA(internalBuffer.getInt((y * width + x) * 4))
 
-	override fun uncheckedGet(x: Int, y: Int): Pixel =
-		Pixel.fromNativeRGBA(internalBuffer.getInt((y * width + x) * 4))
+    override fun uncheckedSet(
+        x: Int,
+        y: Int,
+        pixel: Pixel,
+    ): Boolean {
+        internalBuffer.putInt((y * width + x) * 4, pixel.nativeRGBA)
+        return true
+    }
 
-	override fun uncheckedSet(x: Int, y: Int, pixel: Pixel): Boolean {
-		internalBuffer.putInt((y * width + x) * 4, pixel.nativeRGBA)
-		return true
-	}
+    override fun clear(pixel: Pixel) {
+        internalBuffer.clear()
+        while (internalBuffer.hasRemaining()) {
+            internalBuffer.putInt(pixel.nativeRGBA)
+        }
+    }
 
-	override fun clear(pixel: Pixel) {
-		internalBuffer.clear()
-		while (internalBuffer.hasRemaining()) {
-			internalBuffer.putInt(pixel.nativeRGBA)
-		}
-	}
+    override fun clear(pixelByXY: (x: Int, y: Int) -> Pixel) {
+        internalBuffer.clear()
+        for (y in 0..<height) {
+            for (x in 0..<width) {
+                internalBuffer.putInt(pixelByXY(x, y).nativeRGBA)
+            }
+        }
+    }
 
-	override fun clear(pixelByXY: (x: Int, y: Int) -> Pixel) {
-		internalBuffer.clear()
-		for (y in 0..<height) {
-			for (x in 0..<width) {
-				internalBuffer.putInt(pixelByXY(x, y).nativeRGBA)
-			}
-		}
-	}
+    override fun inv() = EndianAwareUtils.invRGBABuffer(internalBuffer)
 
-	override fun inv() = EndianAwareUtils.invRGBABuffer(internalBuffer)
-
-	override fun close() = cleanable.clean()
-
+    override fun close() = cleanable.clean()
 }

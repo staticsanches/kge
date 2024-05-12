@@ -8,19 +8,17 @@ import dev.staticsanches.kge.types.vector.Int2D
 
 @OptIn(KGESensitiveAPI::class)
 interface ScreenSizeAddon {
+    context(Window)
+    fun changeScreenSize(newScreenSize: Int2D) {
+        dimensionState.screenSize = newScreenSize
+        dimensionState.updateViewport()
 
-	context(Window)
-	fun changeScreenSize(newScreenSize: Int2D) {
-		dimensionState.screenSize = newScreenSize
-		dimensionState.updateViewport()
+        layers.forEach { it.resize(newScreenSize.x, newScreenSize.y) }
+        drawTarget = null
 
-		layers.forEach { it.resize(newScreenSize.x, newScreenSize.y) }
-		drawTarget = null
-
-		Renderer.clearBuffer(Colors.BLACK, true)
-		Renderer.displayFrame()
-		Renderer.clearBuffer(Colors.BLACK, true)
-		Renderer.updateViewport(dimensionState.viewportPosition, dimensionState.viewportSize)
-	}
-
+        Renderer.clearBuffer(Colors.BLACK, true)
+        Renderer.displayFrame()
+        Renderer.clearBuffer(Colors.BLACK, true)
+        Renderer.updateViewport(dimensionState.viewportPosition, dimensionState.viewportSize)
+    }
 }
