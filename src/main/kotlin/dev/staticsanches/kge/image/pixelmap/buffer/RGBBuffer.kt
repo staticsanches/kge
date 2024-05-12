@@ -1,3 +1,5 @@
+@file:OptIn(KGESensitiveAPI::class)
+
 package dev.staticsanches.kge.image.pixelmap.buffer
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
@@ -11,7 +13,6 @@ import java.nio.ByteBuffer
 /**
  * [PixelBuffer] associated with [Type.RGB].
  */
-@OptIn(KGESensitiveAPI::class)
 class RGBBuffer(width: Int, height: Int, type: Type.RGB, buffer: ByteBuffer, bufferCleanAction: KGECleanAction) :
     PixelBuffer<RGBBuffer, Type.RGB>(width, height, type, buffer) {
     private val cleanable = KGELeakDetector.register(this, representation, bufferCleanAction)

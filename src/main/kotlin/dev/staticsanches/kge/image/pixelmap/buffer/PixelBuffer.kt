@@ -19,7 +19,6 @@ import kotlin.experimental.inv
 /**
  * [ByteBuffer] wrapper to allow it to function as a [PixelMap].
  */
-@OptIn(KGESensitiveAPI::class)
 sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
     final override val width: Int,
     final override val height: Int,

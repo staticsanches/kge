@@ -13,7 +13,6 @@ import dev.staticsanches.kge.types.vector.FloatOneByOne
 import dev.staticsanches.kge.types.vector.FloatZeroByZero
 import dev.staticsanches.kge.utils.invokeForAll
 
-@OptIn(KGESensitiveAPI::class)
 class LayerDescriptor private constructor(
     drawTarget: Decal,
     var offset: Float2D,

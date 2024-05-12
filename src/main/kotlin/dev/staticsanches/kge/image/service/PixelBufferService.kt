@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.image.service
 
-import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.image.pixelmap.buffer.BitmapBuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.GrayscaleBuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer
@@ -66,7 +65,6 @@ interface PixelBufferService : KGESPIExtensible {
 /**
  * Default implementation of a [PixelBufferService] that uses the stb_image.h.
  */
-@OptIn(KGESensitiveAPI::class)
 internal data object STBPixelBufferService : PixelBufferService {
     override fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> create(
         type: T,

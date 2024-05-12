@@ -19,7 +19,6 @@ import dev.staticsanches.kge.utils.invokeForAllRemoving
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW
 
-@OptIn(KGESensitiveAPI::class)
 class Window
     @KGESensitiveAPI
     constructor(glfwHandle: Long) : KGEInternalResource {

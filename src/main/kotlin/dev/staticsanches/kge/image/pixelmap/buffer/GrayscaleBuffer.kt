@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.image.pixelmap.buffer
 
-import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
 import dev.staticsanches.kge.image.service.PixelService
@@ -11,7 +10,6 @@ import java.nio.ByteBuffer
 /**
  * [PixelBuffer] associated with [Type.Grayscale].
  */
-@OptIn(KGESensitiveAPI::class)
 class GrayscaleBuffer(
     width: Int,
     height: Int,

@@ -4,7 +4,6 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.window.Window
 import org.lwjgl.glfw.GLFW
 
-@OptIn(KGESensitiveAPI::class)
 interface WindowManipulationAddon {
     context(Window)
     @KGESensitiveAPI

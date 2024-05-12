@@ -21,7 +21,6 @@ import kotlin.math.min
  * Representation of an image in KGE.
  */
 @KGEAllOpen
-@OptIn(KGESensitiveAPI::class)
 class Sprite(
     @property:KGESensitiveAPI val pixmap: RGBABuffer,
     var sampleMode: SampleMode,

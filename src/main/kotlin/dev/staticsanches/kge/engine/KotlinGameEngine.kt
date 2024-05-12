@@ -26,7 +26,6 @@ import org.lwjgl.system.Configuration
 import org.lwjgl.system.MemoryUtil
 
 @KGEAllOpen
-@OptIn(KGESensitiveAPI::class)
 class KotlinGameEngine(val appName: String) :
     CallbacksAddon,
     DrawAddon,

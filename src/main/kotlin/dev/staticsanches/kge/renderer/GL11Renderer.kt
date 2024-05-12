@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.renderer
 
-import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
@@ -58,7 +57,6 @@ import org.lwjgl.opengl.GL11.glVertex2f
 import org.lwjgl.opengl.GL11.glVertex3f
 import org.lwjgl.opengl.GL11.glViewport
 
-@OptIn(KGESensitiveAPI::class)
 internal data object GL11Renderer : Renderer {
     context(Window)
     private var decalMode: Decal.Mode
