@@ -6,7 +6,10 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.types.vector.Float2D
 import dev.staticsanches.kge.types.vector.Int2D
-import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
+import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
+import org.lwjgl.glfw.GLFW.glfwSwapBuffers
+import org.lwjgl.glfw.GLFW.glfwWindowHint
 import org.lwjgl.opengl.GL11.GL_BLEND
 import org.lwjgl.opengl.GL11.GL_CLAMP
 import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
@@ -76,9 +79,9 @@ internal data object GL11Renderer : Renderer {
         }
 
     override fun beforeWindowCreation() {
-        // Request OpenGL 1.1
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 1)
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1)
+        println("Requesting OpenGL 1.1")
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 1)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
     }
 
     context(Window)
@@ -185,7 +188,7 @@ internal data object GL11Renderer : Renderer {
     ) = glViewport(position.x, position.y, size.x, size.y)
 
     context(Window)
-    override fun displayFrame() = GLFW.glfwSwapBuffers(glfwHandle)
+    override fun displayFrame() = glfwSwapBuffers(glfwHandle)
 
     context(Window)
     override fun drawDecal(decal: DecalInstance) {

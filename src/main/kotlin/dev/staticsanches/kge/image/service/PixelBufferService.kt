@@ -6,6 +6,7 @@ import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBBuffer
 import dev.staticsanches.kge.resource.KGECleanAction
+import dev.staticsanches.kge.resource.MemFreeAction
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.spi.KGESPIExtensible
@@ -122,14 +123,6 @@ internal data object STBPixelBufferService : PixelBufferService {
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE
-
-    private class MemFreeAction(size: Int) : AutoCloseable, KGECleanAction {
-        val buffer: ByteBuffer = MemoryUtil.memAlloc(size)
-
-        override fun invoke() = close()
-
-        override fun close() = MemoryUtil.memFree(buffer.clear())
-    }
 
     private class STBFreeAction(val buffer: ByteBuffer) : AutoCloseable, KGECleanAction {
         override fun invoke() = close()
