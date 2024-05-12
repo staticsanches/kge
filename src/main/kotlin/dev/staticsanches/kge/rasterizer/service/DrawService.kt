@@ -14,7 +14,7 @@ interface DrawService : KGESPIExtensible {
 
 }
 
-internal class DefaultDrawService : DrawService {
+internal object DefaultDrawService : DrawService {
 
 	override fun draw(position: Int2D, color: Pixel, target: PixelMap, pixelMode: Pixel.Mode): Boolean =
 		draw(position.x, position.y, color, target, pixelMode)

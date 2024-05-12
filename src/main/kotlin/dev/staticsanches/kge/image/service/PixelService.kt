@@ -21,11 +21,11 @@ interface PixelService : KGESPIExtensible {
 
 	fun distance2(rgb1: Pixel, rgb2: Pixel): Float
 
-	companion object : PixelService by KGESPIExtensible.getWithHigherPriority()
+	companion object : PixelService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultPixelService
 
 }
 
-internal class DefaultPixelService : PixelService {
+internal data object DefaultPixelService : PixelService {
 
 	override fun toRGB(pixel: Pixel, matteBackground: Pixel): Pixel =
 		when (pixel.a) {

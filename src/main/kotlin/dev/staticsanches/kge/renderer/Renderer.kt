@@ -48,11 +48,13 @@ interface Renderer : KGESPIExtensible {
 	context(Window)
 	fun drawLayerQuad(offset: Float2D, scale: Float2D, tint: Pixel)
 
-	companion object : Renderer by KGESPIExtensible.getWithHigherPriority()
+	companion object : Renderer by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultRenderer
 
 }
 
-internal class DefaultRenderer : Renderer {
+internal data object DefaultRenderer : Renderer {
+
+	var delegate: Renderer = GL11Renderer
 
 	override fun beforeWindowCreation() = delegate.beforeWindowCreation()
 
@@ -95,11 +97,5 @@ internal class DefaultRenderer : Renderer {
 
 	override val servicePriority: Int
 		get() = Int.MIN_VALUE
-
-	companion object {
-
-		var delegate: Renderer = GL11Renderer
-
-	}
 
 }

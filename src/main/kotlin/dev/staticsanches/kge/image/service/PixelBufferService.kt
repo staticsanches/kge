@@ -51,7 +51,7 @@ interface PixelBufferService : KGESPIExtensible {
 	 */
 	fun writePNG(fileName: String, buffer: RGBABuffer): Boolean
 
-	companion object : PixelBufferService by KGESPIExtensible.getWithHigherPriority()
+	companion object : PixelBufferService by KGESPIExtensible.getOptionalWithHigherPriority() ?: STBPixelBufferService
 
 }
 
@@ -59,7 +59,7 @@ interface PixelBufferService : KGESPIExtensible {
  * Default implementation of a [PixelBufferService] that uses the stb_image.h.
  */
 @OptIn(KGESensitiveAPI::class)
-internal class STBPixelBufferService : PixelBufferService {
+internal data object STBPixelBufferService : PixelBufferService {
 
 	override fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> create(type: T, width: Int, height: Int): PB =
 		MemFreeAction(type.expectedBufferCapacity(width, height)).closeIfFailed { memFreeAction ->

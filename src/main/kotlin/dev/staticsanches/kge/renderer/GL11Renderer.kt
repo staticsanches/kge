@@ -11,7 +11,7 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11.*
 
 @OptIn(KGESensitiveAPI::class)
-internal object GL11Renderer : Renderer {
+internal data object GL11Renderer : Renderer {
 
 	context(Window)
 	private var decalMode: Decal.Mode
