@@ -16,6 +16,7 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStream
 import java.net.URL
+import java.net.URLConnection
 import java.nio.ByteBuffer
 import java.nio.file.Files
 
@@ -96,7 +97,16 @@ internal data object STBPixelBufferService : PixelBufferService {
     override fun load(isProvider: () -> InputStream): RGBABuffer =
         try {
             isProvider().use {
-                val file = Files.createTempFile("image", ".tmp").toFile()
+                val file =
+                    Files.createTempFile(
+                        "imageFromInputStream",
+                        when (val contentType: String? = URLConnection.guessContentTypeFromStream(it)) {
+                            "image/png" -> ".png"
+                            "image/jpeg" -> ".jpg"
+                            "image/gif" -> ".gif"
+                            else -> throw RuntimeException("Unsupported content type: $contentType")
+                        },
+                    ).toFile()
                 try {
                     it.transferTo(file.outputStream())
                     return@use load(file.absolutePath)
