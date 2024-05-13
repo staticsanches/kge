@@ -16,9 +16,7 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.io.InputStream
 import java.net.URL
-import java.net.URLConnection
 import java.nio.ByteBuffer
-import java.nio.file.Files
 
 interface PixelBufferService : KGESPIExtensible {
     /**
@@ -95,27 +93,17 @@ internal data object STBPixelBufferService : PixelBufferService {
     override fun load(url: URL): RGBABuffer = load(url::openStream)
 
     override fun load(isProvider: () -> InputStream): RGBABuffer =
-        try {
-            isProvider().use {
-                val file =
-                    Files.createTempFile(
-                        "imageFromInputStream",
-                        when (val contentType: String? = URLConnection.guessContentTypeFromStream(it)) {
-                            "image/png" -> ".png"
-                            "image/jpeg" -> ".jpg"
-                            "image/gif" -> ".gif"
-                            else -> throw RuntimeException("Unsupported content type: $contentType")
-                        },
-                    ).toFile()
-                try {
-                    it.transferTo(file.outputStream())
-                    return@use load(file.absolutePath)
-                } finally {
-                    file.delete()
-                }
-            }
-        } catch (t: Throwable) {
-            throw RuntimeException("Unable to load image", t)
+        MemoryStack.stackPush().use { stack ->
+            val bytes = isProvider().use { it.readAllBytes() }
+
+            val width = stack.mallocInt(1)
+            val height = stack.mallocInt(1)
+            val components = stack.mallocInt(1)
+            val content = stack.malloc(bytes.size)
+            return@use STBFreeAction(
+                STBImage.stbi_load_from_memory(content.put(bytes).flip(), width, height, components, 4)
+                    ?: throw RuntimeException("Unable to load image"),
+            ).closeIfFailed { stbFreeAction -> RGBABuffer(width[0], height[0], stbFreeAction.buffer, stbFreeAction) }
         }
 
     override fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> duplicate(original: PB): PB =
