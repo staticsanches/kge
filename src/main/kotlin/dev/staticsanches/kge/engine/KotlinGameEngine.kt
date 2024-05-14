@@ -24,6 +24,7 @@ import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.Configuration
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.system.Platform
 
 @KGEAllOpen
 class KotlinGameEngine(val appName: String) :
@@ -128,7 +129,7 @@ class KotlinGameEngine(val appName: String) :
     }
 
     private fun Configurator.createWindow(): Window {
-        Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
+        if (Platform.get() == Platform.MACOSX) Configuration.GLFW_LIBRARY_NAME.set("glfw_async")
 
         GLFWErrorCallback.create(::onGLFWError).set()
         check(GLFW.glfwInit()) { "Unable to initialize GLFW" }
