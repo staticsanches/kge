@@ -66,19 +66,20 @@ private fun funkyLine(
     var x = startX
     var y = startY
 
-    val result = mutableListOf<Int2D>()
+    val result = ArrayList<Int2D>(endX - x + 1)
     while (x <= endX) {
         val point = converter(x++, y)
+        if (point in viewport) {
+            result.add(point)
+        } else if (result.isNotEmpty()) {
+            break // the next points will not be inside the viewport
+        }
+
         if (d <= 0) {
             d += deltaE
         } else {
             y++
             d += deltaNE
-        }
-        if (point in viewport) {
-            result.add(point)
-        } else if (result.isNotEmpty()) {
-            break // the next points will not be inside the viewport
         }
     }
     return result
