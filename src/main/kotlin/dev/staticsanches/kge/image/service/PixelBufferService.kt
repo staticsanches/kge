@@ -114,7 +114,8 @@ internal data object STBPixelBufferService : PixelBufferService {
     override fun writePNG(
         fileName: String,
         buffer: RGBABuffer,
-    ): Boolean = stbi_write_png(fileName, buffer.width, buffer.height, 4, buffer.internalBuffer.clear(), buffer.width * 4)
+    ): Boolean =
+        stbi_write_png(fileName, buffer.width, buffer.height, 4, buffer.internalBuffer.clear(), buffer.width * 4)
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE

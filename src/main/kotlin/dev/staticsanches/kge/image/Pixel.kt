@@ -65,9 +65,11 @@ value class Pixel
 
         operator fun minus(other: Pixel): Pixel = rgba(r - other.r, g - other.g, b - other.b, a)
 
-        operator fun times(factor: Float): Pixel = rgba((r * factor).toInt(), (g * factor).toInt(), (b * factor).toInt(), a)
+        operator fun times(factor: Float): Pixel =
+            rgba((r * factor).toInt(), (g * factor).toInt(), (b * factor).toInt(), a)
 
-        operator fun div(factor: Float): Pixel = rgba((r / factor).toInt(), (g / factor).toInt(), (b / factor).toInt(), a)
+        operator fun div(factor: Float): Pixel =
+            rgba((r / factor).toInt(), (g / factor).toInt(), (b / factor).toInt(), a)
 
         override fun toString(): String = Format.HEX(this)
 

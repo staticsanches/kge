@@ -2,8 +2,10 @@ package dev.staticsanches.kge.image.pixelmap
 
 import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.rasterizer.Viewport
 import dev.staticsanches.kge.types.vector.Float2D
 import dev.staticsanches.kge.types.vector.Int2D
+import dev.staticsanches.kge.types.vector.IntZeroByZero
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -14,7 +16,7 @@ import kotlin.math.min
  *
  * (0, 0) indicates the top-left corner and ([width] - 1, [height] - 1) indicates the bottom-right corner.
  */
-interface PixelMap : Sequence<Pixel> {
+interface PixelMap : Sequence<Pixel>, Viewport.Bounded {
     /**
      * The number of columns.
      */
@@ -30,12 +32,20 @@ interface PixelMap : Sequence<Pixel> {
      */
     val size: Int2D
 
+    override val lowerBoundInclusive: Int2D
+        get() = IntZeroByZero
+
+    override val upperBoundExclusive: Int2D
+        get() = size
+
     operator fun get(
         x: Int,
         y: Int,
     ): Pixel {
         if (x !in 0..<width || y !in 0..<height) {
-            throw IndexOutOfBoundsException("Coordinates ($x, $y) does not comply to 0 <= x < $width and 0 <= y < $height")
+            throw IndexOutOfBoundsException(
+                "Coordinates ($x, $y) does not comply to 0 <= x < $width and 0 <= y < $height",
+            )
         }
         return uncheckedGet(x, y)
     }

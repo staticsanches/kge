@@ -44,7 +44,8 @@ internal data object DefaultPixelService : PixelService {
             else -> matteBackground.lerp(pixel, pixel.a / 255f) // uses linear interpolation
         }
 
-    override fun toGrayscale(pixel: Pixel): IntColorComponent = (pixel.r * 0.299f + pixel.g * 0.587f + pixel.b * 0.114f).toInt()
+    override fun toGrayscale(pixel: Pixel): IntColorComponent =
+        (pixel.r * 0.299f + pixel.g * 0.587f + pixel.b * 0.114f).toInt()
 
     override fun fromGrayscale(
         grayscale: IntColorComponent,

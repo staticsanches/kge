@@ -30,9 +30,11 @@ interface Vector2D<T> {
 
     fun ceil(): Vector2D<T> = copy(x.ceil(), y.ceil())
 
-    infix fun max(other: Vector2D<T>): Vector2D<T> = copy(maxOf(x, other.x, this::compare), maxOf(y, other.y, this::compare))
+    infix fun max(other: Vector2D<T>): Vector2D<T> =
+        copy(maxOf(x, other.x, this::compare), maxOf(y, other.y, this::compare))
 
-    infix fun min(other: Vector2D<T>): Vector2D<T> = copy(minOf(x, other.x, this::compare), minOf(y, other.y, this::compare))
+    infix fun min(other: Vector2D<T>): Vector2D<T> =
+        copy(minOf(x, other.x, this::compare), minOf(y, other.y, this::compare))
 
     fun cartesian(): Double2D {
         val yAsDouble = y.toDouble()
