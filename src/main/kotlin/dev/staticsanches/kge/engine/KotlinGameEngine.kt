@@ -3,6 +3,7 @@ package dev.staticsanches.kge.engine
 import dev.staticsanches.kge.annotations.KGEAllOpen
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.addon.CallbacksAddon
+import dev.staticsanches.kge.engine.addon.ClearAddon
 import dev.staticsanches.kge.engine.addon.DrawAddon
 import dev.staticsanches.kge.engine.addon.DrawLineAddon
 import dev.staticsanches.kge.engine.addon.DrawRectAddon
@@ -32,6 +33,7 @@ import org.lwjgl.system.Platform
 @KGEAllOpen
 class KotlinGameEngine(val appName: String) :
     CallbacksAddon,
+    ClearAddon,
     DrawAddon,
     DrawLineAddon,
     DrawRectAddon,
