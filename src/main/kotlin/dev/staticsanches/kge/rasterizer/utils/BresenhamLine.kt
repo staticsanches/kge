@@ -5,7 +5,6 @@ import dev.staticsanches.kge.rasterizer.Viewport
 import dev.staticsanches.kge.types.vector.Int2D
 import dev.staticsanches.kge.types.vector.IntZeroByZero
 import dev.staticsanches.kge.types.vector.by
-import java.util.LinkedList
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -31,7 +30,7 @@ fun BresenhamLine(
         d.x == 0 -> Vertical.line(start, end, viewport)
         d.y == 0 -> Horizontal.line(start, end, viewport)
         d.x == d.y || d.x == -d.y -> Diagonal.line(start, end, viewport)
-        else -> Funky.line(start, end, viewport)
+        else -> funkyLine(start, end, d, viewport)
     }
 }
 
@@ -147,9 +146,41 @@ private class Diagonal private constructor(
     }
 }
 
-private class Funky private constructor(
-    var x: Int,
-    var y: Int,
+private fun funkyLine(
+    start: Int2D,
+    end: Int2D,
+    d: Int2D,
+    viewport: Viewport,
+): BresenhamLine = funkyLine(start.x, start.y, end.x, end.y, d.x, d.y, viewport, ::Int2D)
+
+private fun funkyLine(
+    startX: Int,
+    startY: Int,
+    endX: Int,
+    endY: Int,
+    dx: Int,
+    dy: Int,
+    viewport: Viewport,
+    converter: (x: Int, y: Int) -> Int2D,
+): BresenhamLine {
+    if (dx > 0 && dy < 0 || dx < 0 && dy > 0) { // slope < 0: reflect on X-axis
+        return funkyLine(startX, -startY, endX, -endY, dx, -dy, viewport) { x, y -> converter(x, -y) }
+    }
+
+    if (abs(dy) > abs(dx)) { // slope > 1: swap x and y
+        return funkyLine(startY, startX, endY, endX, dy, dx, viewport) { x, y -> converter(y, x) }
+    }
+
+    return if (dx > 0) {
+        Iterable { AscendingFunky(startX, startY, endX, dx, dy, viewport, converter) }
+    } else {
+        Iterable { DescendingFunky(startX, startY, endX, dx, dy, viewport, converter) }
+    }
+}
+
+private class AscendingFunky(
+    private var x: Int,
+    private var y: Int,
     private val endX: Int,
     dx: Int,
     dy: Int,
@@ -183,50 +214,46 @@ private class Funky private constructor(
             y++
             d += deltaNE
         }
-        if (next in viewport) {
-            return next
+        return if (next in viewport) next else null
+    }
+}
+
+private class DescendingFunky(
+    private var x: Int,
+    private var y: Int,
+    private val endX: Int,
+    dx: Int,
+    dy: Int,
+    private val viewport: Viewport,
+    private val converter: (x: Int, y: Int) -> Int2D,
+) : Iterator<Int2D> {
+    private val deltaE = 2 * dy
+    private val deltaNE = 2 * (dy - dx)
+    private var d = 2 * dy - dx
+    private var next: Int2D? = null
+
+    init {
+        while (next == null && x >= endX) {
+            next = computeNext()
         }
-        return null
     }
 
-    companion object {
-        fun line(
-            start: Int2D,
-            end: Int2D,
-            viewport: Viewport,
-        ): BresenhamLine = line(start.x, start.y, end.x, end.y, viewport, false, ::Int2D)
+    override fun hasNext(): Boolean = next != null
 
-        private fun line(
-            startX: Int,
-            startY: Int,
-            endX: Int,
-            endY: Int,
-            viewport: Viewport,
-            mustReverse: Boolean,
-            converter: (x: Int, y: Int) -> Int2D,
-        ): BresenhamLine {
-            if (startX > endX) { // ensure starX <= endX
-                return line(endX, endY, startX, startY, viewport, !mustReverse, converter)
-            }
+    override fun next(): Int2D {
+        val next = next ?: throw NoSuchElementException()
+        this.next = if (x >= endX) computeNext() else null
+        return next
+    }
 
-            val dy = endY - startY
-            if (dy < 0) { // slope < 0: reflect on X-axis
-                return line(startX, -startY, endX, -endY, viewport, mustReverse) { x, y -> converter(x, -y) }
-            }
-
-            val dx = endX - startX
-            if (dy > dx) { // slope > 1: swap x and y
-                return line(startY, startX, endY, endX, viewport, mustReverse) { x, y -> converter(y, x) }
-            }
-
-            val line = Iterable { Funky(startX, startY, endX, dx, dy, viewport, converter) }
-            if (!mustReverse) {
-                return line
-            }
-
-            val reversed = LinkedList<Int2D>()
-            line.forEach { reversed.addFirst(it) }
-            return reversed
+    private fun computeNext(): Int2D? {
+        val next = converter(x--, y)
+        if (d > 0) {
+            d += deltaE
+        } else {
+            y--
+            d += deltaNE
         }
+        return if (next in viewport) next else null
     }
 }
