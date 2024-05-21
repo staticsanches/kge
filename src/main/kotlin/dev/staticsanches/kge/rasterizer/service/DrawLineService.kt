@@ -35,7 +35,7 @@ internal object DefaultDrawLineService : DrawLineService {
         color: Pixel,
         target: PixelMap,
         pixelMode: Pixel.Mode,
-    ) = BresenhamLine(start, end, target, false).forEach { Rasterizer.draw(it, color, target, pixelMode) }
+    ) = BresenhamLine(start, end, target).forEach { Rasterizer.draw(it, color, target, pixelMode) }
 
     override fun drawLine(
         startX: Int,

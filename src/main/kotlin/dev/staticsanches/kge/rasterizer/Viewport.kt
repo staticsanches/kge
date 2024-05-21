@@ -22,6 +22,8 @@ sealed interface Viewport {
             if (p.y < lowerBoundInclusive.y) outCode = outCode or CohenSutherlandOutCode.TOP
             return outCode
         }
+
+        override fun contains(p: Int2D): Boolean = p.x >= lowerBoundInclusive.x && p.y >= lowerBoundInclusive.y
     }
 
     /**
@@ -40,6 +42,8 @@ sealed interface Viewport {
             if (p.y >= upperBoundExclusive.y) outCode = outCode or CohenSutherlandOutCode.BOTTOM
             return outCode
         }
+
+        override fun contains(p: Int2D): Boolean = p.x < upperBoundExclusive.x && p.y < upperBoundExclusive.y
     }
 
     /**
@@ -60,11 +64,10 @@ sealed interface Viewport {
                 else -> y
             }
 
-        override fun outCode(p: Int2D): CohenSutherlandOutCode {
-            var outCode = super<LowerBounded>.outCode(p)
-            outCode = outCode or super<UpperBounded>.outCode(p)
-            return outCode
-        }
+        override fun outCode(p: Int2D): CohenSutherlandOutCode =
+            super<LowerBounded>.outCode(p) or super<UpperBounded>.outCode(p)
+
+        override fun contains(p: Int2D): Boolean = super<LowerBounded>.contains(p) && super<UpperBounded>.contains(p)
     }
 
     /**
@@ -90,7 +93,7 @@ sealed interface Viewport {
 
     fun outCode(p: Int2D): CohenSutherlandOutCode
 
-    operator fun contains(p: Int2D): Boolean = outCode(p) == CohenSutherlandOutCode.INSIDE
+    operator fun contains(p: Int2D): Boolean
 }
 
 /**
