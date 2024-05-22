@@ -3,12 +3,11 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.engine.window.Window
+import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.FloatOneByOne
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.resource.IdentifiedResource
 import dev.staticsanches.kge.resource.KGEResource
-import dev.staticsanches.kge.types.vector.Float2D
-import dev.staticsanches.kge.types.vector.FloatOneByOne
-import dev.staticsanches.kge.types.vector.div
 
 /**
  * A GPU resident storage of a [Sprite].

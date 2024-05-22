@@ -1,6 +1,6 @@
 package dev.staticsanches.kge.rasterizer
 
-import dev.staticsanches.kge.types.vector.Int2D
+import dev.staticsanches.kge.math.vector.Int2D
 
 /**
  * Represents the visible area of the rendering process.

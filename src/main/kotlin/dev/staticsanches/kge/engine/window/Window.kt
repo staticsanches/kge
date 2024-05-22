@@ -9,11 +9,11 @@ import dev.staticsanches.kge.engine.window.state.TimeState
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.LayerDescriptor
 import dev.staticsanches.kge.resource.IdentifiedResource
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGEResource
-import dev.staticsanches.kge.types.vector.Int2D
 import dev.staticsanches.kge.utils.invokeForAll
 import dev.staticsanches.kge.utils.invokeForAllRemoving
 import org.lwjgl.glfw.Callbacks

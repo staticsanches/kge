@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.utils
 
-import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.types.vector.MutableInt2D
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.MutableInt2D
 
 /**
  * Uses the [triangle area](https://www.geeksforgeeks.org/area-of-triangle-using-determinants/) to check if the

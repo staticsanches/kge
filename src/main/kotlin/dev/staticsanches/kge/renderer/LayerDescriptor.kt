@@ -6,11 +6,11 @@ import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.FloatOneByOne
+import dev.staticsanches.kge.math.vector.FloatZeroByZero
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.closeIfFailed
-import dev.staticsanches.kge.types.vector.Float2D
-import dev.staticsanches.kge.types.vector.FloatOneByOne
-import dev.staticsanches.kge.types.vector.FloatZeroByZero
 import dev.staticsanches.kge.utils.invokeForAll
 
 class LayerDescriptor private constructor(

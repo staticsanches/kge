@@ -1,8 +1,8 @@
 package dev.staticsanches.kge.rasterizer.utils
 
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.rasterizer.Viewport
-import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.types.vector.by
 import org.junit.jupiter.api.Nested
 import kotlin.test.Test
 import kotlin.test.assertEquals

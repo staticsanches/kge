@@ -8,9 +8,9 @@ import dev.staticsanches.kge.image.pixelmap.PixelMap
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type.RGBA
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.image.service.PixelBufferService
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
-import dev.staticsanches.kge.types.vector.Int2D
 import java.io.InputStream
 import java.net.URL
 import kotlin.math.abs

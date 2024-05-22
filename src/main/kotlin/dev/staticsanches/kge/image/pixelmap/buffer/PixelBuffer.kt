@@ -8,9 +8,9 @@ import dev.staticsanches.kge.image.pixelmap.PixelMap
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
 import dev.staticsanches.kge.image.service.PixelBufferService
 import dev.staticsanches.kge.image.service.PixelService
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.resource.KGEResource
-import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.types.vector.by
 import dev.staticsanches.kge.utils.humanReadableByteCountBin
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

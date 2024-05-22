@@ -3,8 +3,8 @@ package dev.staticsanches.kge.engine.addon
 import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
-import dev.staticsanches.kge.types.vector.Int2D
 
 interface FillRectAddon {
     context(Window)

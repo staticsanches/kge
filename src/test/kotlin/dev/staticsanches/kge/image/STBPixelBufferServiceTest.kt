@@ -9,7 +9,7 @@ import dev.staticsanches.kge.image.Colors.ORANGE
 import dev.staticsanches.kge.image.Colors.RED
 import dev.staticsanches.kge.image.Colors.YELLOW
 import dev.staticsanches.kge.image.service.PixelBufferService
-import dev.staticsanches.kge.types.vector.by
+import dev.staticsanches.kge.math.vector.by
 import java.net.URL
 import java.nio.file.Files
 import kotlin.io.path.toPath

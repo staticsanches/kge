@@ -2,13 +2,13 @@ package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.MutableInt2D
+import dev.staticsanches.kge.math.vector.mutableBy
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.utils.areCollinear
 import dev.staticsanches.kge.rasterizer.utils.sortTriangleVertices
 import dev.staticsanches.kge.spi.KGESPIExtensible
-import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.types.vector.MutableInt2D
-import dev.staticsanches.kge.types.vector.mutableBy
 
 interface DrawTriangleService : KGESPIExtensible {
     fun drawTriangle(

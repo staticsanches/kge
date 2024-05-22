@@ -4,9 +4,9 @@ import dev.staticsanches.kge.configuration.Configuration
 import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.spi.KGESPIExtensible
-import dev.staticsanches.kge.types.vector.Float2D
-import dev.staticsanches.kge.types.vector.Int2D
 
 interface Renderer : KGESPIExtensible {
     fun beforeWindowCreation()

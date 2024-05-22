@@ -1,13 +1,14 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package dev.staticsanches.kge.engine.window.state
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.types.vector.Float2D
-import dev.staticsanches.kge.types.vector.FloatOneByOne
-import dev.staticsanches.kge.types.vector.FloatZeroByZero
-import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.types.vector.IntZeroByZero
-import dev.staticsanches.kge.types.vector.by
-import dev.staticsanches.kge.types.vector.div
+import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.FloatOneByOne
+import dev.staticsanches.kge.math.vector.FloatZeroByZero
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.IntZeroByZero
+import dev.staticsanches.kge.math.vector.by
 
 class DimensionState {
     /**

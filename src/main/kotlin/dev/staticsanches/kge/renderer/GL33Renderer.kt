@@ -6,6 +6,8 @@ import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.QuadInfo.QuadInfoKey
 import dev.staticsanches.kge.resource.IdentifiedResource
 import dev.staticsanches.kge.resource.KGECleanable
@@ -15,8 +17,6 @@ import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.MemFreeAction
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.closeIfFailed
-import dev.staticsanches.kge.types.vector.Float2D
-import dev.staticsanches.kge.types.vector.Int2D
 import dev.staticsanches.kge.utils.invokeForAll
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR

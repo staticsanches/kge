@@ -2,7 +2,7 @@ package dev.staticsanches.kge.renderer
 
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.types.vector.Float2D
+import dev.staticsanches.kge.math.vector.Float2D
 
 class DecalInstance(
     val decal: Decal?,

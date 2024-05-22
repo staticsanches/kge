@@ -2,10 +2,10 @@ package dev.staticsanches.kge.image.pixelmap
 
 import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.IntZeroByZero
 import dev.staticsanches.kge.rasterizer.Viewport
-import dev.staticsanches.kge.types.vector.Float2D
-import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.types.vector.IntZeroByZero
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min

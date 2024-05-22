@@ -1,14 +1,14 @@
 package dev.staticsanches.kge.rasterizer.utils
 
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.IntZeroByZero
+import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.rasterizer.CohenSutherlandOutCode
 import dev.staticsanches.kge.rasterizer.Viewport
 import dev.staticsanches.kge.rasterizer.contains
 import dev.staticsanches.kge.rasterizer.fittestX
 import dev.staticsanches.kge.rasterizer.fittestY
 import dev.staticsanches.kge.rasterizer.outCode
-import dev.staticsanches.kge.types.vector.Int2D
-import dev.staticsanches.kge.types.vector.IntZeroByZero
-import dev.staticsanches.kge.types.vector.by
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

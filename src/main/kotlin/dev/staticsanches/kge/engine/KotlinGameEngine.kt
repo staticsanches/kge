@@ -22,8 +22,8 @@ import dev.staticsanches.kge.input.KeyboardModifiers
 import dev.staticsanches.kge.input.PressAction
 import dev.staticsanches.kge.input.ReleaseAction
 import dev.staticsanches.kge.input.RepeatAction
+import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.renderer.Renderer
-import dev.staticsanches.kge.types.vector.by
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
