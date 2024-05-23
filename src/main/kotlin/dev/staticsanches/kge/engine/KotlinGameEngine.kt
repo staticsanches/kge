@@ -10,6 +10,7 @@ import dev.staticsanches.kge.engine.addon.DrawRectAddon
 import dev.staticsanches.kge.engine.addon.DrawTriangleAddon
 import dev.staticsanches.kge.engine.addon.ExtensionsAddon
 import dev.staticsanches.kge.engine.addon.FillRectAddon
+import dev.staticsanches.kge.engine.addon.FillTriangleAddon
 import dev.staticsanches.kge.engine.addon.LayersAddon
 import dev.staticsanches.kge.engine.addon.ScreenSizeAddon
 import dev.staticsanches.kge.engine.addon.WindowManipulationAddon
@@ -41,6 +42,7 @@ class KotlinGameEngine(val appName: String) :
     DrawTriangleAddon,
     ExtensionsAddon,
     FillRectAddon,
+    FillTriangleAddon,
     LayersAddon,
     ScreenSizeAddon,
     WindowManipulationAddon {
