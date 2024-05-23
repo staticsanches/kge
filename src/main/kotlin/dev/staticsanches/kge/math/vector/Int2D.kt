@@ -27,7 +27,7 @@ open class Int2D internal constructor(open val x: Int, open val y: Int) {
 
     open operator fun times(other: Int2D): Int2D = copy(x * other.x, y * other.y)
 
-    open operator fun div(other: Int2D): Int2D = copy(x * other.x, y * other.y)
+    open operator fun div(other: Int2D): Int2D = copy(x / other.x, y / other.y)
 
     open operator fun times(value: Int): Int2D = copy(x * value, y * value)
 
