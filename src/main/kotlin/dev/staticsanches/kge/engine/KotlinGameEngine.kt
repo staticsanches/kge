@@ -5,6 +5,7 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.addon.CallbacksAddon
 import dev.staticsanches.kge.engine.addon.ClearAddon
 import dev.staticsanches.kge.engine.addon.DrawAddon
+import dev.staticsanches.kge.engine.addon.DrawCircleAddon
 import dev.staticsanches.kge.engine.addon.DrawLineAddon
 import dev.staticsanches.kge.engine.addon.DrawRectAddon
 import dev.staticsanches.kge.engine.addon.DrawTriangleAddon
@@ -37,6 +38,7 @@ class KotlinGameEngine(val appName: String) :
     CallbacksAddon,
     ClearAddon,
     DrawAddon,
+    DrawCircleAddon,
     DrawLineAddon,
     DrawRectAddon,
     DrawTriangleAddon,
