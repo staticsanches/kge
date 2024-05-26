@@ -10,6 +10,7 @@ import dev.staticsanches.kge.engine.addon.DrawLineAddon
 import dev.staticsanches.kge.engine.addon.DrawRectAddon
 import dev.staticsanches.kge.engine.addon.DrawTriangleAddon
 import dev.staticsanches.kge.engine.addon.ExtensionsAddon
+import dev.staticsanches.kge.engine.addon.FillCircleAddon
 import dev.staticsanches.kge.engine.addon.FillRectAddon
 import dev.staticsanches.kge.engine.addon.FillTriangleAddon
 import dev.staticsanches.kge.engine.addon.LayersAddon
@@ -43,6 +44,7 @@ class KotlinGameEngine(val appName: String) :
     DrawRectAddon,
     DrawTriangleAddon,
     ExtensionsAddon,
+    FillCircleAddon,
     FillRectAddon,
     FillTriangleAddon,
     LayersAddon,
