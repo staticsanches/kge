@@ -80,11 +80,11 @@ internal object DefaultFillTriangleService : FillTriangleService {
         val leftResult: PeekingIterator<Int2D>
         val rightResult: PeekingIterator<Int2D>
         if (p1.x < p2.x) {
-            leftResult = BresenhamLine(p0, p1, Viewport.Unbounded).iterator().peeking()
-            rightResult = BresenhamLine(p0, p2, Viewport.Unbounded).iterator().peeking()
+            leftResult = BresenhamLine(p0, p1, Viewport.Unbounded).peeking()
+            rightResult = BresenhamLine(p0, p2, Viewport.Unbounded).peeking()
         } else {
-            leftResult = BresenhamLine(p0, p2, Viewport.Unbounded).iterator().peeking()
-            rightResult = BresenhamLine(p0, p1, Viewport.Unbounded).iterator().peeking()
+            leftResult = BresenhamLine(p0, p2, Viewport.Unbounded).peeking()
+            rightResult = BresenhamLine(p0, p1, Viewport.Unbounded).peeking()
         }
 
         while (leftResult.hasNext() && rightResult.hasNext()) {
@@ -111,8 +111,8 @@ internal object DefaultFillTriangleService : FillTriangleService {
         check(p0.y == p1.y)
         check(p0.x < p1.x)
 
-        val leftResult = BresenhamLine(p0, p2, Viewport.Unbounded).iterator().peeking()
-        val rightResult = BresenhamLine(p1, p2, Viewport.Unbounded).iterator().peeking()
+        val leftResult = BresenhamLine(p0, p2, Viewport.Unbounded).peeking()
+        val rightResult = BresenhamLine(p1, p2, Viewport.Unbounded).peeking()
 
         if (skipFirst && leftResult.hasNext() && rightResult.hasNext()) {
             leftResult.nextLeft()

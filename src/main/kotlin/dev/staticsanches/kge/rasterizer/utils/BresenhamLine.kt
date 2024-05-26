@@ -9,11 +9,12 @@ import dev.staticsanches.kge.rasterizer.contains
 import dev.staticsanches.kge.rasterizer.fittestX
 import dev.staticsanches.kge.rasterizer.fittestY
 import dev.staticsanches.kge.rasterizer.outCode
+import java.util.Collections
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-typealias BresenhamLine = Iterable<Int2D>
+typealias BresenhamLine = Iterator<Int2D>
 
 /**
  * Uses the [Bresenham's line algorithm](https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm) to generate a line
@@ -25,16 +26,28 @@ fun BresenhamLine(
     viewport: Viewport,
 ): BresenhamLine {
     if (viewport.outCode(start) and viewport.outCode(end) != CohenSutherlandOutCode.INSIDE) {
-        return emptyList() // outside viewport (trivial rejection)
+        return Collections.emptyIterator() // outside viewport (trivial rejection)
     }
 
     val d = end - start
     return when {
-        d == IntZeroByZero -> listOf(start)
+        d == IntZeroByZero -> SinglePoint(start)
         d.x == 0 -> Vertical.line(start, end, viewport)
         d.y == 0 -> Horizontal.line(start, end, viewport)
         d.x == d.y || d.x == -d.y -> Diagonal.line(start, end, viewport)
         else -> funkyLine(start, end, d, viewport)
+    }
+}
+
+private class SinglePoint(private val next: Int2D) : BresenhamLine {
+    private var hasNext = true
+
+    override fun hasNext(): Boolean = hasNext
+
+    override fun next(): Int2D {
+        if (!hasNext) throw NoSuchElementException()
+        hasNext = false
+        return next
     }
 }
 
@@ -43,7 +56,7 @@ private class Vertical private constructor(
     private var y: Int,
     private val yInc: Int,
     private var dy: Int,
-) : Iterator<Int2D> {
+) : BresenhamLine {
     override fun hasNext(): Boolean = dy >= 0
 
     override fun next(): Int2D {
@@ -65,7 +78,7 @@ private class Vertical private constructor(
             val y = viewport.fittestY(start)
             val dy = abs(viewport.fittestY(end) - y)
             val yInc = if (start.y < end.y) 1 else -1
-            return Iterable { Vertical(x, y, yInc, dy) }
+            return Vertical(x, y, yInc, dy)
         }
     }
 }
@@ -75,7 +88,7 @@ private class Horizontal private constructor(
     private val y: Int,
     private val xInc: Int,
     private var dx: Int,
-) : Iterator<Int2D> {
+) : BresenhamLine {
     override fun hasNext(): Boolean = dx >= 0
 
     override fun next(): Int2D {
@@ -97,7 +110,7 @@ private class Horizontal private constructor(
             val y = start.y
             val dx = abs(viewport.fittestX(end) - x)
             val xInc = if (start.x < end.x) 1 else -1
-            return Iterable { Horizontal(x, y, xInc, dx) }
+            return Horizontal(x, y, xInc, dx)
         }
     }
 }
@@ -108,7 +121,7 @@ private class Diagonal private constructor(
     private var x: Int,
     private var y: Int,
     private var d: Int,
-) : Iterator<Int2D> {
+) : BresenhamLine {
     override fun hasNext(): Boolean = d >= 0
 
     override fun next(): Int2D {
@@ -130,22 +143,12 @@ private class Diagonal private constructor(
         ): BresenhamLine {
             val xInc = if (start.x < end.x) 1 else -1
             val yInc = if (start.y < end.y) 1 else -1
-            val (x, y) = computeStart(start, viewport, xInc, yInc)
-            val d = min(abs(viewport.fittestX(end) - x), abs(viewport.fittestY(end) - y))
-            return Iterable { Diagonal(xInc, yInc, x, y, d) }
-        }
-
-        private fun computeStart(
-            start: Int2D,
-            viewport: Viewport,
-            xInc: Int,
-            yInc: Int,
-        ): Int2D {
             var (x, y) = start
             val delta = max(abs(viewport.fittestX(start) - x), abs(viewport.fittestY(start) - y))
             x += (xInc * delta)
             y += (yInc * delta)
-            return x by y
+            val d = min(abs(viewport.fittestX(end) - x), abs(viewport.fittestY(end) - y))
+            return Diagonal(xInc, yInc, x, y, d)
         }
     }
 }
@@ -176,9 +179,9 @@ private fun funkyLine(
     }
 
     return if (dx > 0) {
-        Iterable { AscendingFunky(startX, startY, endX, dx, dy, viewport, converter) }
+        AscendingFunky(startX, startY, endX, dx, dy, viewport, converter)
     } else {
-        Iterable { DescendingFunky(startX, startY, endX, dx, dy, viewport, converter) }
+        DescendingFunky(startX, startY, endX, dx, dy, viewport, converter)
     }
 }
 
@@ -190,7 +193,7 @@ private class AscendingFunky(
     dy: Int,
     private val viewport: Viewport,
     private val converter: (x: Int, y: Int) -> Int2D,
-) : Iterator<Int2D> {
+) : BresenhamLine {
     private val deltaE = 2 * dy
     private val deltaNE = 2 * (dy - dx)
     private var d = 2 * dy - dx
@@ -230,7 +233,7 @@ private class DescendingFunky(
     dy: Int,
     private val viewport: Viewport,
     private val converter: (x: Int, y: Int) -> Int2D,
-) : Iterator<Int2D> {
+) : BresenhamLine {
     private val deltaE = 2 * dy
     private val deltaNE = 2 * (dy - dx)
     private var d = 2 * dy - dx

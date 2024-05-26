@@ -717,9 +717,7 @@ class BresenhamLineTest {
         viewport: Viewport,
         expected: List<Int2D>,
     ) {
-        val actual = BresenhamLine(first, last, viewport)
         // Assert two times to check the independence of iterators
-        assertEquals(expected, actual.toList())
-        assertEquals(expected, actual.toList())
+        assertEquals(expected, Iterable { BresenhamLine(first, last, viewport) }.toList())
     }
 }
