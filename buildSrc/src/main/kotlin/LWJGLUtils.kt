@@ -6,10 +6,6 @@ object LWJGLUtils {
             arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } ->
                 if (arrayOf("arm", "aarch64").any { arch.startsWith(it) }) {
                     "natives-linux${if (arch.contains("64") || arch.startsWith("armv8")) "-arm64" else "-arm32"}"
-                } else if (arch.startsWith("ppc")) {
-                    "natives-linux-ppc64le"
-                } else if (arch.startsWith("riscv")) {
-                    "natives-linux-riscv64"
                 } else {
                     "natives-linux"
                 }

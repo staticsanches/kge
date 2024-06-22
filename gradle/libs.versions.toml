@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.23"
+kotlin = "2.0.0"
 lwjgl = "3.3.3"
 ktlint = "12.1.1"
 
