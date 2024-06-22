@@ -1,1 +1,1 @@
-# kotlin Game Engine (kGE)
+# Kotlin Game Engine (kge)

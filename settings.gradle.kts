@@ -1,1 +1,3 @@
-rootProject.name = "kGE"
+rootProject.name = "kge"
+
+include("kge-core")
