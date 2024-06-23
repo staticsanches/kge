@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    api("dev.staticsanches:kge-core:${project.version}")
+    api(project(":kge-core"))
 
     implementation(platform(libs.lwjgl.bom))
     runtimeOnly(libs.bundles.lwjgl) {
