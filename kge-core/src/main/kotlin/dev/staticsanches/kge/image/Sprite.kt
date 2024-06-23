@@ -24,7 +24,8 @@ import kotlin.math.min
 class Sprite(
     @property:KGESensitiveAPI val pixmap: RGBABuffer,
     var sampleMode: SampleMode,
-) : PixelMap by pixmap, KGEResource by pixmap {
+) : PixelMap by pixmap,
+    KGEResource by pixmap {
     override operator fun get(
         x: Int,
         y: Int,

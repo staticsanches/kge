@@ -21,7 +21,9 @@ import org.lwjgl.glfw.GLFW
 
 class Window
     @KGESensitiveAPI
-    constructor(glfwHandle: Long) : KGEInternalResource {
+    constructor(
+        glfwHandle: Long,
+    ) : KGEInternalResource {
         private val glfwWindow = IdentifiedResource("GLFW Window", { glfwHandle }, ::clearGLFWWindow)
         private val boundResources = ArrayList<KGEResource>()
 

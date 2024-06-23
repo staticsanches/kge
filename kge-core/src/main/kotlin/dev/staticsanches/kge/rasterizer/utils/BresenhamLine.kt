@@ -39,7 +39,9 @@ fun BresenhamLine(
     }
 }
 
-private class SinglePoint(private val next: Int2D) : BresenhamLine {
+private class SinglePoint(
+    private val next: Int2D,
+) : BresenhamLine {
     private var hasNext = true
 
     override fun hasNext(): Boolean = hasNext

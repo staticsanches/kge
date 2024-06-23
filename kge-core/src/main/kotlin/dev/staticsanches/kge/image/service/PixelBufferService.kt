@@ -120,7 +120,10 @@ internal data object STBPixelBufferService : PixelBufferService {
     override val servicePriority: Int
         get() = Int.MIN_VALUE
 
-    private class STBFreeAction(val buffer: ByteBuffer) : AutoCloseable, KGECleanAction {
+    private class STBFreeAction(
+        val buffer: ByteBuffer,
+    ) : AutoCloseable,
+        KGECleanAction {
         override fun invoke() = close()
 
         override fun close() = STBImage.stbi_image_free(buffer.clear())

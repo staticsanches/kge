@@ -14,7 +14,10 @@ infix fun Int.by(y: Int): Int2D =
 
 infix fun Int.mutableBy(y: Int): MutableInt2D = MutableInt2D(this, y)
 
-open class Int2D internal constructor(open val x: Int, open val y: Int) {
+open class Int2D internal constructor(
+    open val x: Int,
+    open val y: Int,
+) {
     operator fun component1(): Int = x
 
     operator fun component2(): Int = y
@@ -57,7 +60,10 @@ open class Int2D internal constructor(open val x: Int, open val y: Int) {
     final override fun toString(): String = "($x, $y)"
 }
 
-class MutableInt2D internal constructor(override var x: Int, override var y: Int) : Int2D(x, y) {
+class MutableInt2D internal constructor(
+    override var x: Int,
+    override var y: Int,
+) : Int2D(x, y) {
     override fun plus(other: Int2D): MutableInt2D = MutableInt2D(x + other.x, y + other.y)
 
     override fun minus(other: Int2D): MutableInt2D = MutableInt2D(x - other.x, y - other.y)

@@ -11,7 +11,9 @@ import org.lwjgl.glfw.GLFW
 @JvmInline
 value class KeyboardModifiers
     @KGESensitiveAPI
-    constructor(private val mods: Int) {
+    constructor(
+        private val mods: Int,
+    ) {
         val shiftHeldDown: Boolean
             get() = mods and GLFW.GLFW_MOD_SHIFT > 0
 

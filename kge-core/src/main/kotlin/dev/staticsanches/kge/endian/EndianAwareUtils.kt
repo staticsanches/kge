@@ -106,7 +106,8 @@ private data object BigEndianAwareUtils : EndianAwareUtils {
             val g = buffer.get()
             val b = buffer.get()
 
-            buffer.position(i)
+            buffer
+                .position(i)
                 .put(r.inv())
                 .put(g.inv())
                 .put(b.inv())
@@ -143,7 +144,8 @@ private data object LittleEndianAwareUtils : EndianAwareUtils {
             val g = buffer.get()
             val r = buffer.get()
 
-            buffer.position(i)
+            buffer
+                .position(i)
                 .put(b.inv())
                 .put(g.inv())
                 .put(r.inv())

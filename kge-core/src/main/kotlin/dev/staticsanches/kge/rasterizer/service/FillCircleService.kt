@@ -51,8 +51,10 @@ internal object DefaultFillCircleService : FillCircleService {
         if (
             radius < 0 ||
             mask == CircleOctantMask.NONE ||
-            centerX < -radius || centerX - target.width > radius ||
-            centerY < -radius || centerY - target.height > radius
+            centerX < -radius ||
+            centerX - target.width > radius ||
+            centerY < -radius ||
+            centerY - target.height > radius
         ) {
             return
         }

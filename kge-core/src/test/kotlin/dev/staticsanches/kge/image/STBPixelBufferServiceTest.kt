@@ -45,7 +45,14 @@ class STBPixelBufferServiceTest {
 
     @Test
     fun checkLoadFromFileName() =
-        Sprite.load(xmas5x5URL.toURI().toPath().toAbsolutePath().toString()).use { it.fullCheck() }
+        Sprite
+            .load(
+                xmas5x5URL
+                    .toURI()
+                    .toPath()
+                    .toAbsolutePath()
+                    .toString(),
+            ).use { it.fullCheck() }
 
     private fun Sprite.fullCheck() {
         this.validateXmas5By5PngPixels()

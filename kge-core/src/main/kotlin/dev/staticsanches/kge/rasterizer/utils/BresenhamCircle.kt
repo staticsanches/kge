@@ -47,7 +47,9 @@ inline fun bresenhamCircle(
  * @see <img width="400" src="https://ars.els-cdn.com/content/image/1-s2.0-S0166218X07004817-gr2.jpg" />
  */
 @JvmInline
-value class CircleOctantMask private constructor(private val mask: Int) {
+value class CircleOctantMask private constructor(
+    private val mask: Int,
+) {
     infix fun or(other: CircleOctantMask): CircleOctantMask = CircleOctantMask(mask or other.mask)
 
     infix fun and(other: CircleOctantMask): CircleOctantMask = CircleOctantMask(mask and other.mask)

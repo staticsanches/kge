@@ -37,8 +37,9 @@ import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
 
 @KGEAllOpen
-class KotlinGameEngine(val appName: String) :
-    CallbacksAddon,
+class KotlinGameEngine(
+    val appName: String,
+) : CallbacksAddon,
     ClearAddon,
     DrawAddon,
     DrawCircleAddon,
@@ -114,7 +115,9 @@ class KotlinGameEngine(val appName: String) :
 
         Renderer.prepareDrawing()
 
-        layers.reversed().asSequence()
+        layers
+            .reversed()
+            .asSequence()
             .filter { it.show }
             .forEach { layer ->
                 val functionHook = layer.functionHook

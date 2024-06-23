@@ -16,7 +16,10 @@ infix fun Float.by(y: Float): Float2D =
 
 infix fun Float.mutableBy(y: Float): MutableFloat2D = MutableFloat2D(this, y)
 
-open class Float2D internal constructor(open val x: Float, open val y: Float) {
+open class Float2D internal constructor(
+    open val x: Float,
+    open val y: Float,
+) {
     operator fun component1(): Float = x
 
     operator fun component2(): Float = y
@@ -55,7 +58,10 @@ open class Float2D internal constructor(open val x: Float, open val y: Float) {
     }
 }
 
-class MutableFloat2D internal constructor(override var x: Float, override var y: Float) : Float2D(x, y) {
+class MutableFloat2D internal constructor(
+    override var x: Float,
+    override var y: Float,
+) : Float2D(x, y) {
     override fun plus(other: Float2D): MutableFloat2D = MutableFloat2D(x + other.x, y + other.y)
 
     override fun minus(other: Float2D): MutableFloat2D = MutableFloat2D(x - other.x, y - other.y)

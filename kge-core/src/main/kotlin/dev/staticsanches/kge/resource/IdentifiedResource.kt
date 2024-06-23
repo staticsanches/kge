@@ -1,6 +1,10 @@
 package dev.staticsanches.kge.resource
 
-class IdentifiedResource<T>(type: String, idCreator: () -> T, idDeleter: (T) -> Unit) : KGEResource {
+class IdentifiedResource<T>(
+    type: String,
+    idCreator: () -> T,
+    idDeleter: (T) -> Unit,
+) : KGEResource {
     val id: T
         get() {
             check(!cleanable.cleaned) { "$representation has already been released and can not be used" }
@@ -22,6 +26,9 @@ class IdentifiedResource<T>(type: String, idCreator: () -> T, idDeleter: (T) -> 
     override fun toString(): String = if (cleanable.cleaned) "$representation (released)" else representation
 }
 
-private class ResourceCleanAction<T>(val id: T, val idDeleter: (T) -> Unit) : KGECleanAction {
+private class ResourceCleanAction<T>(
+    val id: T,
+    val idDeleter: (T) -> Unit,
+) : KGECleanAction {
     override fun invoke() = idDeleter(id)
 }

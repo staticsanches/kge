@@ -16,7 +16,9 @@ import kotlin.math.min
  *
  * (0, 0) indicates the top-left corner and ([width] - 1, [height] - 1) indicates the bottom-right corner.
  */
-interface PixelMap : Sequence<Pixel>, Viewport.Bounded {
+interface PixelMap :
+    Sequence<Pixel>,
+    Viewport.Bounded {
     /**
      * The number of columns.
      */

@@ -232,7 +232,9 @@ internal data object GL33Renderer : Renderer {
     override fun drawDecal(decal: DecalInstance) {
         val quadInfo = quadInfo
 
-        val buffer = quadInfo.quadBuffer.bufferResource.buffer.clear()
+        val buffer =
+            quadInfo.quadBuffer.bufferResource.buffer
+                .clear()
         decal.points.forEach { point ->
             buffer.putFloat(point.position.x)
             buffer.putFloat(point.position.y)
@@ -272,22 +274,35 @@ internal data object GL33Renderer : Renderer {
         val quadInfo = quadInfo
 
         val buffer =
-            quadInfo.quadBuffer.bufferResource.buffer.clear()
+            quadInfo.quadBuffer.bufferResource.buffer
+                .clear()
                 // Vertex 0
-                .putFloat(-1f).putFloat(-1f).putFloat(1f) // position
-                .putFloat(0f * scale.x + offset.x).putFloat(1f * scale.y + offset.y) // texture
+                .putFloat(-1f)
+                .putFloat(-1f)
+                .putFloat(1f) // position
+                .putFloat(0f * scale.x + offset.x)
+                .putFloat(1f * scale.y + offset.y) // texture
                 .putInt(tint.nativeRGBA)
                 // Vertex 1
-                .putFloat(1f).putFloat(-1f).putFloat(1f) // position
-                .putFloat(1f * scale.x + offset.x).putFloat(1f * scale.y + offset.y) // texture
+                .putFloat(1f)
+                .putFloat(-1f)
+                .putFloat(1f) // position
+                .putFloat(1f * scale.x + offset.x)
+                .putFloat(1f * scale.y + offset.y) // texture
                 .putInt(tint.nativeRGBA)
                 // Vertex 2
-                .putFloat(-1f).putFloat(1f).putFloat(1f) // position
-                .putFloat(0f * scale.x + offset.x).putFloat(0f * scale.y + offset.y) // texture
+                .putFloat(-1f)
+                .putFloat(1f)
+                .putFloat(1f) // position
+                .putFloat(0f * scale.x + offset.x)
+                .putFloat(0f * scale.y + offset.y) // texture
                 .putInt(tint.nativeRGBA)
                 // Vertex 3
-                .putFloat(1f).putFloat(1f).putFloat(1f) // position
-                .putFloat(1f * scale.x + offset.x).putFloat(0f * scale.y + offset.y) // texture
+                .putFloat(1f)
+                .putFloat(1f)
+                .putFloat(1f) // position
+                .putFloat(1f * scale.x + offset.x)
+                .putFloat(0f * scale.y + offset.y) // texture
                 .putInt(tint.nativeRGBA)
 
         glBindBuffer(GL_ARRAY_BUFFER, quadInfo.quadBuffer.bufferID.id)
@@ -394,7 +409,9 @@ private fun Shader(
         glCompileShader(it.id)
     }
 
-private enum class ShaderType(val glType: Int) {
+private enum class ShaderType(
+    val glType: Int,
+) {
     VERTEX(GL_VERTEX_SHADER) {
         override fun toString(): String = "Vertex Shader"
     },
@@ -444,7 +461,9 @@ private class QuadBuffer private constructor(
     }
 }
 
-private class ByteBufferResource(size: Int) : KGEInternalResource {
+private class ByteBufferResource(
+    size: Int,
+) : KGEInternalResource {
     val buffer: ByteBuffer
     private val cleanable: KGECleanable
 

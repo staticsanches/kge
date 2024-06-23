@@ -71,10 +71,11 @@ interface CallbacksAddon {
 
     companion object {
         private val errorCodes =
-            APIUtil.apiClassTokens(
-                { _: Field?, value: Int -> value in 0x10001..0x1ffff },
-                null,
-                GLFW::class.java,
-            ).toMap()
+            APIUtil
+                .apiClassTokens(
+                    { _: Field?, value: Int -> value in 0x10001..0x1ffff },
+                    null,
+                    GLFW::class.java,
+                ).toMap()
     }
 }

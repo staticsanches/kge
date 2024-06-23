@@ -24,7 +24,8 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
     final override val height: Int,
     val type: T,
     @property:KGESensitiveAPI val internalBuffer: ByteBuffer,
-) : PixelMap, KGEResource {
+) : PixelMap,
+    KGEResource {
     init {
         check(width > 0 && height > 0) { "Invalid buffer dimension ${width}x$height" }
 
@@ -104,8 +105,10 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
          *
          * @see RGBBuffer
          */
-        data class RGB(val defaultAlpha: IntColorComponent = 0xFF, val matteBackground: Pixel = Colors.WHITE) :
-            Type<RGBBuffer, RGB>() {
+        data class RGB(
+            val defaultAlpha: IntColorComponent = 0xFF,
+            val matteBackground: Pixel = Colors.WHITE,
+        ) : Type<RGBBuffer, RGB>() {
             override fun expectedBufferCapacity(
                 width: Int,
                 height: Int,
@@ -121,7 +124,9 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
          *
          * @see GrayscaleBuffer
          */
-        data class Grayscale(val defaultAlpha: IntColorComponent = 0xFF) : Type<GrayscaleBuffer, Grayscale>() {
+        data class Grayscale(
+            val defaultAlpha: IntColorComponent = 0xFF,
+        ) : Type<GrayscaleBuffer, Grayscale>() {
             override fun expectedBufferCapacity(
                 width: Int,
                 height: Int,

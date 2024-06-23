@@ -23,7 +23,9 @@ sealed interface Viewport {
     /**
      * A [Viewport] that is a combination of [LowerBounded] and [UpperBounded].
      */
-    interface Bounded : LowerBounded, UpperBounded
+    interface Bounded :
+        LowerBounded,
+        UpperBounded
 
     /**
      * A [Viewport] that does not have any bounds.
@@ -35,7 +37,9 @@ sealed interface Viewport {
  * Out code from [Cohen-Sutherland clip algorithm](https://en.wikipedia.org/wiki/Cohen–Sutherland_algorithm).
  */
 @JvmInline
-value class CohenSutherlandOutCode(val value: Int) {
+value class CohenSutherlandOutCode(
+    val value: Int,
+) {
     infix fun or(other: CohenSutherlandOutCode): CohenSutherlandOutCode = CohenSutherlandOutCode(value or other.value)
 
     infix fun and(other: CohenSutherlandOutCode): CohenSutherlandOutCode = CohenSutherlandOutCode(value and other.value)
@@ -125,8 +129,10 @@ private fun Viewport.UpperBounded.outCode(
 operator fun Viewport.contains(p: Int2D): Boolean =
     when (this) {
         is Viewport.Bounded ->
-            p.x >= lowerBoundInclusive.x && p.y >= lowerBoundInclusive.y &&
-                p.x < upperBoundExclusive.x && p.y < upperBoundExclusive.y
+            p.x >= lowerBoundInclusive.x &&
+                p.y >= lowerBoundInclusive.y &&
+                p.x < upperBoundExclusive.x &&
+                p.y < upperBoundExclusive.y
 
         Viewport.Unbounded -> true
         is Viewport.LowerBounded -> p.x >= lowerBoundInclusive.x && p.y >= lowerBoundInclusive.y

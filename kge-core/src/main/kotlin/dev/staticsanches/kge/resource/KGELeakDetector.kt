@@ -48,7 +48,9 @@ infix fun KGECleanAction.andThen(other: KGECleanAction): KGECleanAction {
     return KGECombinedCleanAction(mutableListOf(this, other))
 }
 
-private class KGECombinedCleanAction(val actions: MutableList<KGECleanAction>) : KGECleanAction {
+private class KGECombinedCleanAction(
+    val actions: MutableList<KGECleanAction>,
+) : KGECleanAction {
     override fun invoke() = actions.invokeForAll { it() }
 }
 
@@ -57,7 +59,8 @@ private class LeakDetectorAction(
     private val objRepresentation: String,
     @Volatile private var action: KGECleanAction?,
     cleaner: Cleaner,
-) : KGECleanable, Runnable {
+) : KGECleanable,
+    Runnable {
     private val selfCleanable = cleaner.register(obj, this)
 
     override val cleaned: Boolean

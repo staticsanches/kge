@@ -31,7 +31,9 @@ typealias FloatColorComponent = Float
 @JvmInline
 value class Pixel
     @KGEEndianDependent
-    constructor(val nativeRGBA: Int) {
+    constructor(
+        val nativeRGBA: Int,
+    ) {
         val r: IntColorComponent
             get() = redFromNativeRGBA(nativeRGBA)
         val g: IntColorComponent
@@ -79,7 +81,9 @@ value class Pixel
             data object Mask : Mode
 
             @JvmInline
-            value class Alpha private constructor(val blendFactor: Float) : Mode {
+            value class Alpha private constructor(
+                val blendFactor: Float,
+            ) : Mode {
                 constructor(
                     blendFactor: Float,
                     @Suppress("UNUSED_PARAMETER") parameterToAvoidPlatformDeclarationClash: Boolean = true,
@@ -104,7 +108,12 @@ value class Pixel
             operator fun invoke(pixel: Pixel): String =
                 when (this) {
                     RGBA -> "rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})"
-                    HEX -> "#" + pixel.rgba.toString(16).uppercase().padStart(8, '0')
+                    HEX ->
+                        "#" +
+                            pixel.rgba
+                                .toString(16)
+                                .uppercase()
+                                .padStart(8, '0')
                 }
         }
 

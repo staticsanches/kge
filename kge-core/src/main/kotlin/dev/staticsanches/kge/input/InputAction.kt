@@ -6,9 +6,13 @@ sealed interface PreviousKeyboardKeyAction
 
 sealed interface PreviousMouseButtonAction
 
-sealed interface KeyboardKeyAction : InputAction, PreviousKeyboardKeyAction
+sealed interface KeyboardKeyAction :
+    InputAction,
+    PreviousKeyboardKeyAction
 
-sealed interface MouseButtonAction : InputAction, PreviousMouseButtonAction
+sealed interface MouseButtonAction :
+    InputAction,
+    PreviousMouseButtonAction
 
 data object PressAction : KeyboardKeyAction, MouseButtonAction
 

@@ -6,7 +6,9 @@ interface PeekingIterator<T> : Iterator<T> {
 
 fun <T> Iterator<T>.peeking(): PeekingIterator<T> = if (this is PeekingIteratorImpl) this else PeekingIteratorImpl(this)
 
-private class PeekingIteratorImpl<T>(val delegate: Iterator<T>) : PeekingIterator<T> {
+private class PeekingIteratorImpl<T>(
+    val delegate: Iterator<T>,
+) : PeekingIterator<T> {
     var hasPeek = false
     var peek: T? = null
 

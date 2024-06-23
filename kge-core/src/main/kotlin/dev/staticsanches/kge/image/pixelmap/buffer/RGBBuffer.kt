@@ -13,8 +13,13 @@ import java.nio.ByteBuffer
 /**
  * [PixelBuffer] associated with [Type.RGB].
  */
-class RGBBuffer(width: Int, height: Int, type: Type.RGB, buffer: ByteBuffer, bufferCleanAction: KGECleanAction) :
-    PixelBuffer<RGBBuffer, Type.RGB>(width, height, type, buffer) {
+class RGBBuffer(
+    width: Int,
+    height: Int,
+    type: Type.RGB,
+    buffer: ByteBuffer,
+    bufferCleanAction: KGECleanAction,
+) : PixelBuffer<RGBBuffer, Type.RGB>(width, height, type, buffer) {
     private val cleanable = KGELeakDetector.register(this, representation, bufferCleanAction)
 
     override fun uncheckedGet(
