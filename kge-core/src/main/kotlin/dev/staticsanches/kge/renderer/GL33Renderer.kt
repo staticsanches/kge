@@ -8,6 +8,7 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.renderer.DecalInstance.VerticesData.Companion.VERTEX_BYTES_COUNT
 import dev.staticsanches.kge.renderer.QuadInfo.QuadInfoKey
 import dev.staticsanches.kge.resource.IdentifiedResource
 import dev.staticsanches.kge.resource.KGECleanable
@@ -232,23 +233,18 @@ internal data object GL33Renderer : Renderer {
     override fun drawDecal(decal: DecalInstance) {
         val quadInfo = quadInfo
 
-        val buffer =
-            quadInfo.quadBuffer.bufferResource.buffer
-                .clear()
-        decal.points.forEach { point ->
-            buffer.putFloat(point.position.x)
-            buffer.putFloat(point.position.y)
-            buffer.putFloat(point.w)
-            buffer.putFloat(point.uv.x)
-            buffer.putFloat(point.uv.y)
-            buffer.putInt(point.tint.nativeRGBA)
-        }
-
         decalMode = decal.mode
         glBindTexture(GL_TEXTURE_2D, (decal.decal ?: quadInfo.emptyDecal).id)
 
         glBindBuffer(GL_ARRAY_BUFFER, quadInfo.quadBuffer.bufferID.id)
-        glBufferData(GL_ARRAY_BUFFER, buffer.flip(), GL_STREAM_DRAW)
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            quadInfo.quadBuffer.bufferResource.buffer
+                .clear()
+                .put(decal.verticesData.buffer.clear())
+                .flip(),
+            GL_STREAM_DRAW,
+        )
         glDrawArrays(
             if (decal.mode == Decal.Mode.WIREFRAME) {
                 GL_LINE_LOOP
@@ -261,7 +257,7 @@ internal data object GL33Renderer : Renderer {
                 }
             },
             0,
-            decal.points.size,
+            decal.verticesData.numberOfVertices,
         )
     }
 
@@ -428,12 +424,10 @@ private class QuadBuffer private constructor(
     override fun close() = invokeForAll(bufferResource, bufferID, arrayID) { it.close() }
 
     companion object {
-        // Each vertex is composed by 3 position coordinates (x, y, w), 2 texture coordinates (x, y), 1 color (RGBA)
-        private const val VERTEX_SIZE = 4 * (3 + 2 + 1)
         private const val MAX_NUMBER_OF_VERTICES = 128
 
         operator fun invoke(): QuadBuffer =
-            ByteBufferResource(VERTEX_SIZE * MAX_NUMBER_OF_VERTICES).closeIfFailed { bufferResource ->
+            ByteBufferResource(VERTEX_BYTES_COUNT * MAX_NUMBER_OF_VERTICES).closeIfFailed { bufferResource ->
                 IdentifiedResource("Quad Buffer", ::glGenBuffers, ::glDeleteBuffers).closeIfFailed { bufferID ->
                     IdentifiedResource(
                         "Quad Array",
@@ -445,11 +439,11 @@ private class QuadBuffer private constructor(
 
                         glBufferData(GL_ARRAY_BUFFER, bufferResource.buffer, GL_STREAM_DRAW)
 
-                        glVertexAttribPointer(0, 3, GL_FLOAT, false, VERTEX_SIZE, 0)
+                        glVertexAttribPointer(0, 3, GL_FLOAT, false, VERTEX_BYTES_COUNT, 0)
                         glEnableVertexAttribArray(0)
-                        glVertexAttribPointer(1, 2, GL_FLOAT, false, VERTEX_SIZE, 3 * 4)
+                        glVertexAttribPointer(1, 2, GL_FLOAT, false, VERTEX_BYTES_COUNT, 3 * 4)
                         glEnableVertexAttribArray(1)
-                        glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, true, VERTEX_SIZE, 5 * 4)
+                        glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, true, VERTEX_BYTES_COUNT, 5 * 4)
                         glEnableVertexAttribArray(2)
 
                         glBindBuffer(GL_ARRAY_BUFFER, 0)

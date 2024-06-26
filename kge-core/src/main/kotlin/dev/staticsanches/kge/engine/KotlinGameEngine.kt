@@ -6,6 +6,7 @@ import dev.staticsanches.kge.engine.addon.CallbacksAddon
 import dev.staticsanches.kge.engine.addon.ClearAddon
 import dev.staticsanches.kge.engine.addon.DrawAddon
 import dev.staticsanches.kge.engine.addon.DrawCircleAddon
+import dev.staticsanches.kge.engine.addon.DrawDecalAddon
 import dev.staticsanches.kge.engine.addon.DrawLineAddon
 import dev.staticsanches.kge.engine.addon.DrawPartialSpriteAddon
 import dev.staticsanches.kge.engine.addon.DrawRectAddon
@@ -43,6 +44,7 @@ class KotlinGameEngine(
     ClearAddon,
     DrawAddon,
     DrawCircleAddon,
+    DrawDecalAddon,
     DrawLineAddon,
     DrawPartialSpriteAddon,
     DrawRectAddon,

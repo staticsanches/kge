@@ -85,7 +85,7 @@ value class Pixel
                 val blendFactor: Float,
             ) : Mode {
                 constructor(
-                    blendFactor: Float,
+                    blendFactor: Float = 1f,
                     @Suppress("UNUSED_PARAMETER") parameterToAvoidPlatformDeclarationClash: Boolean = true,
                 ) : this(max(0f, min(1f, blendFactor)))
             }

@@ -207,10 +207,17 @@ internal data object GL11Renderer : Renderer {
         }
 
         // Render as 2D Spatial entity
-        for ((position, uv, w, tint) in decal.points) {
+        val buffer = decal.verticesData.buffer.clear()
+        repeat(decal.verticesData.numberOfVertices) {
+            val x = buffer.getFloat()
+            val y = buffer.getFloat()
+            val w = buffer.getFloat()
+            val u = buffer.getFloat()
+            val v = buffer.getFloat()
+            val tint = Pixel.fromNativeRGBA(buffer.getInt())
             glColor4ub(tint.r.toByte(), tint.g.toByte(), tint.b.toByte(), tint.a.toByte())
-            glTexCoord4f(uv.x, uv.y, 0.0f, w)
-            glVertex2f(position.x, position.y)
+            glTexCoord4f(u, v, 0.0f, w)
+            glVertex2f(x, y)
         }
 
         glEnd()

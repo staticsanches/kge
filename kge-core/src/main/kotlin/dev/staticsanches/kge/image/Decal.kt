@@ -8,6 +8,7 @@ import dev.staticsanches.kge.math.vector.FloatOneByOne
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.resource.IdentifiedResource
 import dev.staticsanches.kge.resource.KGEResource
+import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 
 /**
  * A GPU resident storage of a [Sprite].
@@ -46,6 +47,6 @@ class Decal private constructor(
                     { Renderer.createTexture(filtered, clamp) },
                     { Renderer.deleteTexture(it) },
                 ),
-            )
+            ).applyAndCloseIfFailed { it.update() }
     }
 }

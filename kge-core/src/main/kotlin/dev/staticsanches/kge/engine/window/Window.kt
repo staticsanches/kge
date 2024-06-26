@@ -9,6 +9,7 @@ import dev.staticsanches.kge.engine.window.state.TimeState
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.LayerDescriptor
 import dev.staticsanches.kge.resource.IdentifiedResource
@@ -18,6 +19,7 @@ import dev.staticsanches.kge.utils.invokeForAll
 import dev.staticsanches.kge.utils.invokeForAllRemoving
 import org.lwjgl.glfw.Callbacks
 import org.lwjgl.glfw.GLFW
+import java.util.LinkedList
 
 class Window
     @KGESensitiveAPI
@@ -25,7 +27,7 @@ class Window
         glfwHandle: Long,
     ) : KGEInternalResource {
         private val glfwWindow = IdentifiedResource("GLFW Window", { glfwHandle }, ::clearGLFWWindow)
-        private val boundResources = ArrayList<KGEResource>()
+        private val boundResources = LinkedList<KGEResource>()
 
         init {
             bindResource(glfwWindow)
@@ -36,6 +38,7 @@ class Window
 
         val dimensionState: DimensionState = DimensionState()
         val screenSize: Int2D by dimensionState::screenSize
+        val invertedScreenSize: Float2D by dimensionState::invertedScreenSize
 
         val inputState: InputState = InputState()
         val timeState: TimeState = TimeState()
@@ -51,6 +54,9 @@ class Window
         @KGESensitiveAPI
         var targetLayerIndex = 0
 
+        val targetLayer: LayerDescriptor
+            get() = layers[targetLayerIndex]
+
         var drawTarget: Sprite? = null
             set(value) {
                 if (value == null) {
@@ -62,9 +68,7 @@ class Window
             }
 
         @KGESensitiveAPI
-        fun bindResource(resource: KGEResource) {
-            boundResources.add(0, resource)
-        }
+        fun bindResource(resource: KGEResource) = boundResources.add(0, resource)
 
         @KGESensitiveAPI
         override fun close() = boundResources.invokeForAllRemoving(KGEResource::close)
