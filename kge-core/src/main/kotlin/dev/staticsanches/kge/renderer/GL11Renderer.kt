@@ -191,37 +191,38 @@ internal data object GL11Renderer : Renderer {
     override fun displayFrame() = glfwSwapBuffers(glfwHandle)
 
     context(Window)
-    override fun drawDecal(decal: DecalInstance) {
-        decalMode = decal.mode
-        glBindTexture(GL_TEXTURE_2D, decal.decal?.id ?: 0)
+    override fun drawDecals(decals: List<DecalInstance>) =
+        decals.forEach { decal ->
+            decalMode = decal.mode
+            glBindTexture(GL_TEXTURE_2D, decal.decal?.id ?: 0)
 
-        if (decal.mode == Decal.Mode.WIREFRAME) {
-            glBegin(GL_LINE_LOOP)
-        } else {
-            when (decal.structure) {
-                Decal.Structure.LINE -> glBegin(GL_LINE_LOOP)
-                Decal.Structure.FAN -> glBegin(GL_TRIANGLE_FAN)
-                Decal.Structure.STRIP -> glBegin(GL_TRIANGLE_STRIP)
-                Decal.Structure.LIST -> glBegin(GL_TRIANGLES)
+            if (decal.mode == Decal.Mode.WIREFRAME) {
+                glBegin(GL_LINE_LOOP)
+            } else {
+                when (decal.structure) {
+                    Decal.Structure.LINE -> glBegin(GL_LINE_LOOP)
+                    Decal.Structure.FAN -> glBegin(GL_TRIANGLE_FAN)
+                    Decal.Structure.STRIP -> glBegin(GL_TRIANGLE_STRIP)
+                    Decal.Structure.LIST -> glBegin(GL_TRIANGLES)
+                }
             }
-        }
 
-        // Render as 2D Spatial entity
-        val buffer = decal.verticesData.buffer.clear()
-        repeat(decal.verticesData.numberOfVertices) {
-            val x = buffer.getFloat()
-            val y = buffer.getFloat()
-            val w = buffer.getFloat()
-            val u = buffer.getFloat()
-            val v = buffer.getFloat()
-            val tint = Pixel.fromNativeRGBA(buffer.getInt())
-            glColor4ub(tint.r.toByte(), tint.g.toByte(), tint.b.toByte(), tint.a.toByte())
-            glTexCoord4f(u, v, 0.0f, w)
-            glVertex2f(x, y)
-        }
+            // Render as 2D Spatial entity
+            val buffer = decal.verticesData.buffer.clear()
+            repeat(decal.verticesData.numberOfVertices) {
+                val x = buffer.getFloat()
+                val y = buffer.getFloat()
+                val w = buffer.getFloat()
+                val u = buffer.getFloat()
+                val v = buffer.getFloat()
+                val tint = Pixel.fromNativeRGBA(buffer.getInt())
+                glColor4ub(tint.r.toByte(), tint.g.toByte(), tint.b.toByte(), tint.a.toByte())
+                glTexCoord4f(u, v, 0.0f, w)
+                glVertex2f(x, y)
+            }
 
-        glEnd()
-    }
+            glEnd()
+        }
 
     context(Window)
     override fun drawLayerQuad(

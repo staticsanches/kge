@@ -57,7 +57,7 @@ interface Renderer : KGESPIExtensible {
     fun displayFrame()
 
     context(Window)
-    fun drawDecal(decal: DecalInstance)
+    fun drawDecals(decals: List<DecalInstance>)
 
     context(Window)
     fun drawLayerQuad(

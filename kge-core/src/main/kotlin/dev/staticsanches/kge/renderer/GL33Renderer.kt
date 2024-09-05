@@ -9,6 +9,7 @@ import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.DecalInstance.VerticesData.Companion.VERTEX_BYTES_COUNT
+import dev.staticsanches.kge.renderer.QuadBuffer.Companion.MAX_NUMBER_OF_VERTICES
 import dev.staticsanches.kge.renderer.QuadInfo.QuadInfoKey
 import dev.staticsanches.kge.resource.IdentifiedResource
 import dev.staticsanches.kge.resource.KGECleanable
@@ -230,35 +231,59 @@ internal data object GL33Renderer : Renderer {
     override fun displayFrame() = glfwSwapBuffers(glfwHandle)
 
     context(Window)
-    override fun drawDecal(decal: DecalInstance) {
+    override fun drawDecals(decals: List<DecalInstance>) {
         val quadInfo = quadInfo
+        var index = 0
+        while (index < decals.size) {
+            val current = decals[index++]
+            var availableVertices = MAX_NUMBER_OF_VERTICES
+            val buffer =
+                quadInfo.quadBuffer.bufferResource.buffer
+                    .clear()
 
-        decalMode = decal.mode
-        glBindTexture(GL_TEXTURE_2D, (decal.decal ?: quadInfo.emptyDecal).id)
+            fun collect(decal: DecalInstance) {
+                availableVertices -= decal.verticesData.numberOfVertices
+                buffer.put(decal.verticesData.buffer.clear())
+            }
 
-        glBindBuffer(GL_ARRAY_BUFFER, quadInfo.quadBuffer.bufferID.id)
-        glBufferData(
-            GL_ARRAY_BUFFER,
-            quadInfo.quadBuffer.bufferResource.buffer
-                .clear()
-                .put(decal.verticesData.buffer.clear())
-                .flip(),
-            GL_STREAM_DRAW,
-        )
-        glDrawArrays(
-            if (decal.mode == Decal.Mode.WIREFRAME) {
-                GL_LINE_LOOP
-            } else {
-                when (decal.structure) {
-                    Decal.Structure.LINE -> GL_LINE_LOOP
-                    Decal.Structure.FAN -> GL_TRIANGLE_FAN
-                    Decal.Structure.STRIP -> GL_TRIANGLE_STRIP
-                    Decal.Structure.LIST -> GL_TRIANGLES
+            collect(current)
+
+            while (index < decals.size) {
+                val peek = decals[index++]
+                if (current.mode != peek.mode ||
+                    current.structure != peek.structure ||
+                    current.decal != peek.decal ||
+                    availableVertices < peek.verticesData.numberOfVertices
+                ) {
+                    index--
+                    break
                 }
-            },
-            0,
-            decal.verticesData.numberOfVertices,
-        )
+                collect(peek)
+            }
+
+            decalMode = current.mode
+            glBindTexture(GL_TEXTURE_2D, (current.decal ?: quadInfo.emptyDecal).id)
+            glBindBuffer(GL_ARRAY_BUFFER, quadInfo.quadBuffer.bufferID.id)
+            glBufferData(
+                GL_ARRAY_BUFFER,
+                buffer.flip(),
+                GL_STREAM_DRAW,
+            )
+            glDrawArrays(
+                if (current.mode == Decal.Mode.WIREFRAME) {
+                    GL_LINE_LOOP
+                } else {
+                    when (current.structure) {
+                        Decal.Structure.LINE -> GL_LINE_LOOP
+                        Decal.Structure.FAN -> GL_TRIANGLE_FAN
+                        Decal.Structure.STRIP -> GL_TRIANGLE_STRIP
+                        Decal.Structure.LIST -> GL_TRIANGLES
+                    }
+                },
+                0,
+                MAX_NUMBER_OF_VERTICES - availableVertices,
+            )
+        }
     }
 
     context(Window)
@@ -424,7 +449,7 @@ private class QuadBuffer private constructor(
     override fun close() = invokeForAll(bufferResource, bufferID, arrayID) { it.close() }
 
     companion object {
-        private const val MAX_NUMBER_OF_VERTICES = 128
+        const val MAX_NUMBER_OF_VERTICES = 1_048_576 / 24
 
         operator fun invoke(): QuadBuffer =
             ByteBufferResource(VERTEX_BYTES_COUNT * MAX_NUMBER_OF_VERTICES).closeIfFailed { bufferResource ->

@@ -132,8 +132,7 @@ class KotlinGameEngine(
                     Renderer.drawLayerQuad(layer.offset, layer.scale, layer.tint)
 
                     // Display Decals in order for this layer
-                    layer.decalInstances.forEach { Renderer.drawDecal(it) }
-
+                    Renderer.drawDecals(layer.decalInstances)
                     layer.decalInstances.clear()
                 } else {
                     functionHook(layer)
