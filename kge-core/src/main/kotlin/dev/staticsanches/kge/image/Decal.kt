@@ -47,6 +47,6 @@ class Decal private constructor(
                     { Renderer.createTexture(filtered, clamp) },
                     { Renderer.deleteTexture(it) },
                 ),
-            ).applyAndCloseIfFailed { it.update() }
+            ).applyAndCloseIfFailed { Renderer.initializeTexture(it.id, it.sprite) }
     }
 }

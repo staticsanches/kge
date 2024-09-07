@@ -27,6 +27,12 @@ interface Renderer : KGESPIExtensible {
     fun deleteTexture(id: Int)
 
     context(Window)
+    fun initializeTexture(
+        id: Int,
+        sprite: Sprite,
+    )
+
+    context(Window)
     fun updateTexture(
         id: Int,
         sprite: Sprite,

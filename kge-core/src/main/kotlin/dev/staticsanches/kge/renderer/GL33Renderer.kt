@@ -8,7 +8,6 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.renderer.DecalInstance.VerticesData.Companion.VERTEX_BYTES_COUNT
 import dev.staticsanches.kge.renderer.QuadBuffer.Companion.MAX_NUMBER_OF_VERTICES
 import dev.staticsanches.kge.renderer.QuadInfo.QuadInfoKey
 import dev.staticsanches.kge.resource.IdentifiedResource
@@ -86,6 +85,7 @@ import org.lwjgl.opengl.GL33.glReadPixels
 import org.lwjgl.opengl.GL33.glShaderSource
 import org.lwjgl.opengl.GL33.glTexImage2D
 import org.lwjgl.opengl.GL33.glTexParameteri
+import org.lwjgl.opengl.GL33.glTexSubImage2D
 import org.lwjgl.opengl.GL33.glUseProgram
 import org.lwjgl.opengl.GL33.glVertexAttribPointer
 import org.lwjgl.opengl.GL33.glViewport
@@ -171,7 +171,7 @@ internal data object GL33Renderer : Renderer {
     override fun deleteTexture(id: Int) = glDeleteTextures(id)
 
     context(Window)
-    override fun updateTexture(
+    override fun initializeTexture(
         id: Int,
         sprite: Sprite,
     ) {
@@ -183,6 +183,25 @@ internal data object GL33Renderer : Renderer {
             sprite.width,
             sprite.height,
             0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            sprite.pixmap.internalBuffer.clear(),
+        )
+    }
+
+    context(Window)
+    override fun updateTexture(
+        id: Int,
+        sprite: Sprite,
+    ) {
+        glBindTexture(GL_TEXTURE_2D, id)
+        glTexSubImage2D(
+            GL_TEXTURE_2D,
+            0,
+            0,
+            0,
+            sprite.width,
+            sprite.height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
             sprite.pixmap.internalBuffer.clear(),
@@ -241,10 +260,11 @@ internal data object GL33Renderer : Renderer {
                 quadInfo.quadBuffer.bufferResource.buffer
                     .clear()
 
-            fun collect(decal: DecalInstance) {
-                availableVertices -= decal.verticesData.numberOfVertices
-                buffer.put(decal.verticesData.buffer.clear())
-            }
+            fun collect(decal: DecalInstance) =
+                with(decal.verticesInfo) {
+                    availableVertices -= numberOfVertices
+                    putAllXYWUVTint(buffer)
+                }
 
             collect(current)
 
@@ -253,7 +273,7 @@ internal data object GL33Renderer : Renderer {
                 if (current.mode != peek.mode ||
                     current.structure != peek.structure ||
                     current.decal != peek.decal ||
-                    availableVertices < peek.verticesData.numberOfVertices
+                    availableVertices < peek.verticesInfo.numberOfVertices
                 ) {
                     index--
                     break
@@ -449,7 +469,8 @@ private class QuadBuffer private constructor(
     override fun close() = invokeForAll(bufferResource, bufferID, arrayID) { it.close() }
 
     companion object {
-        const val MAX_NUMBER_OF_VERTICES = 1_048_576 / 24
+        const val VERTEX_BYTES_COUNT = 5 * Float.SIZE_BYTES + 1 * Int.SIZE_BYTES
+        const val MAX_NUMBER_OF_VERTICES = 1_048_576 / VERTEX_BYTES_COUNT
 
         operator fun invoke(): QuadBuffer =
             ByteBufferResource(VERTEX_BYTES_COUNT * MAX_NUMBER_OF_VERTICES).closeIfFailed { bufferResource ->

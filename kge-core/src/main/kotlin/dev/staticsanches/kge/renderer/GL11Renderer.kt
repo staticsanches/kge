@@ -59,6 +59,7 @@ import org.lwjgl.opengl.GL11.glTexParameteri
 import org.lwjgl.opengl.GL11.glVertex2f
 import org.lwjgl.opengl.GL11.glVertex3f
 import org.lwjgl.opengl.GL11.glViewport
+import org.lwjgl.opengl.GL33.glTexSubImage2D
 
 internal data object GL11Renderer : Renderer {
     context(Window)
@@ -131,7 +132,7 @@ internal data object GL11Renderer : Renderer {
     override fun deleteTexture(id: Int) = glDeleteTextures(id)
 
     context(Window)
-    override fun updateTexture(
+    override fun initializeTexture(
         id: Int,
         sprite: Sprite,
     ) {
@@ -143,6 +144,25 @@ internal data object GL11Renderer : Renderer {
             sprite.width,
             sprite.height,
             0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            sprite.pixmap.internalBuffer.clear(),
+        )
+    }
+
+    context(Window)
+    override fun updateTexture(
+        id: Int,
+        sprite: Sprite,
+    ) {
+        glBindTexture(GL_TEXTURE_2D, id)
+        glTexSubImage2D(
+            GL_TEXTURE_2D,
+            0,
+            0,
+            0,
+            sprite.width,
+            sprite.height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
             sprite.pixmap.internalBuffer.clear(),
@@ -208,17 +228,13 @@ internal data object GL11Renderer : Renderer {
             }
 
             // Render as 2D Spatial entity
-            val buffer = decal.verticesData.buffer.clear()
-            repeat(decal.verticesData.numberOfVertices) {
-                val x = buffer.getFloat()
-                val y = buffer.getFloat()
-                val w = buffer.getFloat()
-                val u = buffer.getFloat()
-                val v = buffer.getFloat()
-                val tint = Pixel.fromNativeRGBA(buffer.getInt())
-                glColor4ub(tint.r.toByte(), tint.g.toByte(), tint.b.toByte(), tint.a.toByte())
-                glTexCoord4f(u, v, 0.0f, w)
-                glVertex2f(x, y)
+            with(decal.verticesInfo) {
+                repeat(numberOfVertices) { index ->
+                    val tint = tint(index)
+                    glColor4ub(tint.r.toByte(), tint.g.toByte(), tint.b.toByte(), tint.a.toByte())
+                    glTexCoord4f(u(index), v(index), 0.0f, w(index))
+                    glVertex2f(x(index), y(index))
+                }
             }
 
             glEnd()

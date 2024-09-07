@@ -29,15 +29,16 @@ class FirstExample : KotlinGameEngine("First Example") {
     override fun onUserUpdate(): Boolean {
         (0..<screenSize.x).forEach { x ->
             (0..<screenSize.y).forEach { y ->
-                draw(x, y, Pixel.rgba(randomComponent(), randomComponent(), randomComponent()))
+                draw(x, y, Pixel.rgba(randomComponent(), randomComponent(), randomComponent()).inv())
             }
         }
 
         pixelMode = Pixel.Mode.Alpha()
-        drawSprite(30, 30, sprite, 4u)
+        repeat(10_000) {
+//            drawSprite(30, 30, sprite, 4u)
+            drawDecal(10 by 10, decal, 4f by 4f)
+        }
         pixelMode = Pixel.Mode.Normal
-
-        drawDecal(10 by 10, decal, 4f by 4f)
 
         return true
     }
@@ -50,6 +51,7 @@ class FirstExample : KotlinGameEngine("First Example") {
             Configuration.useOpenGL11 = false
             FirstExample().start {
                 resizable = true
+                vSync = false
             }
         }
     }

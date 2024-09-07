@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.endian.EndianAwareUtils
