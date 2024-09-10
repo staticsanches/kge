@@ -3,13 +3,11 @@ package dev.staticsanches.kge.rasterizer.service
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.PixelMap
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.math.vector.MutableInt2D
-import dev.staticsanches.kge.math.vector.mutableBy
+import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.Viewport
 import dev.staticsanches.kge.rasterizer.utils.BresenhamLine
-import dev.staticsanches.kge.rasterizer.utils.areCollinear
-import dev.staticsanches.kge.rasterizer.utils.sortTriangleVertices
+import dev.staticsanches.kge.rasterizer.utils.SortedTriangleVertices
 import dev.staticsanches.kge.spi.KGESPIExtensible
 import dev.staticsanches.kge.utils.PeekingIterator
 import dev.staticsanches.kge.utils.peeking
@@ -45,7 +43,7 @@ internal object DefaultFillTriangleService : FillTriangleService {
         color: Pixel,
         target: PixelMap,
         pixelMode: Pixel.Mode,
-    ) = innerFillTriangle(p0.toMutable(), p1.toMutable(), p2.toMutable(), color, target, pixelMode)
+    ) = innerFillTriangle(SortedTriangleVertices(p0, p1, p2), color, target, pixelMode)
 
     override fun fillTriangle(
         x0: Int,
@@ -57,19 +55,17 @@ internal object DefaultFillTriangleService : FillTriangleService {
         color: Pixel,
         target: PixelMap,
         pixelMode: Pixel.Mode,
-    ) = innerFillTriangle(x0 mutableBy y0, x1 mutableBy y1, x2 mutableBy y2, color, target, pixelMode)
+    ) = innerFillTriangle(SortedTriangleVertices(x0 by y0, x1 by y1, x2 by y2), color, target, pixelMode)
 
     private fun innerFillTriangle(
-        p0: MutableInt2D,
-        p1: MutableInt2D,
-        p2: MutableInt2D,
+        vertices: SortedTriangleVertices,
         color: Pixel,
         target: PixelMap,
         pixelMode: Pixel.Mode,
     ) {
-        sortTriangleVertices(p0, p1, p2)
+        val (p0, p1, p2) = vertices
 
-        if (areCollinear(p0, p1, p2)) {
+        if (vertices.areCollinear) {
             return Rasterizer.drawLine(p0, p2, color, target, pixelMode)
         }
 
