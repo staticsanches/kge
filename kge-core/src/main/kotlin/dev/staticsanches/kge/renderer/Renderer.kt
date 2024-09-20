@@ -11,61 +11,48 @@ import dev.staticsanches.kge.spi.KGESPIExtensible
 interface Renderer : KGESPIExtensible {
     fun beforeWindowCreation()
 
-    context(Window)
-    fun afterWindowCreation()
+    fun afterWindowCreation(window: Window)
 
-    context(Window)
     fun prepareDrawing()
 
-    context(Window)
     fun createTexture(
         filtered: Boolean,
         clamp: Boolean,
     ): Int
 
-    context(Window)
     fun deleteTexture(id: Int)
 
-    context(Window)
     fun initializeTexture(
         id: Int,
         sprite: Sprite,
     )
 
-    context(Window)
     fun updateTexture(
         id: Int,
         sprite: Sprite,
     )
 
-    context(Window)
     fun readTexture(
         id: Int,
         sprite: Sprite,
     )
 
-    context(Window)
     fun applyTexture(id: Int)
 
-    context(Window)
     fun clearBuffer(
         pixel: Pixel,
         depth: Boolean,
     )
 
-    context(Window)
     fun updateViewport(
         position: Int2D,
         size: Int2D,
     )
 
-    context(Window)
     fun displayFrame()
 
-    context(Window)
     fun drawDecals(decals: List<DecalInstance>)
 
-    context(Window)
     fun drawLayerQuad(
         offset: Float2D,
         scale: Float2D,

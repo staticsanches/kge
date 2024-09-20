@@ -232,11 +232,9 @@ class KotlinGameEngine(
 
         window.registerCallbacks()
 
-        with(window) {
-            Renderer.afterWindowCreation()
-            Renderer.updateViewport(dimensionState.viewportPosition, dimensionState.viewportSize)
-            Renderer.clearBuffer(Colors.BLACK, true)
-        }
+        Renderer.afterWindowCreation(window)
+        Renderer.updateViewport(dimensionState.viewportPosition, dimensionState.viewportSize)
+        Renderer.clearBuffer(Colors.BLACK, true)
 
         return window
     }

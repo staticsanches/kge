@@ -62,12 +62,10 @@ import org.lwjgl.opengl.GL11.glViewport
 import org.lwjgl.opengl.GL33.glTexSubImage2D
 
 internal data object GL11Renderer : Renderer {
-    context(Window)
-    private var decalMode: Decal.Mode
-        get() = getExtraInfo(DecalModeKey) ?: Decal.Mode.NORMAL
+    private var glfwHandle: Long = -1
+    private var decalMode: Decal.Mode = Decal.Mode.NORMAL
         set(decalMode) {
-            val oldDecalMode = putExtraInfo(DecalModeKey, decalMode)
-            if (oldDecalMode != decalMode) {
+            if (field != decalMode) {
                 when (decalMode) {
                     Decal.Mode.NORMAL -> glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
                     Decal.Mode.ADDITIVE -> glBlendFunc(GL_SRC_ALPHA, GL_ONE)
@@ -77,6 +75,7 @@ internal data object GL11Renderer : Renderer {
                     Decal.Mode.WIREFRAME -> glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
                 }
             }
+            field = decalMode
         }
 
     override fun beforeWindowCreation() {
@@ -85,21 +84,20 @@ internal data object GL11Renderer : Renderer {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
     }
 
-    context(Window)
-    override fun afterWindowCreation() {
+    override fun afterWindowCreation(window: Window) {
         glEnable(GL_BLEND)
         glEnable(GL_TEXTURE_2D)
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
+        glfwHandle = window.glfwHandle
         prepareDrawing()
     }
 
-    context(Window)
     override fun prepareDrawing() {
         glEnable(GL_BLEND)
         decalMode = Decal.Mode.NORMAL
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     }
 
-    context(Window)
     override fun createTexture(
         filtered: Boolean,
         clamp: Boolean,
@@ -128,10 +126,8 @@ internal data object GL11Renderer : Renderer {
         return id
     }
 
-    context(Window)
     override fun deleteTexture(id: Int) = glDeleteTextures(id)
 
-    context(Window)
     override fun initializeTexture(
         id: Int,
         sprite: Sprite,
@@ -150,7 +146,6 @@ internal data object GL11Renderer : Renderer {
         )
     }
 
-    context(Window)
     override fun updateTexture(
         id: Int,
         sprite: Sprite,
@@ -169,7 +164,6 @@ internal data object GL11Renderer : Renderer {
         )
     }
 
-    context(Window)
     override fun readTexture(
         id: Int,
         sprite: Sprite,
@@ -186,10 +180,8 @@ internal data object GL11Renderer : Renderer {
         )
     }
 
-    context(Window)
     override fun applyTexture(id: Int) = glBindTexture(GL_TEXTURE_2D, id)
 
-    context(Window)
     override fun clearBuffer(
         pixel: Pixel,
         depth: Boolean,
@@ -201,16 +193,13 @@ internal data object GL11Renderer : Renderer {
         }
     }
 
-    context(Window)
     override fun updateViewport(
         position: Int2D,
         size: Int2D,
     ) = glViewport(position.x, position.y, size.x, size.y)
 
-    context(Window)
     override fun displayFrame() = glfwSwapBuffers(glfwHandle)
 
-    context(Window)
     override fun drawDecals(decals: List<DecalInstance>) =
         decals.forEach { decal ->
             decalMode = decal.mode
@@ -240,7 +229,6 @@ internal data object GL11Renderer : Renderer {
             glEnd()
         }
 
-    context(Window)
     override fun drawLayerQuad(
         offset: Float2D,
         scale: Float2D,
@@ -261,6 +249,4 @@ internal data object GL11Renderer : Renderer {
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE
-
-    private data object DecalModeKey : Window.ExtraInfoKey<Decal.Mode>
 }

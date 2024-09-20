@@ -26,7 +26,6 @@ class LayerDescriptor private constructor(
     var drawTarget: Decal = drawTarget
         private set
 
-    context(Window)
     fun resize(
         width: Int,
         height: Int,
@@ -63,7 +62,6 @@ class LayerDescriptor private constructor(
                 functionHook,
             ).apply { bindResource(this) }
 
-        context(Window)
         private fun Decal(
             width: Int,
             height: Int,

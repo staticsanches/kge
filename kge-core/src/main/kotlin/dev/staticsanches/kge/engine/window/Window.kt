@@ -12,9 +12,10 @@ import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.LayerDescriptor
-import dev.staticsanches.kge.resource.IdentifiedResource
+import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGEResource
+import dev.staticsanches.kge.resource.LongResource
 import dev.staticsanches.kge.utils.invokeForAll
 import dev.staticsanches.kge.utils.invokeForAllRemoving
 import org.lwjgl.glfw.Callbacks
@@ -26,7 +27,7 @@ class Window
     constructor(
         glfwHandle: Long,
     ) : KGEInternalResource {
-        private val glfwWindow = IdentifiedResource("GLFW Window", { glfwHandle }, ::clearGLFWWindow)
+        private val glfwWindow = LongResource("GLFW Window", { glfwHandle }, ::ClearGLFWWindowAction)
         private val boundResources = LinkedList<KGEResource>()
 
         init {
@@ -73,23 +74,6 @@ class Window
         @KGESensitiveAPI
         override fun close() = boundResources.invokeForAllRemoving(KGEResource::close)
 
-        private val extraInfoMap = HashMap<ExtraInfoKey<*>, Any>()
-
-        @KGESensitiveAPI
-        @Suppress("UNCHECKED_CAST")
-        fun <T : Any> putExtraInfo(
-            key: ExtraInfoKey<T>,
-            extraInfo: T,
-        ): T? = extraInfoMap.put(key, extraInfo) as? T
-
-        @KGESensitiveAPI
-        @Suppress("UNCHECKED_CAST")
-        fun <T : Any> getExtraInfo(key: ExtraInfoKey<T>): T? = extraInfoMap[key] as? T
-
-        override fun toString(): String = glfwWindow.toString()
-
-        interface ExtraInfoKey<T>
-
         companion object {
             private fun clearGLFWWindow(handle: Long) =
                 invokeForAll(
@@ -98,3 +82,14 @@ class Window
                 ) { it() }
         }
     }
+
+@JvmInline
+private value class ClearGLFWWindowAction(
+    val handle: Long,
+) : KGECleanAction {
+    override fun invoke() =
+        invokeForAll(
+            { Callbacks.glfwFreeCallbacks(handle) },
+            { GLFW.glfwDestroyWindow(handle) },
+        ) { it() }
+}

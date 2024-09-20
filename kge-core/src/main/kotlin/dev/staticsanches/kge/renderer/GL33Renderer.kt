@@ -9,13 +9,13 @@ import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.QuadBuffer.Companion.MAX_NUMBER_OF_VERTICES
-import dev.staticsanches.kge.renderer.QuadInfo.QuadInfoKey
-import dev.staticsanches.kge.resource.IdentifiedResource
+import dev.staticsanches.kge.resource.IntResource
+import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.KGECleanable
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGELeakDetector
 import dev.staticsanches.kge.resource.KGEResource
-import dev.staticsanches.kge.resource.MemFreeAction
+import dev.staticsanches.kge.resource.OffHeapBuffer
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.utils.invokeForAll
@@ -92,12 +92,10 @@ import org.lwjgl.opengl.GL33.glViewport
 import java.nio.ByteBuffer
 
 internal data object GL33Renderer : Renderer {
-    context(Window)
-    private var decalMode: Decal.Mode
-        get() = getExtraInfo(DecalModeKey) ?: Decal.Mode.NORMAL
+    private var glfwHandle: Long = -1
+    private var decalMode: Decal.Mode = Decal.Mode.NORMAL
         set(decalMode) {
-            val oldDecalMode = putExtraInfo(DecalModeKey, decalMode)
-            if (oldDecalMode != decalMode) {
+            if (field != decalMode) {
                 when (decalMode) {
                     Decal.Mode.NORMAL -> glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
                     Decal.Mode.ADDITIVE -> glBlendFunc(GL_SRC_ALPHA, GL_ONE)
@@ -107,11 +105,10 @@ internal data object GL33Renderer : Renderer {
                     Decal.Mode.WIREFRAME -> glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
                 }
             }
+            field = decalMode
         }
 
-    context(Window)
-    private val quadInfo: QuadInfo
-        get() = getExtraInfo(QuadInfoKey) ?: throw RuntimeException("Quad Info not available for ${this@Window}")
+    private lateinit var quadInfo: QuadInfo
 
     override fun beforeWindowCreation() {
         println("Requesting OpenGL 3.3")
@@ -121,18 +118,18 @@ internal data object GL33Renderer : Renderer {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
     }
 
-    context(Window)
-    override fun afterWindowCreation() {
-        putExtraInfo(QuadInfoKey, QuadInfo())
+    override fun afterWindowCreation(window: Window) {
+        quadInfo = QuadInfo(window)
         glEnable(GL_BLEND)
         glEnable(GL_TEXTURE_2D)
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
+        glfwHandle = window.glfwHandle
         prepareDrawing()
     }
 
-    context(Window)
     override fun prepareDrawing() {
         glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         decalMode = Decal.Mode.NORMAL
 
         val quadInfo = quadInfo
@@ -140,7 +137,6 @@ internal data object GL33Renderer : Renderer {
         glBindVertexArray(quadInfo.quadBuffer.arrayID.id)
     }
 
-    context(Window)
     override fun createTexture(
         filtered: Boolean,
         clamp: Boolean,
@@ -167,10 +163,8 @@ internal data object GL33Renderer : Renderer {
         return id
     }
 
-    context(Window)
     override fun deleteTexture(id: Int) = glDeleteTextures(id)
 
-    context(Window)
     override fun initializeTexture(
         id: Int,
         sprite: Sprite,
@@ -189,7 +183,6 @@ internal data object GL33Renderer : Renderer {
         )
     }
 
-    context(Window)
     override fun updateTexture(
         id: Int,
         sprite: Sprite,
@@ -208,7 +201,6 @@ internal data object GL33Renderer : Renderer {
         )
     }
 
-    context(Window)
     override fun readTexture(
         id: Int,
         sprite: Sprite,
@@ -225,10 +217,8 @@ internal data object GL33Renderer : Renderer {
         )
     }
 
-    context(Window)
     override fun applyTexture(id: Int) = glBindTexture(GL_TEXTURE_2D, id)
 
-    context(Window)
     override fun clearBuffer(
         pixel: Pixel,
         depth: Boolean,
@@ -240,16 +230,13 @@ internal data object GL33Renderer : Renderer {
         }
     }
 
-    context(Window)
     override fun updateViewport(
         position: Int2D,
         size: Int2D,
     ) = glViewport(position.x, position.y, size.x, size.y)
 
-    context(Window)
     override fun displayFrame() = glfwSwapBuffers(glfwHandle)
 
-    context(Window)
     override fun drawDecals(decals: List<DecalInstance>) {
         val quadInfo = quadInfo
         var index = 0
@@ -306,7 +293,6 @@ internal data object GL33Renderer : Renderer {
         }
     }
 
-    context(Window)
     override fun drawLayerQuad(
         offset: Float2D,
         scale: Float2D,
@@ -353,8 +339,6 @@ internal data object GL33Renderer : Renderer {
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE
-
-    private data object DecalModeKey : Window.ExtraInfoKey<Decal.Mode>
 }
 
 private class QuadInfo private constructor(
@@ -364,11 +348,8 @@ private class QuadInfo private constructor(
 ) : KGEInternalResource {
     override fun close() = invokeForAll(program, quadBuffer, emptyDecal, emptyDecal.sprite) { it.close() }
 
-    data object QuadInfoKey : Window.ExtraInfoKey<QuadInfo>
-
     companion object {
-        context(Window)
-        operator fun invoke(): QuadInfo =
+        operator fun invoke(window: Window): QuadInfo =
             Program(
                 """
                 #version 330 core
@@ -399,7 +380,7 @@ private class QuadInfo private constructor(
                     Sprite.create(1, 1, defaultPixel = Colors.WHITE).closeIfFailed { sprite ->
                         Decal(sprite).closeIfFailed { decal ->
                             QuadInfo(program, quadBuffer, decal).applyAndCloseIfFailed {
-                                bindResource(it)
+                                window.bindResource(it)
                             }
                         }
                     }
@@ -409,7 +390,7 @@ private class QuadInfo private constructor(
 }
 
 private class Program private constructor(
-    private val programID: IdentifiedResource<Int>,
+    private val programID: IntResource,
     private val vertexShader: Shader,
     private val fragmentShader: Shader,
 ) : KGEInternalResource {
@@ -431,7 +412,7 @@ private class Program private constructor(
         ): Program =
             Shader(ShaderType.VERTEX, vertexShader).closeIfFailed { vs ->
                 Shader(ShaderType.FRAGMENT, fragmentShader).closeIfFailed { fs ->
-                    IdentifiedResource("Program", ::glCreateProgram, ::glDeleteProgram).closeIfFailed { id ->
+                    IntResource("Program", ::glCreateProgram, ::DeleteProgramAction).closeIfFailed { id ->
                         Program(id, vs, fs)
                     }
                 }
@@ -439,13 +420,13 @@ private class Program private constructor(
     }
 }
 
-private typealias Shader = IdentifiedResource<Int>
+private typealias Shader = IntResource
 
 private fun Shader(
     type: ShaderType,
     source: String,
 ): Shader =
-    IdentifiedResource("$type", { glCreateShader(type.glType) }, ::glDeleteShader).applyAndCloseIfFailed {
+    IntResource("$type", { glCreateShader(type.glType) }, ::DeleteShaderAction).applyAndCloseIfFailed {
         glShaderSource(it.id, source)
         glCompileShader(it.id)
     }
@@ -463,8 +444,8 @@ private enum class ShaderType(
 
 private class QuadBuffer private constructor(
     val bufferResource: ByteBufferResource,
-    val bufferID: IdentifiedResource<Int>,
-    val arrayID: IdentifiedResource<Int>,
+    val bufferID: IntResource,
+    val arrayID: IntResource,
 ) : KGEResource {
     override fun close() = invokeForAll(bufferResource, bufferID, arrayID) { it.close() }
 
@@ -474,11 +455,11 @@ private class QuadBuffer private constructor(
 
         operator fun invoke(): QuadBuffer =
             ByteBufferResource(VERTEX_BYTES_COUNT * MAX_NUMBER_OF_VERTICES).closeIfFailed { bufferResource ->
-                IdentifiedResource("Quad Buffer", ::glGenBuffers, ::glDeleteBuffers).closeIfFailed { bufferID ->
-                    IdentifiedResource(
+                IntResource("Quad Buffer", ::glGenBuffers, ::DeleteBuffersAction).closeIfFailed { bufferID ->
+                    IntResource(
                         "Quad Array",
                         ::glGenVertexArrays,
-                        ::glDeleteVertexArrays,
+                        ::DeleteVertexArraysAction,
                     ).closeIfFailed { arrayID ->
                         glBindVertexArray(arrayID.id)
                         glBindBuffer(GL_ARRAY_BUFFER, bufferID.id)
@@ -508,11 +489,39 @@ private class ByteBufferResource(
     private val cleanable: KGECleanable
 
     init {
-        val action = MemFreeAction(size)
-        buffer = action.buffer
-        cleanable = KGELeakDetector.register(this, "Quad Byte Buffer", action)
+        val offHeapBuffer = OffHeapBuffer(size)
+        buffer = offHeapBuffer.buffer
+        cleanable = KGELeakDetector.register(this, "Quad Byte Buffer", offHeapBuffer)
     }
 
     @KGESensitiveAPI
     override fun close() = cleanable.clean()
+}
+
+@JvmInline
+private value class DeleteShaderAction(
+    val id: Int,
+) : KGECleanAction {
+    override fun invoke() = glDeleteShader(id)
+}
+
+@JvmInline
+private value class DeleteProgramAction(
+    val id: Int,
+) : KGECleanAction {
+    override fun invoke() = glDeleteProgram(id)
+}
+
+@JvmInline
+private value class DeleteVertexArraysAction(
+    val id: Int,
+) : KGECleanAction {
+    override fun invoke() = glDeleteVertexArrays(id)
+}
+
+@JvmInline
+private value class DeleteBuffersAction(
+    val id: Int,
+) : KGECleanAction {
+    override fun invoke() = glDeleteBuffers(id)
 }

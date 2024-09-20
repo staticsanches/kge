@@ -1,12 +1,7 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.resource
 
-import dev.staticsanches.kge.utils.invokeForAll
 import java.lang.ref.Cleaner
 import java.lang.ref.Cleaner.Cleanable
-
-typealias KGECleanAction = () -> Unit
 
 interface KGECleanable : Cleanable {
     val cleaned: Boolean
@@ -28,30 +23,6 @@ object KGELeakDetector {
         objRepresentation: String,
         action: KGECleanAction,
     ): KGECleanable = LeakDetectorAction(obj, objRepresentation, action, cleaner)
-}
-
-/**
- * Infix function to allow combination of [KGECleanAction]s.
- */
-infix fun KGECleanAction.andThen(other: KGECleanAction): KGECleanAction {
-    if (this is KGECombinedCleanAction) {
-        if (other is KGECombinedCleanAction) {
-            actions.addAll(other.actions)
-        } else {
-            actions.add(other)
-        }
-        return this
-    }
-    if (other is KGECombinedCleanAction) {
-        return other.apply { actions.add(0, this@andThen) }
-    }
-    return KGECombinedCleanAction(mutableListOf(this, other))
-}
-
-private class KGECombinedCleanAction(
-    val actions: MutableList<KGECleanAction>,
-) : KGECleanAction {
-    override fun invoke() = actions.invokeForAll { it() }
 }
 
 private class LeakDetectorAction(

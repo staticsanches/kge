@@ -6,9 +6,10 @@ import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBBuffer
 import dev.staticsanches.kge.resource.KGECleanAction
-import dev.staticsanches.kge.resource.MemFreeAction
+import dev.staticsanches.kge.resource.OffHeapBuffer
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
-import dev.staticsanches.kge.resource.closeIfFailed
+import dev.staticsanches.kge.resource.invokeIfFailed
+import dev.staticsanches.kge.resource.use
 import dev.staticsanches.kge.spi.KGESPIExtensible
 import org.lwjgl.stb.STBImage
 import org.lwjgl.stb.STBImageWrite.stbi_write_png
@@ -68,14 +69,14 @@ internal data object STBPixelBufferService : PixelBufferService {
         width: Int,
         height: Int,
     ): PB =
-        MemFreeAction(type.expectedBufferCapacity(width, height)).closeIfFailed { memFreeAction ->
-            val buffer = memFreeAction.buffer
+        OffHeapBuffer(type.expectedBufferCapacity(width, height)).invokeIfFailed { offHeapBuffer ->
+            val buffer = offHeapBuffer.buffer
             @Suppress("UNCHECKED_CAST")
-            return@closeIfFailed when (val t: PixelBuffer.Type<PB, T> = type) {
-                PixelBuffer.Type.RGBA -> RGBABuffer(width, height, buffer, memFreeAction)
-                is PixelBuffer.Type.RGB -> RGBBuffer(width, height, t, buffer, memFreeAction)
-                is PixelBuffer.Type.Grayscale -> GrayscaleBuffer(width, height, t, buffer, memFreeAction)
-                is PixelBuffer.Type.Bitmap -> BitmapBuffer(width, height, t, buffer, memFreeAction)
+            return@invokeIfFailed when (val t: PixelBuffer.Type<PB, T> = type) {
+                PixelBuffer.Type.RGBA -> RGBABuffer(width, height, buffer, offHeapBuffer)
+                is PixelBuffer.Type.RGB -> RGBBuffer(width, height, t, buffer, offHeapBuffer)
+                is PixelBuffer.Type.Grayscale -> GrayscaleBuffer(width, height, t, buffer, offHeapBuffer)
+                is PixelBuffer.Type.Bitmap -> BitmapBuffer(width, height, t, buffer, offHeapBuffer)
             } as PB
         }
 
@@ -84,26 +85,26 @@ internal data object STBPixelBufferService : PixelBufferService {
             val width = stack.mallocInt(1)
             val height = stack.mallocInt(1)
             val components = stack.mallocInt(1)
-            return@use STBFreeAction(
+            return@use STBBuffer(
                 STBImage.stbi_load(fileName, width, height, components, 4)
                     ?: throw RuntimeException("Unable to load $fileName"),
-            ).closeIfFailed { stbFreeAction -> RGBABuffer(width[0], height[0], stbFreeAction.buffer, stbFreeAction) }
+            ).invokeIfFailed { stbBuffer -> RGBABuffer(width[0], height[0], stbBuffer.buffer, stbBuffer) }
         }
 
     override fun load(url: URL): RGBABuffer = load(url::openStream)
 
     override fun load(isProvider: () -> InputStream): RGBABuffer =
         MemoryStack.stackPush().use { stack ->
-            val bytes = isProvider().use { it.readAllBytes() }
-
             val width = stack.mallocInt(1)
             val height = stack.mallocInt(1)
             val components = stack.mallocInt(1)
-            val content = stack.malloc(bytes.size)
-            return@use STBFreeAction(
-                STBImage.stbi_load_from_memory(content.put(bytes).flip(), width, height, components, 4)
-                    ?: throw RuntimeException("Unable to load image"),
-            ).closeIfFailed { stbFreeAction -> RGBABuffer(width[0], height[0], stbFreeAction.buffer, stbFreeAction) }
+
+            OffHeapBuffer(isProvider).use { offHeapBuffer ->
+                STBBuffer(
+                    STBImage.stbi_load_from_memory(offHeapBuffer.buffer, width, height, components, 4)
+                        ?: throw RuntimeException("Unable to load image"),
+                ).invokeIfFailed { stbBuffer -> RGBABuffer(width[0], height[0], stbBuffer.buffer, stbBuffer) }
+            }
         }
 
     override fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> duplicate(original: PB): PB =
@@ -119,13 +120,11 @@ internal data object STBPixelBufferService : PixelBufferService {
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE
+}
 
-    private class STBFreeAction(
-        val buffer: ByteBuffer,
-    ) : AutoCloseable,
-        KGECleanAction {
-        override fun invoke() = close()
-
-        override fun close() = STBImage.stbi_image_free(buffer.clear())
-    }
+@JvmInline
+private value class STBBuffer(
+    val buffer: ByteBuffer,
+) : KGECleanAction {
+    override fun invoke() = STBImage.stbi_image_free(buffer.clear())
 }
