@@ -13,7 +13,7 @@ infix fun Int.by(y: Int): Int2D =
     }
 
 data class Int2D internal constructor(
-    inline val x: Int,
+    val x: Int,
     val y: Int,
 ) {
     operator fun plus(other: Int2D): Int2D = (x + other.x) by (y + other.y)
