@@ -6,6 +6,7 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
 import org.lwjgl.glfw.GLFW.glfwSwapBuffers
@@ -61,6 +62,8 @@ import org.lwjgl.opengl.GL11.glVertex3f
 import org.lwjgl.opengl.GL11.glViewport
 import org.lwjgl.opengl.GL33.glTexSubImage2D
 
+private val logger = KotlinLogging.logger {}
+
 internal data object GL11Renderer : Renderer {
     private var glfwHandle: Long = -1
     private var decalMode: Decal.Mode = Decal.Mode.NORMAL
@@ -79,7 +82,7 @@ internal data object GL11Renderer : Renderer {
         }
 
     override fun beforeWindowCreation() {
-        println("Requesting OpenGL 1.1")
+        logger.debug { "Requesting OpenGL 1.1" }
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 1)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
     }

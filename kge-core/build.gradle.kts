@@ -9,6 +9,8 @@ dependencies {
     implementation(platform(libs.lwjgl.bom))
     implementation(libs.bundles.lwjgl)
 
+    implementation(libs.bundles.logging)
+
     testImplementation(kotlin("test"))
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly(libs.bundles.lwjgl) {
@@ -40,6 +42,7 @@ dependencies {
             classifier = lwjglNatives
         }
     }
+    testImplementation(libs.logback.classic)
 }
 
 allOpen {

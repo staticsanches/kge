@@ -1,21 +1,36 @@
 [versions]
-kotlin = "2.0.0"
-lwjgl = "3.3.3"
-ktlint = "12.1.1"
 dokka = "1.9.20"
+kotlin = "2.0.20"
+kotlinLogging = "7.0.0"
+ktlint = "12.1.1"
+logback = "1.5.8"
+lwjgl = "3.3.4"
+slf4j = "2.0.16"
 vanniktechMavenPublish = "0.29.0"
 
 [libraries]
-lwjgl-bom = { group = "org.lwjgl", name = "lwjgl-bom", version.ref = "lwjgl" }
+dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
+
+kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+
+kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "kotlinLogging" }
+
+ktlint-plugin = { group = "org.jlleitschuh.gradle", name = "ktlint-gradle", version.ref = "ktlint" }
+
+logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+
 lwjgl = { group = "org.lwjgl", name = "lwjgl" }
+lwjgl-bom = { group = "org.lwjgl", name = "lwjgl-bom", version.ref = "lwjgl" }
+lwjgl-freetype = { group = "org.lwjgl", name = "lwjgl-freetype" }
 lwjgl-glfw = { group = "org.lwjgl", name = "lwjgl-glfw" }
+lwjgl-harfbuzz = { group = "org.lwjgl", name = "lwjgl-harfbuzz" }
 lwjgl-opengl = { group = "org.lwjgl", name = "lwjgl-opengl" }
 lwjgl-stb = { group = "org.lwjgl", name = "lwjgl-stb" }
 
-kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
-ktlint-plugin = { group = "org.jlleitschuh.gradle", name = "ktlint-gradle", version.ref = "ktlint" }
-dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
+slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+
 vanniktech-maven-publish-plugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktechMavenPublish" }
 
 [bundles]
-lwjgl = ["lwjgl", "lwjgl-glfw", "lwjgl-opengl", "lwjgl-stb"]
+logging = ["kotlin-logging", "slf4j"]
+lwjgl = ["lwjgl", "lwjgl-freetype", "lwjgl-glfw", "lwjgl-harfbuzz", "lwjgl-opengl", "lwjgl-stb"]

@@ -19,6 +19,7 @@ import dev.staticsanches.kge.resource.OffHeapBuffer
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.utils.invokeForAll
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
 import org.lwjgl.glfw.GLFW.GLFW_OPENGL_CORE_PROFILE
@@ -91,6 +92,8 @@ import org.lwjgl.opengl.GL33.glVertexAttribPointer
 import org.lwjgl.opengl.GL33.glViewport
 import java.nio.ByteBuffer
 
+private val logger = KotlinLogging.logger { }
+
 internal data object GL33Renderer : Renderer {
     private var glfwHandle: Long = -1
     private var decalMode: Decal.Mode = Decal.Mode.NORMAL
@@ -111,7 +114,7 @@ internal data object GL33Renderer : Renderer {
     private lateinit var quadInfo: QuadInfo
 
     override fun beforeWindowCreation() {
-        println("Requesting OpenGL 3.3")
+        logger.debug { "Requesting OpenGL 3.3" }
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE)

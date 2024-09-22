@@ -1,7 +1,10 @@
 package dev.staticsanches.kge.resource
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.ref.Cleaner
 import java.lang.ref.Cleaner.Cleanable
+
+private val logger = KotlinLogging.logger {}
 
 interface KGECleanable : Cleanable {
     val cleaned: Boolean
@@ -23,6 +26,9 @@ object KGELeakDetector {
         objRepresentation: String,
         action: KGECleanAction,
     ): KGECleanable = LeakDetectorAction(obj, objRepresentation, action, cleaner)
+
+    internal fun leakMessage(objRepresentation: String) =
+        "$objRepresentation was not cleaned and is potentially leaking its resources"
 }
 
 private class LeakDetectorAction(
@@ -51,7 +57,7 @@ private class LeakDetectorAction(
 
     override fun run() {
         if (action != null) {
-            System.err.println("$objRepresentation was not cleaned and is potentially leaking its resources")
+            logger.error { KGELeakDetector.leakMessage(objRepresentation) }
             action = null
         }
     }
