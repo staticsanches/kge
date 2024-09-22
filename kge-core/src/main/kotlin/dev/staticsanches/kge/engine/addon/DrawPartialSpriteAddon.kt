@@ -1,12 +1,10 @@
 package dev.staticsanches.kge.engine.addon
 
-import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
-interface DrawPartialSpriteAddon {
-    context(Window)
+interface DrawPartialSpriteAddon : WindowDependentAddon {
     fun drawPartialSprite(
         position: Int2D,
         sprite: Sprite,
@@ -14,7 +12,7 @@ interface DrawPartialSpriteAddon {
         diagonalEnd: Int2D,
         scale: UInt = 1u,
         flip: Sprite.Flip = Sprite.Flip.NONE,
-    ) {
+    ) = with(window) {
         Rasterizer.drawPartialSprite(
             position,
             sprite,
@@ -27,7 +25,6 @@ interface DrawPartialSpriteAddon {
         )
     }
 
-    context(Window)
     fun drawPartialSprite(
         x: Int,
         y: Int,

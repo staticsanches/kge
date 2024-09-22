@@ -18,9 +18,10 @@ import dev.staticsanches.kge.engine.addon.FillRectAddon
 import dev.staticsanches.kge.engine.addon.FillTriangleAddon
 import dev.staticsanches.kge.engine.addon.LayersAddon
 import dev.staticsanches.kge.engine.addon.ScreenSizeAddon
+import dev.staticsanches.kge.engine.addon.WindowDependentAddon
 import dev.staticsanches.kge.engine.addon.WindowManipulationAddon
 import dev.staticsanches.kge.engine.extension.KGEX
-import dev.staticsanches.kge.engine.window.Window
+import dev.staticsanches.kge.engine.state.WithKGEState
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.input.KeyboardKey
@@ -36,9 +37,10 @@ import org.lwjgl.opengl.GL
 import org.lwjgl.system.Configuration
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.Platform
+import java.lang.IllegalStateException
 
 @KGEAllOpen
-class KotlinGameEngine(
+class KotlinGameEngine<KGE : KotlinGameEngine<KGE>>(
     val appName: String,
 ) : CallbacksAddon,
     ClearAddon,
@@ -50,22 +52,36 @@ class KotlinGameEngine(
     DrawRectAddon,
     DrawSpriteAddon,
     DrawTriangleAddon,
-    ExtensionsAddon,
+    ExtensionsAddon<KGE>,
     FillCircleAddon,
     FillRectAddon,
     FillTriangleAddon,
     LayersAddon,
     ScreenSizeAddon,
-    WindowManipulationAddon {
-    fun start(initializer: Configurator.() -> Unit): Unit =
+    WindowDependentAddon,
+    WindowManipulationAddon,
+    WithKGEState {
+    private var internalWindow: Window? = null
+    final override val window: Window
+        get() =
+            internalWindow
+                ?: throw IllegalStateException("Window and its info are only available while the engine is running")
+
+    fun run(initializer: Configurator.() -> Unit): Unit =
         try {
-            Configurator().apply(initializer).createWindow().use { it.doStart() }
+            val window = Configurator().apply(initializer).createWindow()
+            try {
+                internalWindow = window
+                window.use { doStart() }
+            } finally {
+                internalWindow = null
+            }
         } finally {
             GLFW.glfwTerminate()
             GLFW.glfwSetErrorCallback(null)?.free()
         }
 
-    private fun Window.doStart() {
+    private fun doStart() {
         // Create primary layer 0
         createLayer()
         layers[0].apply {
@@ -93,8 +109,7 @@ class KotlinGameEngine(
         }
     }
 
-    @KGESensitiveAPI
-    private fun Window.coreUpdate() {
+    private fun coreUpdate() {
         timeState.tick()
 
         val blockedFrame = extensions.fold(false) { blocked, extension -> extension.onBeforeUserUpdate() || blocked }
@@ -282,8 +297,11 @@ class KotlinGameEngine(
 
     private final val extensions = ArrayList<KGEX>()
 
-    override fun registerExtension(extensionProvider: (KotlinGameEngine) -> KGEX) {
-        extensions.add(extensionProvider(this))
+    override fun registerExtension(extensionProvider: (KGE) -> KGEX): KGE {
+        @Suppress("UNCHECKED_CAST")
+        val kge = this as KGE
+        extensions.add(extensionProvider(kge))
+        return kge
     }
 
     class Configurator {

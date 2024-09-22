@@ -1,14 +1,12 @@
 package dev.staticsanches.kge.engine.addon
 
-import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.utils.CircleOctantMask
 
-interface DrawCircleAddon {
-    context(Window)
+interface DrawCircleAddon : WindowDependentAddon {
     fun drawCircle(
         center: Int2D,
         radius: Int,
@@ -18,7 +16,6 @@ interface DrawCircleAddon {
         Rasterizer.drawCircle(center, radius, mask, color, drawTarget ?: return, pixelMode)
     }
 
-    context(Window)
     fun drawCircle(
         centerX: Int,
         centerY: Int,

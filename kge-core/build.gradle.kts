@@ -51,13 +51,6 @@ allOpen {
 
 tasks.named("compileKotlin", KotlinCompilationTask::class.java) {
     compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
         freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.annotations.KGESensitiveAPI")
-    }
-}
-
-tasks.named("compileTestKotlin", KotlinCompilationTask::class.java) {
-    compilerOptions {
-        freeCompilerArgs.add("-Xcontext-receivers")
     }
 }

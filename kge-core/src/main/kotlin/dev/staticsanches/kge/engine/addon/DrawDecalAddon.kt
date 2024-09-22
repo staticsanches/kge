@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.engine.addon
 
-import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
@@ -9,8 +8,7 @@ import dev.staticsanches.kge.math.vector.FloatOneByOne
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
-interface DrawDecalAddon {
-    context(Window)
+interface DrawDecalAddon : WindowDependentAddon {
     fun drawDecal(
         position: Int2D,
         decal: Decal,

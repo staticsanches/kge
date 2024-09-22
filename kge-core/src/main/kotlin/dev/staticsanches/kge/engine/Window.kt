@@ -1,11 +1,12 @@
 @file:Suppress("unused")
 
-package dev.staticsanches.kge.engine.window
+package dev.staticsanches.kge.engine
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.engine.window.state.DimensionState
-import dev.staticsanches.kge.engine.window.state.InputState
-import dev.staticsanches.kge.engine.window.state.TimeState
+import dev.staticsanches.kge.engine.state.DimensionState
+import dev.staticsanches.kge.engine.state.InputState
+import dev.staticsanches.kge.engine.state.TimeState
+import dev.staticsanches.kge.engine.state.WithKGEState
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
@@ -26,7 +27,8 @@ class Window
     @KGESensitiveAPI
     constructor(
         glfwHandle: Long,
-    ) : KGEInternalResource {
+    ) : WithKGEState,
+        KGEInternalResource {
         private val glfwWindow = LongResource("GLFW Window", { glfwHandle }, ::ClearGLFWWindowAction)
         private val boundResources = LinkedList<KGEResource>()
 
@@ -35,31 +37,28 @@ class Window
         }
 
         @KGESensitiveAPI
-        val glfwHandle: Long by glfwWindow::id
+        override val glfwHandle: Long by glfwWindow::id
 
-        val dimensionState: DimensionState = DimensionState()
-        val screenSize: Int2D by dimensionState::screenSize
-        val invertedScreenSize: Float2D by dimensionState::invertedScreenSize
+        override val dimensionState: DimensionState = DimensionState()
+        override val screenSize: Int2D by dimensionState::screenSize
+        override val invertedScreenSize: Float2D by dimensionState::invertedScreenSize
 
-        val inputState: InputState = InputState()
-        val timeState: TimeState = TimeState()
+        override val inputState: InputState = InputState()
+        override val timeState: TimeState = TimeState()
 
-        var decalMode = Decal.Mode.NORMAL
-        var pixelMode: Pixel.Mode = Pixel.Mode.Normal
-        var decalStructure = Decal.Structure.FAN
-        var suspendTextureTransfer = false
-
-        @KGESensitiveAPI
-        val layers = ArrayList<LayerDescriptor>()
+        override var decalMode = Decal.Mode.NORMAL
+        override var pixelMode: Pixel.Mode = Pixel.Mode.Normal
+        override var decalStructure = Decal.Structure.FAN
+        override var suspendTextureTransfer = false
 
         @KGESensitiveAPI
-        var targetLayerIndex = 0
+        override val layers = ArrayList<LayerDescriptor>()
 
-        val targetLayer: LayerDescriptor
-            get() = layers[targetLayerIndex]
+        @KGESensitiveAPI
+        override var targetLayerIndex = 0
 
-        var drawTarget: Sprite? = null
-            set(value) {
+        override var drawTarget: Sprite? = null
+            @KGESensitiveAPI set(value) {
                 if (value == null) {
                     targetLayerIndex = 0
                     field = layers[0].drawTarget.sprite

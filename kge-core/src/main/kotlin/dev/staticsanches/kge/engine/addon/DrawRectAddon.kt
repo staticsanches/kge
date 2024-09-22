@@ -1,13 +1,11 @@
 package dev.staticsanches.kge.engine.addon
 
-import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
-interface DrawRectAddon {
-    context(Window)
+interface DrawRectAddon : WindowDependentAddon {
     fun drawRect(
         diagonalStart: Int2D,
         diagonalEnd: Int2D,
@@ -16,7 +14,6 @@ interface DrawRectAddon {
         Rasterizer.drawRect(diagonalStart, diagonalEnd, color, drawTarget ?: return, pixelMode)
     }
 
-    context(Window)
     fun drawRect(
         diagonalStartX: Int,
         diagonalStartY: Int,

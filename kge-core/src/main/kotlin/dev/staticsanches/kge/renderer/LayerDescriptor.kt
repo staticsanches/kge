@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.renderer
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.engine.window.Window
+import dev.staticsanches.kge.engine.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
@@ -39,8 +39,8 @@ class LayerDescriptor private constructor(
     override fun close() = invokeForAll(drawTarget.sprite, drawTarget) { it.close() }
 
     companion object {
-        context(Window)
         operator fun invoke(
+            window: Window,
             width: Int,
             height: Int,
             offset: Float2D = FloatZeroByZero,
@@ -60,7 +60,7 @@ class LayerDescriptor private constructor(
                 decalInstances,
                 tint,
                 functionHook,
-            ).apply { bindResource(this) }
+            ).apply { window.bindResource(this) }
 
         private fun Decal(
             width: Int,

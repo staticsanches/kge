@@ -12,7 +12,7 @@ infix fun Int.by(y: Int): Int2D =
         Int2D(this, y)
     }
 
-data class Int2D internal constructor(
+class Int2D internal constructor(
     val x: Int,
     val y: Int,
 ) {
@@ -28,5 +28,27 @@ data class Int2D internal constructor(
 
     operator fun div(value: Int): Int2D = (x / value) by (y / value)
 
+    operator fun component1(): Int = x
+
+    operator fun component2(): Int = y
+
     override fun toString(): String = "($x, $y)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Int2D
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x
+        result = 31 * result + y
+        return result
+    }
 }

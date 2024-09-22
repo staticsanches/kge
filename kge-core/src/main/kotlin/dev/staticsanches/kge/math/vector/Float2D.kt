@@ -14,7 +14,7 @@ infix fun Float.by(y: Float): Float2D =
         Float2D(this, y)
     }
 
-data class Float2D internal constructor(
+class Float2D internal constructor(
     val x: Float,
     val y: Float,
 ) {
@@ -26,5 +26,27 @@ data class Float2D internal constructor(
 
     operator fun div(other: Int2D): Float2D = (x / other.x) by (y / other.y)
 
+    operator fun component1(): Float = x
+
+    operator fun component2(): Float = y
+
     override fun toString(): String = "($x, $y)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Float2D
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        return result
+    }
 }

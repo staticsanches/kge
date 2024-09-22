@@ -1,13 +1,11 @@
 package dev.staticsanches.kge.engine.addon
 
-import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
-interface DrawTriangleAddon {
-    context(Window)
+interface DrawTriangleAddon : WindowDependentAddon {
     fun drawTriangle(
         p0: Int2D,
         p1: Int2D,
@@ -17,7 +15,6 @@ interface DrawTriangleAddon {
         Rasterizer.drawTriangle(p0, p1, p2, color, drawTarget ?: return, pixelMode)
     }
 
-    context(Window)
     fun drawTriangle(
         x0: Int,
         y0: Int,

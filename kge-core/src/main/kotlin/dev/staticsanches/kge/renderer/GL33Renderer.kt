@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.renderer
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.engine.window.Window
+import dev.staticsanches.kge.engine.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel

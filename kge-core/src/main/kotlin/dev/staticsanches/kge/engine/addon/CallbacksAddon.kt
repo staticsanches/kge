@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.engine.addon
 
-import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.input.KeyboardKey
 import dev.staticsanches.kge.input.KeyboardKeyAction
 import dev.staticsanches.kge.input.KeyboardModifiers
@@ -13,7 +12,6 @@ interface CallbacksAddon {
     /**
      * Called once on application startup, use to load your resources.
      */
-    context(Window)
     fun onUserCreate() = Unit
 
     /**
@@ -21,7 +19,6 @@ interface CallbacksAddon {
      *
      * @return if the game should continue running.
      */
-    context(Window)
     fun onUserUpdate(): Boolean = true
 
     /**
@@ -29,7 +26,6 @@ interface CallbacksAddon {
      *
      * @return if the shutdown process should continue.
      */
-    context(Window)
     fun onUserDestroy(): Boolean = true
 
     /**
@@ -43,7 +39,6 @@ interface CallbacksAddon {
     /**
      * Handle window resize.
      */
-    context(Window)
     fun onFrameBufferResize(
         width: Int,
         height: Int,
@@ -52,7 +47,6 @@ interface CallbacksAddon {
     /**
      * Handle keyboard events.
      */
-    context(Window)
     fun onKeyEvent(
         key: KeyboardKey,
         newAction: KeyboardKeyAction,

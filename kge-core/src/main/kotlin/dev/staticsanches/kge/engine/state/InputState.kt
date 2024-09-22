@@ -1,4 +1,4 @@
-package dev.staticsanches.kge.engine.window.state
+package dev.staticsanches.kge.engine.state
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.input.KeyboardKeyState

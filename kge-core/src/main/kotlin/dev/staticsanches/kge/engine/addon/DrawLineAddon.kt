@@ -1,13 +1,11 @@
 package dev.staticsanches.kge.engine.addon
 
-import dev.staticsanches.kge.engine.window.Window
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
-interface DrawLineAddon {
-    context(Window)
+interface DrawLineAddon : WindowDependentAddon {
     fun drawLine(
         start: Int2D,
         end: Int2D,
@@ -16,7 +14,6 @@ interface DrawLineAddon {
         Rasterizer.drawLine(start, end, color, drawTarget ?: return, pixelMode)
     }
 
-    context(Window)
     fun drawLine(
         startX: Int,
         startY: Int,
