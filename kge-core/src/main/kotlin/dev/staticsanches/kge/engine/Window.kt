@@ -16,7 +16,7 @@ import dev.staticsanches.kge.renderer.LayerDescriptor
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGEResource
-import dev.staticsanches.kge.resource.LongResource
+import dev.staticsanches.kge.resource.PointerResource
 import dev.staticsanches.kge.utils.invokeForAll
 import dev.staticsanches.kge.utils.invokeForAllRemoving
 import org.lwjgl.glfw.Callbacks
@@ -29,7 +29,7 @@ class Window
         glfwHandle: Long,
     ) : WithKGEState,
         KGEInternalResource {
-        private val glfwWindow = LongResource("GLFW Window", { glfwHandle }, ::ClearGLFWWindowAction)
+        private val glfwWindow = PointerResource("GLFWWindow", { glfwHandle }, ::ClearGLFWWindowAction)
         private val boundResources = LinkedList<KGEResource>()
 
         init {
@@ -37,7 +37,7 @@ class Window
         }
 
         @KGESensitiveAPI
-        override val glfwHandle: Long by glfwWindow::id
+        override val glfwHandle: Long by glfwWindow::handle
 
         override val dimensionState: DimensionState = DimensionState()
         override val screenSize: Int2D by dimensionState::screenSize

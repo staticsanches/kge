@@ -12,7 +12,7 @@ interface DrawPartialSpriteAddon : WindowDependentAddon {
         diagonalEnd: Int2D,
         scale: UInt = 1u,
         flip: Sprite.Flip = Sprite.Flip.NONE,
-    ) = with(window) {
+    ) {
         Rasterizer.drawPartialSprite(
             position,
             sprite,

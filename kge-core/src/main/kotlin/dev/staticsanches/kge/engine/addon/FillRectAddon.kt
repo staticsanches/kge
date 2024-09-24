@@ -10,7 +10,9 @@ interface FillRectAddon : WindowDependentAddon {
         diagonalStart: Int2D,
         diagonalEnd: Int2D,
         color: Pixel = Colors.WHITE,
-    ) = with(window) { Rasterizer.fillRect(diagonalStart, diagonalEnd, color, drawTarget ?: return, pixelMode) }
+    ) {
+        Rasterizer.fillRect(diagonalStart, diagonalEnd, color, drawTarget ?: return, pixelMode)
+    }
 
     fun fillRect(
         diagonalStartX: Int,
