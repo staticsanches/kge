@@ -3,7 +3,8 @@ package dev.staticsanches.kge.renderer
 import dev.staticsanches.kge.engine.Window
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.image.pixelmap.OptionalRGBAPixelMap
+import dev.staticsanches.kge.image.pixelmap.RGBAPixelMap
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -133,53 +134,55 @@ internal data object GL11Renderer : Renderer {
 
     override fun initializeTexture(
         id: Int,
-        sprite: Sprite,
+        pixmap: OptionalRGBAPixelMap,
     ) {
         glBindTexture(GL_TEXTURE_2D, id)
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
             GL_RGBA,
-            sprite.width,
-            sprite.height,
+            pixmap.width,
+            pixmap.height,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            sprite.pixmap.internalBuffer.clear(),
+            pixmap.pixelsData,
         )
     }
 
     override fun updateTexture(
         id: Int,
-        sprite: Sprite,
+        pixmap: RGBAPixelMap,
     ) {
+        val lowerBoundInclusive = pixmap.lowerBoundInclusive
         glBindTexture(GL_TEXTURE_2D, id)
         glTexSubImage2D(
             GL_TEXTURE_2D,
             0,
-            0,
-            0,
-            sprite.width,
-            sprite.height,
+            lowerBoundInclusive.x,
+            lowerBoundInclusive.y,
+            pixmap.width,
+            pixmap.height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            sprite.pixmap.internalBuffer.clear(),
+            pixmap.pixelsData,
         )
     }
 
     override fun readTexture(
         id: Int,
-        sprite: Sprite,
+        pixmap: RGBAPixelMap,
     ) {
+        val lowerBoundInclusive = pixmap.lowerBoundInclusive
         glBindTexture(GL_TEXTURE_2D, id)
         glReadPixels(
-            0,
-            0,
-            sprite.width,
-            sprite.height,
+            lowerBoundInclusive.x,
+            lowerBoundInclusive.y,
+            pixmap.width,
+            pixmap.height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            sprite.pixmap.internalBuffer.clear(),
+            pixmap.pixelsData,
         )
     }
 

@@ -4,11 +4,13 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.image.pixelmap.PixelMap
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
 import dev.staticsanches.kge.image.service.PixelBufferService
 import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.IntZeroByZero
 import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.utils.humanReadableByteCountBin
@@ -24,7 +26,7 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
     final override val height: Int,
     val type: T,
     @property:KGESensitiveAPI val internalBuffer: ByteBuffer,
-) : PixelMap,
+) : MutablePixelMap,
     KGEResource {
     init {
         check(width > 0 && height > 0) { "Invalid buffer dimension ${width}x$height" }
@@ -41,6 +43,12 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
 
     final override val size: Int2D = width by height
 
+    override val lowerBoundInclusive: Int2D
+        get() = IntZeroByZero
+
+    override val upperBoundExclusive: Int2D
+        get() = size
+
     override fun inv() {
         for (i in 0..<internalBuffer.capacity()) {
             internalBuffer.put(i, internalBuffer[i].inv())
@@ -48,7 +56,7 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun duplicate(): PB = PixelBufferService.duplicate(this as PB)
+    fun duplicate(): PB = PixelBufferService.duplicate(this as PB)
 
     protected val representation =
         "${type::class.java.simpleName} ${width}x$height (${

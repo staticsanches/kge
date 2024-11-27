@@ -4,6 +4,7 @@ import dev.staticsanches.kge.configuration.Configuration
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.image.SpriteDecal
 import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.utils.invokeForAll
 import kotlin.random.Random
@@ -14,7 +15,7 @@ class FirstExample : KotlinGameEngine<FirstExample>("First Example") {
 
     override fun onUserCreate() {
         sprite = Sprite.load(FirstExample::class.java.getResource("/xmas_5x5.png")!!)
-        decal = Decal(sprite)
+        decal = SpriteDecal(sprite)
     }
 
     override fun onUserDestroy(): Boolean {

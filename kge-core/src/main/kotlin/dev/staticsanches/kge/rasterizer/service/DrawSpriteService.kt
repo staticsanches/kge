@@ -2,7 +2,7 @@ package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
-import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.spi.KGESPIExtensible
@@ -13,7 +13,7 @@ interface DrawSpriteService : KGESPIExtensible {
         sprite: Sprite,
         scale: UInt,
         flip: Sprite.Flip,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
@@ -23,7 +23,7 @@ interface DrawSpriteService : KGESPIExtensible {
         sprite: Sprite,
         scale: UInt,
         flip: Sprite.Flip,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 }
@@ -34,7 +34,7 @@ internal object DefaultDrawSpriteService : DrawSpriteService {
         sprite: Sprite,
         scale: UInt,
         flip: Sprite.Flip,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = drawSprite(
         position.x,
@@ -52,7 +52,7 @@ internal object DefaultDrawSpriteService : DrawSpriteService {
         sprite: Sprite,
         scale: UInt,
         flip: Sprite.Flip,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = Rasterizer.drawPartialSprite(
         x,

@@ -12,7 +12,10 @@ dependencies {
     implementation(libs.bundles.logging)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.junit)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+
     testRuntimeOnly(libs.bundles.lwjgl) {
         val name = System.getProperty("os.name")!!
         val arch = System.getProperty("os.arch")!!
@@ -53,4 +56,8 @@ tasks.named("compileKotlin", KotlinCompilationTask::class.java) {
     compilerOptions {
         freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.annotations.KGESensitiveAPI")
     }
+}
+
+tasks.withType(Test::class) {
+    jvmArgs(listOf("--add-opens", "java.base/jdk.internal.loader=ALL-UNNAMED"))
 }

@@ -3,9 +3,9 @@ package dev.staticsanches.kge.renderer
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.Window
 import dev.staticsanches.kge.image.Colors
-import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.image.SpriteDecal
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.FloatOneByOne
 import dev.staticsanches.kge.math.vector.FloatZeroByZero
@@ -14,7 +14,7 @@ import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.utils.invokeForAll
 
 class LayerDescriptor private constructor(
-    drawTarget: Decal,
+    drawTarget: SpriteDecal,
     var offset: Float2D,
     var scale: Float2D,
     var show: Boolean,
@@ -23,7 +23,7 @@ class LayerDescriptor private constructor(
     var tint: Pixel,
     var functionHook: ((LayerDescriptor) -> Unit)?,
 ) : KGEInternalResource {
-    var drawTarget: Decal = drawTarget
+    var drawTarget: SpriteDecal = drawTarget
         private set
 
     fun resize(
@@ -31,7 +31,7 @@ class LayerDescriptor private constructor(
         height: Int,
     ) {
         close() // free the previous target
-        drawTarget = Decal(width, height)
+        drawTarget = SpriteDecal(width, height)
         update = true
     }
 
@@ -52,7 +52,7 @@ class LayerDescriptor private constructor(
             functionHook: ((LayerDescriptor) -> Unit)? = null,
         ): LayerDescriptor =
             LayerDescriptor(
-                Decal(width, height),
+                SpriteDecal(width, height),
                 offset,
                 scale,
                 show,
@@ -62,9 +62,9 @@ class LayerDescriptor private constructor(
                 functionHook,
             ).apply { window.bindResource(this) }
 
-        private fun Decal(
+        private fun SpriteDecal(
             width: Int,
             height: Int,
-        ): Decal = Sprite.create(width, height).closeIfFailed { Decal(it, filtered = false, clamp = true) }
+        ): SpriteDecal = Sprite.create(width, height).closeIfFailed { SpriteDecal(it, filtered = false, clamp = true) }
     }
 }

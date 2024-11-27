@@ -1,5 +1,6 @@
 [versions]
 dokka = "1.9.20"
+junit = "4.13.1"
 kotlin = "2.0.20"
 kotlinLogging = "7.0.0"
 ktlint = "12.1.1"
@@ -10,6 +11,8 @@ vanniktechMavenPublish = "0.29.0"
 
 [libraries]
 dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
 

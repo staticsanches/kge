@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.spi.KGESPIExtensible
 
@@ -9,7 +9,7 @@ interface DrawService : KGESPIExtensible {
     fun draw(
         position: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ): Boolean
 
@@ -17,7 +17,7 @@ interface DrawService : KGESPIExtensible {
         x: Int,
         y: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ): Boolean
 }
@@ -26,7 +26,7 @@ internal object DefaultDrawService : DrawService {
     override fun draw(
         position: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ): Boolean = draw(position.x, position.y, color, target, pixelMode)
 
@@ -34,7 +34,7 @@ internal object DefaultDrawService : DrawService {
         x: Int,
         y: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ): Boolean =
         when (pixelMode) {

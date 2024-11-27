@@ -55,8 +55,8 @@ private class DefaultVerticesInfo(
 ) : DecalInstance.VerticesInfo {
     val startX = 2f * position.x * invertedScreenSize.x - 1f
     val startY = -2f * position.y * invertedScreenSize.y + 1f
-    val endX = startX + 2f * decal.sprite.width * invertedScreenSize.x * scale.x
-    val endY = startY - 2f * decal.sprite.height * invertedScreenSize.y * scale.y
+    val endX = startX + 2f * decal.size.x * invertedScreenSize.x * scale.x
+    val endY = startY - 2f * decal.size.y * invertedScreenSize.y * scale.y
 
     override val numberOfVertices: Int
         get() = 4

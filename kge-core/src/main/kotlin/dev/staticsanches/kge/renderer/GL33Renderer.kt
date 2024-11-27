@@ -6,6 +6,9 @@ import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.image.SpriteDecal
+import dev.staticsanches.kge.image.pixelmap.OptionalRGBAPixelMap
+import dev.staticsanches.kge.image.pixelmap.RGBAPixelMap
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.QuadBuffer.Companion.MAX_NUMBER_OF_VERTICES
@@ -170,53 +173,55 @@ internal data object GL33Renderer : Renderer {
 
     override fun initializeTexture(
         id: Int,
-        sprite: Sprite,
+        pixmap: OptionalRGBAPixelMap,
     ) {
         glBindTexture(GL_TEXTURE_2D, id)
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
             GL_RGBA,
-            sprite.width,
-            sprite.height,
+            pixmap.width,
+            pixmap.height,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            sprite.pixmap.internalBuffer.clear(),
+            pixmap.pixelsData,
         )
     }
 
     override fun updateTexture(
         id: Int,
-        sprite: Sprite,
+        pixmap: RGBAPixelMap,
     ) {
+        val lowerBoundInclusive = pixmap.lowerBoundInclusive
         glBindTexture(GL_TEXTURE_2D, id)
         glTexSubImage2D(
             GL_TEXTURE_2D,
             0,
-            0,
-            0,
-            sprite.width,
-            sprite.height,
+            lowerBoundInclusive.x,
+            lowerBoundInclusive.y,
+            pixmap.width,
+            pixmap.height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            sprite.pixmap.internalBuffer.clear(),
+            pixmap.pixelsData,
         )
     }
 
     override fun readTexture(
         id: Int,
-        sprite: Sprite,
+        pixmap: RGBAPixelMap,
     ) {
+        val lowerBoundInclusive = pixmap.lowerBoundInclusive
         glBindTexture(GL_TEXTURE_2D, id)
         glReadPixels(
-            0,
-            0,
-            sprite.width,
-            sprite.height,
+            lowerBoundInclusive.x,
+            lowerBoundInclusive.y,
+            pixmap.width,
+            pixmap.height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            sprite.pixmap.internalBuffer.clear(),
+            pixmap.pixelsData,
         )
     }
 
@@ -347,7 +352,7 @@ internal data object GL33Renderer : Renderer {
 private class QuadInfo private constructor(
     val program: Program,
     val quadBuffer: QuadBuffer,
-    val emptyDecal: Decal,
+    val emptyDecal: SpriteDecal,
 ) : KGEInternalResource {
     override fun close() = invokeForAll(program, quadBuffer, emptyDecal, emptyDecal.sprite) { it.close() }
 
@@ -381,10 +386,8 @@ private class QuadInfo private constructor(
             ).closeIfFailed { program ->
                 QuadBuffer().closeIfFailed { quadBuffer ->
                     Sprite.create(1, 1, defaultPixel = Colors.WHITE).closeIfFailed { sprite ->
-                        Decal(sprite).closeIfFailed { decal ->
-                            QuadInfo(program, quadBuffer, decal).applyAndCloseIfFailed {
-                                window.bindResource(it)
-                            }
+                        SpriteDecal(sprite).closeIfFailed { decal ->
+                            QuadInfo(program, quadBuffer, decal).applyAndCloseIfFailed(window::bindResource)
                         }
                     }
                 }

@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.spi.KGESPIExtensible
@@ -11,7 +11,7 @@ interface DrawRectService : KGESPIExtensible {
         diagonalStart: Int2D,
         diagonalEnd: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
@@ -21,7 +21,7 @@ interface DrawRectService : KGESPIExtensible {
         diagonalEndX: Int,
         diagonalEndY: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 }
@@ -31,7 +31,7 @@ internal object DefaultDrawRectService : DrawRectService {
         diagonalStart: Int2D,
         diagonalEnd: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = drawRect(diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, target, pixelMode)
 
@@ -41,7 +41,7 @@ internal object DefaultDrawRectService : DrawRectService {
         diagonalEndX: Int,
         diagonalEndY: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
         // Top edge

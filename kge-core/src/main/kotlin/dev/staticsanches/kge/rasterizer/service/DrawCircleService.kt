@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.utils.CircleOctantMask
@@ -14,7 +14,7 @@ interface DrawCircleService : KGESPIExtensible {
         radius: Int,
         mask: CircleOctantMask,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
@@ -24,7 +24,7 @@ interface DrawCircleService : KGESPIExtensible {
         radius: Int,
         mask: CircleOctantMask,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 }
@@ -35,7 +35,7 @@ internal object DefaultDrawCircleService : DrawCircleService {
         radius: Int,
         mask: CircleOctantMask,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = drawCircle(center.x, center.y, radius, mask, color, target, pixelMode)
 
@@ -45,7 +45,7 @@ internal object DefaultDrawCircleService : DrawCircleService {
         radius: Int,
         mask: CircleOctantMask,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
         if (

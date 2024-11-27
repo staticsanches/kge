@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.rasterizer.Rasterizer
@@ -13,7 +13,7 @@ interface DrawLineService : KGESPIExtensible {
         start: Int2D,
         end: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
@@ -23,7 +23,7 @@ interface DrawLineService : KGESPIExtensible {
         endX: Int,
         endY: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 }
@@ -33,7 +33,7 @@ internal object DefaultDrawLineService : DrawLineService {
         start: Int2D,
         end: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = BresenhamLine(start, end, target).forEach { Rasterizer.draw(it, color, target, pixelMode) }
 
@@ -43,7 +43,7 @@ internal object DefaultDrawLineService : DrawLineService {
         endX: Int,
         endY: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = drawLine(startX by startY, endX by endY, color, target, pixelMode)
 

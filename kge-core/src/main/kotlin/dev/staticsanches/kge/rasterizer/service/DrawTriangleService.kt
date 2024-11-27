@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.rasterizer.Rasterizer
@@ -14,7 +14,7 @@ interface DrawTriangleService : KGESPIExtensible {
         p1: Int2D,
         p2: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
@@ -26,7 +26,7 @@ interface DrawTriangleService : KGESPIExtensible {
         x2: Int,
         y2: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 }
@@ -37,7 +37,7 @@ internal object DefaultDrawTriangleService : DrawTriangleService {
         p1: Int2D,
         p2: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = innerDrawTriangle(SortedTriangleVertices(p0, p1, p2), color, target, pixelMode)
 
@@ -49,14 +49,14 @@ internal object DefaultDrawTriangleService : DrawTriangleService {
         x2: Int,
         y2: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = innerDrawTriangle(SortedTriangleVertices(x0 by y0, x1 by y1, x2 by y2), color, target, pixelMode)
 
     private fun innerDrawTriangle(
         vertices: SortedTriangleVertices,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
         val (p0, p1, p2) = vertices

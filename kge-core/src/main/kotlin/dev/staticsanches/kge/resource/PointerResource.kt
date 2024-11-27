@@ -2,12 +2,12 @@ package dev.staticsanches.kge.resource
 
 import dev.staticsanches.kge.utils.pointerRepresentation
 
-class PointerResource(
+internal class PointerResource(
     type: String,
     extraInfo: String,
     handleCreator: () -> Long,
     handleDeleter: (Long) -> KGECleanAction,
-) : KGEResource {
+) : KGEInternalResource {
     constructor(
         type: String,
         handleCreator: () -> Long,
@@ -16,7 +16,7 @@ class PointerResource(
 
     val handle: Long
         get() {
-            check(!cleanable.cleaned) { "$representation has already been released and can not be used" }
+            check(!cleanable.cleaned) { "$representation has already been closed and can not be used" }
             return field
         }
 
@@ -32,5 +32,5 @@ class PointerResource(
 
     override fun close() = cleanable.clean()
 
-    override fun toString(): String = if (cleanable.cleaned) "$representation (released)" else representation
+    override fun toString(): String = if (cleanable.cleaned) "$representation (closed)" else representation
 }

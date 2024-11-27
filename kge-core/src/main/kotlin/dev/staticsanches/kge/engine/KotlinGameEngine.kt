@@ -40,7 +40,7 @@ import org.lwjgl.system.Platform
 import java.lang.IllegalStateException
 
 @KGEAllOpen
-class KotlinGameEngine<KGE : KotlinGameEngine<KGE>>(
+abstract class KotlinGameEngine<KGE : KotlinGameEngine<KGE>>(
     val appName: String,
 ) : CallbacksAddon,
     ClearAddon,

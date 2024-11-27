@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.pixelmap.PixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.by
 import dev.staticsanches.kge.rasterizer.Rasterizer
@@ -18,7 +18,7 @@ interface FillTriangleService : KGESPIExtensible {
         p1: Int2D,
         p2: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
@@ -30,7 +30,7 @@ interface FillTriangleService : KGESPIExtensible {
         x2: Int,
         y2: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 }
@@ -41,7 +41,7 @@ internal object DefaultFillTriangleService : FillTriangleService {
         p1: Int2D,
         p2: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = innerFillTriangle(SortedTriangleVertices(p0, p1, p2), color, target, pixelMode)
 
@@ -53,14 +53,14 @@ internal object DefaultFillTriangleService : FillTriangleService {
         x2: Int,
         y2: Int,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = innerFillTriangle(SortedTriangleVertices(x0 by y0, x1 by y1, x2 by y2), color, target, pixelMode)
 
     private fun innerFillTriangle(
         vertices: SortedTriangleVertices,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
         val (p0, p1, p2) = vertices
@@ -101,7 +101,7 @@ internal object DefaultFillTriangleService : FillTriangleService {
         p2: Int2D,
         color: Pixel,
         skipFirst: Boolean,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
         check(p0.y == p1.y)
@@ -124,7 +124,7 @@ internal object DefaultFillTriangleService : FillTriangleService {
         nextLeft: Int2D,
         nextRight: Int2D,
         color: Pixel,
-        target: PixelMap,
+        target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
         val y = nextLeft.y

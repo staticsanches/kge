@@ -1,10 +1,11 @@
+@file:Suppress("unused")
+
 package dev.staticsanches.kge.image.pixelmap
 
 import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.math.vector.IntZeroByZero
 import dev.staticsanches.kge.rasterizer.Viewport
 import kotlin.math.floor
 import kotlin.math.max
@@ -34,12 +35,6 @@ interface PixelMap :
      */
     val size: Int2D
 
-    override val lowerBoundInclusive: Int2D
-        get() = IntZeroByZero
-
-    override val upperBoundExclusive: Int2D
-        get() = size
-
     operator fun get(
         x: Int,
         y: Int,
@@ -52,53 +47,19 @@ interface PixelMap :
         return uncheckedGet(x, y)
     }
 
-    operator fun set(
-        x: Int,
-        y: Int,
-        pixel: Pixel,
-    ): Boolean = x in 0..<width && y in 0..<height && uncheckedSet(x, y, pixel)
-
     fun uncheckedGet(
         x: Int,
         y: Int,
     ): Pixel
-
-    fun uncheckedSet(
-        x: Int,
-        y: Int,
-        pixel: Pixel,
-    ): Boolean
-
-    fun clear(pixel: Pixel)
-
-    fun clear(pixelByXY: (x: Int, y: Int) -> Pixel)
-
-    fun inv()
 
     fun getPixel(
         x: Int,
         y: Int,
     ): Pixel = this[x, y]
 
-    fun setPixel(
-        x: Int,
-        y: Int,
-        pixel: Pixel,
-    ): Boolean = set(x, y, pixel)
-
     fun getPixel(position: Int2D): Pixel = this[position]
 
-    fun setPixel(
-        position: Int2D,
-        pixel: Pixel,
-    ): Boolean = set(position, pixel)
-
     operator fun get(position: Int2D): Pixel = this[position.x, position.y]
-
-    operator fun set(
-        position: Int2D,
-        pixel: Pixel,
-    ): Boolean = set(position.x, position.y, pixel)
 
     fun sample(uv: Float2D): Pixel = sample(uv.x, uv.y)
 
@@ -145,8 +106,6 @@ interface PixelMap :
         return Pixel.rgba(calculateComponent(Pixel::r), calculateComponent(Pixel::g), calculateComponent(Pixel::b))
     }
 
-    fun duplicate(): PixelMap
-
     override fun iterator(): Iterator<Pixel> =
         iterator {
             for (y in 0..<height) {
@@ -155,4 +114,43 @@ interface PixelMap :
                 }
             }
         }
+}
+
+/**
+ * [PixelMap] that allows modifications of its [Pixel]s.
+ */
+interface MutablePixelMap : PixelMap {
+    operator fun set(
+        x: Int,
+        y: Int,
+        pixel: Pixel,
+    ): Boolean = x in 0..<width && y in 0..<height && uncheckedSet(x, y, pixel)
+
+    fun uncheckedSet(
+        x: Int,
+        y: Int,
+        pixel: Pixel,
+    ): Boolean
+
+    fun clear(pixel: Pixel)
+
+    fun clear(pixelByXY: (x: Int, y: Int) -> Pixel)
+
+    fun inv()
+
+    fun setPixel(
+        x: Int,
+        y: Int,
+        pixel: Pixel,
+    ): Boolean = set(x, y, pixel)
+
+    fun setPixel(
+        position: Int2D,
+        pixel: Pixel,
+    ): Boolean = set(position, pixel)
+
+    operator fun set(
+        position: Int2D,
+        pixel: Pixel,
+    ): Boolean = set(position.x, position.y, pixel)
 }
