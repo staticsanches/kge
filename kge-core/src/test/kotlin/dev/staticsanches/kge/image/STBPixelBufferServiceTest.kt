@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.image
 
-import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.image.Colors.BLACK
 import dev.staticsanches.kge.image.Colors.BLANK
 import dev.staticsanches.kge.image.Colors.BLUE
@@ -17,7 +16,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@OptIn(KGESensitiveAPI::class)
 class STBPixelBufferServiceTest {
     @Test
     fun checkCreate_function() =

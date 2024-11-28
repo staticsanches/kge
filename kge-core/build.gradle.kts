@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.bundles.logging)
 
     testImplementation(kotlin("test"))
+    testImplementation(kotlin("reflect"))
     testImplementation(libs.junit)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
@@ -55,6 +56,14 @@ allOpen {
 tasks.named("compileKotlin", KotlinCompilationTask::class.java) {
     compilerOptions {
         freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.annotations.KGESensitiveAPI")
+        freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.endian.KGEEndianDependent")
+    }
+}
+
+tasks.named("compileTestKotlin", KotlinCompilationTask::class.java) {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.annotations.KGESensitiveAPI")
+        freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.endian.KGEEndianDependent")
     }
 }
 

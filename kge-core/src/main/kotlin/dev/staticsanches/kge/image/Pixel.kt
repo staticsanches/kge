@@ -84,7 +84,7 @@ value class Pixel
             ) : Mode {
                 constructor(
                     blendFactor: Float = 1f,
-                    @Suppress("UNUSED_PARAMETER") parameterToAvoidPlatformDeclarationClash: Boolean = true,
+                    @Suppress("unused") parameterToAvoidPlatformDeclarationClash: Boolean = true,
                 ) : this(max(0f, min(1f, blendFactor)))
             }
 
@@ -115,7 +115,6 @@ value class Pixel
                 }
         }
 
-        @OptIn(KGEEndianDependent::class)
         companion object {
             fun rgba(rgba: UInt): Pixel = Pixel(toNativeRGBA(rgba.toInt()))
 
