@@ -1,4 +1,4 @@
-name: Build on multiple OSs
+name: Build on Multiple OSs
 
 on:
   push:
