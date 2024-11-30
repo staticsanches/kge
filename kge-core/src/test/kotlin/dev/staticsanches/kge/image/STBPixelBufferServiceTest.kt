@@ -140,6 +140,7 @@ class STBPixelBufferServiceTest {
         get() = STBPixelBufferServiceTest::class.java.getResource("/xmas_5x5.png")!!
     private val xmas5x5GithubURL: URL =
         URI(
-            "https://raw.githubusercontent.com/staticsanches/kge/refs/heads/main/kge-core/src/test/resources/xmas_5x5.png",
+            "https://raw.githubusercontent.com/staticsanches/kge/refs/" +
+                "heads/main/kge-core/src/test/resources/xmas_5x5.png",
         ).toURL()
 }
