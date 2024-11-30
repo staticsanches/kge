@@ -13,7 +13,7 @@ annotation class MockSPIFile(
 
 val Class<*>.mockedSPIFiles: List<KGEMockableRunner.Resource>
     get() {
-        val mockedTypes = LinkedHashMap<KClass<*>, MutableSet<KClass<*>>>()
+        val mockedTypes = LinkedHashMap<KClass<*>, LinkedHashSet<KClass<*>>>()
         getAnnotationsByType(MockSPIFile::class.java).forEach { ann ->
             mockedTypes
                 .computeIfAbsent(ann.target) { LinkedHashSet<KClass<*>>() }

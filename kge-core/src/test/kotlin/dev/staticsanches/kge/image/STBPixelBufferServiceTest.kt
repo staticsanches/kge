@@ -9,6 +9,7 @@ import dev.staticsanches.kge.image.Colors.RED
 import dev.staticsanches.kge.image.Colors.YELLOW
 import dev.staticsanches.kge.image.service.PixelBufferService
 import dev.staticsanches.kge.math.vector.by
+import java.net.URI
 import java.net.URL
 import java.nio.file.Files
 import kotlin.io.path.toPath
@@ -51,6 +52,9 @@ class STBPixelBufferServiceTest {
                     .toAbsolutePath()
                     .toString(),
             ).use { it.fullCheck() }
+
+    @Test
+    fun checkLoadFromWeb() = Sprite.load(xmas5x5GithubURL).use { it.fullCheck() }
 
     private fun Sprite.fullCheck() {
         this.validateXmas5By5PngPixels()
@@ -134,4 +138,8 @@ class STBPixelBufferServiceTest {
 
     private val xmas5x5URL: URL
         get() = STBPixelBufferServiceTest::class.java.getResource("/xmas_5x5.png")!!
+    private val xmas5x5GithubURL: URL =
+        URI(
+            "https://raw.githubusercontent.com/staticsanches/kge/refs/heads/main/kge-core/src/test/resources/xmas_5x5.png",
+        ).toURL()
 }
