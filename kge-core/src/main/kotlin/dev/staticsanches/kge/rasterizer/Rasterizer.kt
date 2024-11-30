@@ -5,6 +5,7 @@ import dev.staticsanches.kge.rasterizer.service.DefaultClearService
 import dev.staticsanches.kge.rasterizer.service.DefaultDrawCircleService
 import dev.staticsanches.kge.rasterizer.service.DefaultDrawDecalService
 import dev.staticsanches.kge.rasterizer.service.DefaultDrawLineService
+import dev.staticsanches.kge.rasterizer.service.DefaultDrawPartialDecalService
 import dev.staticsanches.kge.rasterizer.service.DefaultDrawPartialSpriteService
 import dev.staticsanches.kge.rasterizer.service.DefaultDrawRectService
 import dev.staticsanches.kge.rasterizer.service.DefaultDrawService
@@ -16,6 +17,7 @@ import dev.staticsanches.kge.rasterizer.service.DefaultFillTriangleService
 import dev.staticsanches.kge.rasterizer.service.DrawCircleService
 import dev.staticsanches.kge.rasterizer.service.DrawDecalService
 import dev.staticsanches.kge.rasterizer.service.DrawLineService
+import dev.staticsanches.kge.rasterizer.service.DrawPartialDecalService
 import dev.staticsanches.kge.rasterizer.service.DrawPartialSpriteService
 import dev.staticsanches.kge.rasterizer.service.DrawRectService
 import dev.staticsanches.kge.rasterizer.service.DrawService
@@ -32,6 +34,7 @@ data object Rasterizer :
     DrawCircleService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultDrawCircleService,
     DrawDecalService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultDrawDecalService,
     DrawLineService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultDrawLineService,
+    DrawPartialDecalService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultDrawPartialDecalService,
     DrawPartialSpriteService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultDrawPartialSpriteService,
     DrawRectService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultDrawRectService,
     DrawSpriteService by KGESPIExtensible.getOptionalWithHigherPriority() ?: DefaultDrawSpriteService,

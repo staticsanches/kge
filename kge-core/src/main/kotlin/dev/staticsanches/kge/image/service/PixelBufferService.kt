@@ -6,7 +6,7 @@ import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBBuffer
 import dev.staticsanches.kge.resource.KGECleanAction
-import dev.staticsanches.kge.resource.OffHeapBuffer
+import dev.staticsanches.kge.resource.OffHeapByteBuffer
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.invokeIfFailed
 import dev.staticsanches.kge.resource.use
@@ -69,14 +69,13 @@ internal data object STBPixelBufferService : PixelBufferService {
         width: Int,
         height: Int,
     ): PB =
-        OffHeapBuffer(type.expectedBufferCapacity(width, height)).invokeIfFailed { offHeapBuffer ->
-            val buffer = offHeapBuffer.buffer
+        OffHeapByteBuffer(type.expectedBufferCapacity(width, height)).invokeIfFailed { (buffer, cleanAction) ->
             @Suppress("UNCHECKED_CAST")
-            return@invokeIfFailed when (val t: PixelBuffer.Type<PB, T> = type) {
-                PixelBuffer.Type.RGBA -> RGBABuffer(width, height, buffer, offHeapBuffer)
-                is PixelBuffer.Type.RGB -> RGBBuffer(width, height, t, buffer, offHeapBuffer)
-                is PixelBuffer.Type.Grayscale -> GrayscaleBuffer(width, height, t, buffer, offHeapBuffer)
-                is PixelBuffer.Type.Bitmap -> BitmapBuffer(width, height, t, buffer, offHeapBuffer)
+            when (val t: PixelBuffer.Type<PB, T> = type) {
+                PixelBuffer.Type.RGBA -> RGBABuffer(width, height, buffer, cleanAction)
+                is PixelBuffer.Type.RGB -> RGBBuffer(width, height, t, buffer, cleanAction)
+                is PixelBuffer.Type.Grayscale -> GrayscaleBuffer(width, height, t, buffer, cleanAction)
+                is PixelBuffer.Type.Bitmap -> BitmapBuffer(width, height, t, buffer, cleanAction)
             } as PB
         }
 
@@ -99,9 +98,9 @@ internal data object STBPixelBufferService : PixelBufferService {
             val height = stack.mallocInt(1)
             val components = stack.mallocInt(1)
 
-            OffHeapBuffer(isProvider).use { offHeapBuffer ->
+            OffHeapByteBuffer(isProvider).use { (buffer) ->
                 STBBuffer(
-                    STBImage.stbi_load_from_memory(offHeapBuffer.buffer, width, height, components, 4)
+                    STBImage.stbi_load_from_memory(buffer, width, height, components, 4)
                         ?: throw RuntimeException("Unable to load image"),
                 ).invokeIfFailed { stbBuffer -> RGBABuffer(width[0], height[0], stbBuffer.buffer, stbBuffer) }
             }

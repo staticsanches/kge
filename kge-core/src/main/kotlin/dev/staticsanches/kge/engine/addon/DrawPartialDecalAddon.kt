@@ -5,13 +5,28 @@ import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.FloatOneByOne
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
-interface DrawDecalAddon : WindowDependentAddon {
-    fun drawDecal(
+interface DrawPartialDecalAddon : WindowDependentAddon {
+    fun drawPartialDecal(
         position: Float2D,
         decal: Decal,
+        sourcePosition: Int2D,
+        sourceSize: Int2D,
         scale: Float2D = FloatOneByOne,
         tint: Pixel = Colors.WHITE,
-    ) = Rasterizer.drawDecal(position, decal, scale, tint, invertedScreenSize, decalMode, decalStructure, targetLayer)
+    ) = Rasterizer.drawPartialDecal(
+        position,
+        decal,
+        sourcePosition,
+        sourceSize,
+        scale,
+        tint,
+        screenSize,
+        invertedScreenSize,
+        decalMode,
+        decalStructure,
+        targetLayer,
+    )
 }

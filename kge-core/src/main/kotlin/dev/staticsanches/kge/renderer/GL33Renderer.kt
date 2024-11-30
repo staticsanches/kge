@@ -18,7 +18,8 @@ import dev.staticsanches.kge.resource.KGECleanable
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGELeakDetector
 import dev.staticsanches.kge.resource.KGEResource
-import dev.staticsanches.kge.resource.OffHeapBuffer
+import dev.staticsanches.kge.resource.OffHeapByteBuffer
+import dev.staticsanches.kge.resource.OffHeapIntBuffer
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
 import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.utils.invokeForAll
@@ -85,6 +86,7 @@ import org.lwjgl.opengl.GL33.glGenTextures
 import org.lwjgl.opengl.GL33.glGenVertexArrays
 import org.lwjgl.opengl.GL33.glHint
 import org.lwjgl.opengl.GL33.glLinkProgram
+import org.lwjgl.opengl.GL33.glMultiDrawArrays
 import org.lwjgl.opengl.GL33.glReadPixels
 import org.lwjgl.opengl.GL33.glShaderSource
 import org.lwjgl.opengl.GL33.glTexImage2D
@@ -94,6 +96,7 @@ import org.lwjgl.opengl.GL33.glUseProgram
 import org.lwjgl.opengl.GL33.glVertexAttribPointer
 import org.lwjgl.opengl.GL33.glViewport
 import java.nio.ByteBuffer
+import java.nio.IntBuffer
 
 private val logger = KotlinLogging.logger { }
 
@@ -250,13 +253,22 @@ internal data object GL33Renderer : Renderer {
         var index = 0
         while (index < decals.size) {
             val current = decals[index++]
+
             var availableVertices = MAX_NUMBER_OF_VERTICES
             val buffer =
                 quadInfo.quadBuffer.bufferResource.buffer
                     .clear()
 
+            var nextFirst = 0
+            val firstBuffer = quadInfo.firstBuffer.buffer.clear()
+            val countBuffer = quadInfo.countBuffer.buffer.clear()
+
             fun collect(decal: DecalInstance) =
                 with(decal.verticesInfo) {
+                    firstBuffer.put(nextFirst)
+                    countBuffer.put(numberOfVertices)
+                    nextFirst += numberOfVertices
+
                     availableVertices -= numberOfVertices
                     putAllXYWUVTint(buffer)
                 }
@@ -284,7 +296,8 @@ internal data object GL33Renderer : Renderer {
                 buffer.flip(),
                 GL_STREAM_DRAW,
             )
-            glDrawArrays(
+
+            glMultiDrawArrays(
                 if (current.mode == Decal.Mode.WIREFRAME) {
                     GL_LINE_LOOP
                 } else {
@@ -295,8 +308,8 @@ internal data object GL33Renderer : Renderer {
                         Decal.Structure.LIST -> GL_TRIANGLES
                     }
                 },
-                0,
-                MAX_NUMBER_OF_VERTICES - availableVertices,
+                firstBuffer.flip(),
+                countBuffer.flip(),
             )
         }
     }
@@ -354,7 +367,11 @@ private class QuadInfo private constructor(
     val quadBuffer: QuadBuffer,
     val emptyDecal: SpriteDecal,
 ) : KGEInternalResource {
-    override fun close() = invokeForAll(program, quadBuffer, emptyDecal, emptyDecal.sprite) { it.close() }
+    val firstBuffer = IntBufferResource("First Buffer", MAX_NUMBER_OF_VERTICES / 3)
+    val countBuffer = IntBufferResource("Count Buffer", MAX_NUMBER_OF_VERTICES / 3)
+
+    override fun close() =
+        invokeForAll(firstBuffer, countBuffer, program, quadBuffer, emptyDecal, emptyDecal.sprite) { it.close() }
 
     companion object {
         operator fun invoke(window: Window): QuadInfo =
@@ -495,9 +512,26 @@ private class ByteBufferResource(
     private val cleanable: KGECleanable
 
     init {
-        val offHeapBuffer = OffHeapBuffer(size)
+        val offHeapBuffer = OffHeapByteBuffer(size)
         buffer = offHeapBuffer.buffer
         cleanable = KGELeakDetector.register(this, "Quad Byte Buffer", offHeapBuffer)
+    }
+
+    @KGESensitiveAPI
+    override fun close() = cleanable.clean()
+}
+
+private class IntBufferResource(
+    name: String,
+    size: Int,
+) : KGEInternalResource {
+    val buffer: IntBuffer
+    private val cleanable: KGECleanable
+
+    init {
+        val offHeapBuffer = OffHeapIntBuffer(size)
+        buffer = offHeapBuffer.buffer
+        cleanable = KGELeakDetector.register(this, name, offHeapBuffer)
     }
 
     @KGESensitiveAPI

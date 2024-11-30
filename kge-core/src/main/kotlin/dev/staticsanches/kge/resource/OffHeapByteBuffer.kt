@@ -5,18 +5,22 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 
 @JvmInline
-internal value class OffHeapBuffer private constructor(
+internal value class OffHeapByteBuffer private constructor(
     val buffer: ByteBuffer,
 ) : KGECleanAction {
     constructor(size: Int) : this(MemoryUtil.memAlloc(size))
 
+    operator fun component1(): ByteBuffer = buffer
+
+    operator fun component2(): KGECleanAction = this
+
     override fun invoke() = MemoryUtil.memFree(buffer.clear())
 
     companion object {
-        operator fun invoke(isProvider: () -> InputStream): OffHeapBuffer =
+        operator fun invoke(isProvider: () -> InputStream): OffHeapByteBuffer =
             isProvider().use { stream ->
                 val bytes = stream.readAllBytes()
-                OffHeapBuffer(bytes.size).applyAndInvokeIfFailed { it.buffer.put(bytes).clear() }
+                OffHeapByteBuffer(bytes.size).applyAndInvokeIfFailed { it.buffer.put(bytes).clear() }
             }
     }
 }

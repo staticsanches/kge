@@ -8,6 +8,7 @@ import dev.staticsanches.kge.engine.addon.DrawAddon
 import dev.staticsanches.kge.engine.addon.DrawCircleAddon
 import dev.staticsanches.kge.engine.addon.DrawDecalAddon
 import dev.staticsanches.kge.engine.addon.DrawLineAddon
+import dev.staticsanches.kge.engine.addon.DrawPartialDecalAddon
 import dev.staticsanches.kge.engine.addon.DrawPartialSpriteAddon
 import dev.staticsanches.kge.engine.addon.DrawRectAddon
 import dev.staticsanches.kge.engine.addon.DrawSpriteAddon
@@ -48,6 +49,7 @@ abstract class KotlinGameEngine<KGE : KotlinGameEngine<KGE>>(
     DrawCircleAddon,
     DrawDecalAddon,
     DrawLineAddon,
+    DrawPartialDecalAddon,
     DrawPartialSpriteAddon,
     DrawRectAddon,
     DrawSpriteAddon,
