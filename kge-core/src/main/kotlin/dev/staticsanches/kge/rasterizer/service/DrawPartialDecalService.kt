@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.Decal
+import dev.staticsanches.kge.image.PartialDecal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
@@ -12,6 +13,18 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 interface DrawPartialDecalService : KGESPIExtensible {
+    fun drawPartialDecal(
+        position: Float2D,
+        partialDecal: PartialDecal,
+        scale: Float2D,
+        tint: Pixel,
+        screenSize: Int2D,
+        invertedScreenSize: Float2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        targetLayer: LayerDescriptor,
+    )
+
     fun drawPartialDecal(
         position: Float2D,
         decal: Decal,
@@ -28,6 +41,30 @@ interface DrawPartialDecalService : KGESPIExtensible {
 }
 
 internal object DefaultDrawPartialDecalService : DrawPartialDecalService {
+    override fun drawPartialDecal(
+        position: Float2D,
+        partialDecal: PartialDecal,
+        scale: Float2D,
+        tint: Pixel,
+        screenSize: Int2D,
+        invertedScreenSize: Float2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        targetLayer: LayerDescriptor,
+    ) = drawPartialDecal(
+        position,
+        partialDecal,
+        partialDecal.lowerBoundInclusive,
+        partialDecal.size,
+        scale,
+        tint,
+        screenSize,
+        invertedScreenSize,
+        decalMode,
+        decalStructure,
+        targetLayer,
+    )
+
     override fun drawPartialDecal(
         position: Float2D,
         decal: Decal,

@@ -4,7 +4,7 @@ package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.annotations.KGEAllOpen
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.image.pixelmap.MutableRGBAPixelMap
+import dev.staticsanches.kge.image.pixelmap.MutablePixelMapWithRGBAData
 import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type.RGBA
 import dev.staticsanches.kge.image.pixelmap.buffer.RGBABuffer
 import dev.staticsanches.kge.image.service.PixelBufferService
@@ -24,7 +24,7 @@ import kotlin.math.min
 class Sprite(
     @property:KGESensitiveAPI val pixmap: RGBABuffer,
     var sampleMode: SampleMode,
-) : MutableRGBAPixelMap by pixmap,
+) : MutablePixelMapWithRGBAData by pixmap,
     KGEResource by pixmap {
     override operator fun get(
         x: Int,

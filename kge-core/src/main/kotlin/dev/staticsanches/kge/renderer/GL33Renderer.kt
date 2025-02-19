@@ -7,8 +7,8 @@ import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.SpriteDecal
-import dev.staticsanches.kge.image.pixelmap.OptionalRGBAPixelMap
-import dev.staticsanches.kge.image.pixelmap.RGBAPixelMap
+import dev.staticsanches.kge.image.WithOptionalRGBAData
+import dev.staticsanches.kge.image.WithRGBAData
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.QuadBuffer.Companion.MAX_NUMBER_OF_VERTICES
@@ -176,55 +176,58 @@ internal data object GL33Renderer : Renderer {
 
     override fun initializeTexture(
         id: Int,
-        pixmap: OptionalRGBAPixelMap,
+        withOptionalRGBAData: WithOptionalRGBAData,
     ) {
+        val (width, height) = withOptionalRGBAData.size
         glBindTexture(GL_TEXTURE_2D, id)
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
             GL_RGBA,
-            pixmap.width,
-            pixmap.height,
+            width,
+            height,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            pixmap.pixelsData,
+            withOptionalRGBAData.rgbaData,
         )
     }
 
     override fun updateTexture(
         id: Int,
-        pixmap: RGBAPixelMap,
+        withRGBAData: WithRGBAData,
     ) {
-        val lowerBoundInclusive = pixmap.lowerBoundInclusive
+        val (x, y) = withRGBAData.lowerBoundInclusive
+        val (width, height) = withRGBAData.size
         glBindTexture(GL_TEXTURE_2D, id)
         glTexSubImage2D(
             GL_TEXTURE_2D,
             0,
-            lowerBoundInclusive.x,
-            lowerBoundInclusive.y,
-            pixmap.width,
-            pixmap.height,
+            x,
+            y,
+            width,
+            height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            pixmap.pixelsData,
+            withRGBAData.rgbaData,
         )
     }
 
     override fun readTexture(
         id: Int,
-        pixmap: RGBAPixelMap,
+        withRGBAData: WithRGBAData,
     ) {
-        val lowerBoundInclusive = pixmap.lowerBoundInclusive
+        val (x, y) = withRGBAData.lowerBoundInclusive
+        val (width, height) = withRGBAData.size
         glBindTexture(GL_TEXTURE_2D, id)
         glReadPixels(
-            lowerBoundInclusive.x,
-            lowerBoundInclusive.y,
-            pixmap.width,
-            pixmap.height,
+            x,
+            y,
+            width,
+            height,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            pixmap.pixelsData,
+            withRGBAData.rgbaData,
         )
     }
 

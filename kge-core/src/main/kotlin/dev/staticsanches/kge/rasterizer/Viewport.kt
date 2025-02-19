@@ -25,7 +25,10 @@ sealed interface Viewport {
      */
     interface Bounded :
         LowerBounded,
-        UpperBounded
+        UpperBounded {
+        val size: Int2D
+            get() = upperBoundExclusive - lowerBoundInclusive
+    }
 
     /**
      * A [Viewport] that does not have any bounds.

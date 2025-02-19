@@ -2,7 +2,9 @@
 
 package dev.staticsanches.kge.font
 
+import dev.staticsanches.kge.font.FreeTypeFace.SizedFace
 import dev.staticsanches.kge.resource.KGECleanAction
+import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.utils.invokeForAll
@@ -10,6 +12,9 @@ import dev.staticsanches.kge.utils.invokeForAllRemoving
 import java.io.InputStream
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * Represents a typeface (with a [faceIndex] on a loaded file) and does not have size information.
@@ -18,16 +23,33 @@ import java.util.concurrent.ConcurrentHashMap
  * manipulating text using this font face.
  */
 class TypeFace private constructor(
-    internal val internalFace: FreeTypeFace,
+    private val face: FreeTypeFace,
 ) : KGEResource {
-    val faceIndex: Long by internalFace::faceIndex
-    val name: String by internalFace::name
+    val faceIndex: Long by face::faceIndex
+    val name: String by face::name
 
-    private val shapers = ConcurrentHashMap<Int, HarfBuzzShaper>()
+    private val atlases = ConcurrentHashMap<Int, GlyphAtlas>()
 
-    internal fun shaper(size: Int): HarfBuzzShaper = shapers.computeIfAbsent(size) { HarfBuzzShaper(this, it) }
+    internal fun glyphIndex(codepoint: Int): Int = face.glyphIndex(codepoint)
 
-    override fun close() = invokeForAll(ShapersCleanAction(shapers.values)::invoke, internalFace::close) { it() }
+    internal fun atlas(size: Int): GlyphAtlas = atlases.computeIfAbsent(size) { GlyphAtlas(this, it) }
+
+    @OptIn(ExperimentalContracts::class)
+    internal inline fun <R> withSize(
+        size: Int,
+        block: (face: SizedFace) -> R,
+    ): R {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
+        return face.withSize(size, block)
+    }
+
+    override fun close() =
+        invokeForAll(
+            RelatedResourcesCleaner(atlases.values)::invoke,
+            face::close,
+        ) { it() }
 
     override fun toString(): String = name
 
@@ -50,8 +72,8 @@ class TypeFace private constructor(
 }
 
 @JvmInline
-private value class ShapersCleanAction(
-    val shapers: MutableCollection<HarfBuzzShaper>,
+private value class RelatedResourcesCleaner(
+    val resources: MutableCollection<out KGEInternalResource>,
 ) : KGECleanAction {
-    override fun invoke() = shapers.invokeForAllRemoving { it.close() }
+    override fun invoke() = resources.invokeForAllRemoving { it.close() }
 }

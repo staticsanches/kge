@@ -2,10 +2,8 @@ package dev.staticsanches.kge.font
 
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.math.vector.Int2D
-import org.lwjgl.system.MemoryStack
-import java.nio.IntBuffer
-import java.util.Locale
+import java.util.stream.Stream
+import kotlin.streams.asSequence
 
 class TextShaper private constructor(
     initializer: Initializer,
@@ -16,29 +14,27 @@ class TextShaper private constructor(
     private val tabSize = initializer.tabSize
 
     // Variable control info
-    private var currentFace = initializer.face
-    private var currentSize = initializer.size
-    private var currentScriptTag = initializer.scriptTag
-    private var currentLanguageTag = initializer.languageTag
-    private var currentColor = initializer.color
+    var face = initializer.face
+    var size = initializer.size
+        set(value) {
+            check(value > 0) { "Invalid size: $value" }
+            field = value
+        }
+    var color = initializer.color
 
     // Accumulated values
     private val lines = mutableListOf(Line())
 
     fun append(
         text: CharSequence,
-        face: TypeFace = currentFace,
-        size: Int = currentSize,
-        scriptTag: ScriptTag = currentScriptTag,
-        languageTag: String = currentLanguageTag,
-        color: Pixel = currentColor,
+        face: TypeFace = this@TextShaper.face,
+        size: Int = this@TextShaper.size,
+        color: Pixel = this@TextShaper.color,
     ): TextShaper {
-        check(size >= 1)
-        currentFace = face
-        currentSize = size
-        currentScriptTag = scriptTag
-        currentLanguageTag = languageTag
-        currentColor = color
+        check(size > 0)
+        this@TextShaper.face = face
+        this@TextShaper.size = size
+        this@TextShaper.color = color
 
         val iterator = lineBreakPattern.split(text).iterator()
         lines.last() += iterator.next()
@@ -50,38 +46,30 @@ class TextShaper private constructor(
         append(text)
     }
 
-    fun shape(
-        topLeftCorner: Int2D,
-        shapedGlyphs: MutableList<ShapedGlyph> = mutableListOf(),
-    ): MutableList<ShapedGlyph> {
-        MemoryStack.stackPush().use { memoryStack ->
-            val iterator = lines.iterator()
-            val firstLine = iterator.next()
-
-            val maxLineLength = lines.maxOf { it.codePoints().count() }.toInt()
-            val intBuffer = memoryStack.mallocInt(maxLineLength)
-
-            var baselineOrigin = topLeftCorner.toFPU2D() + (FPU(0) by firstLine.maxAscender)
-            baselineOrigin = firstLine.doShape(baselineOrigin, intBuffer, shapedGlyphs)
-            iterator.forEach {
-                baselineOrigin = it.shape(baselineOrigin, intBuffer, shapedGlyphs)
-            }
+    fun shape(): MutableList<ShapedGlyph> {
+        val shapedGlyphs = mutableListOf<ShapedGlyph>()
+        val iterator = lines.iterator()
+        val firstLine = iterator.next()
+        var baselineOrigin = FPU(0) by firstLine.maxAscender
+        baselineOrigin = firstLine.doShape(baselineOrigin, shapedGlyphs)
+        iterator.forEach { line ->
+            baselineOrigin = line.shape(baselineOrigin, shapedGlyphs)
         }
         return shapedGlyphs
     }
+
+    override fun toString(): String = lines.joinToString("\n")
 
     data class ShapedGlyph(
         val face: TypeFace,
         val size: Int,
         val glyphIndex: Int,
-        val penPosition: FPU2D,
         val color: Pixel,
+        val origin: FPU2D,
     )
 
     class Initializer internal constructor(
         val face: TypeFace,
-        var scriptTag: ScriptTag = ScriptTag.Latn,
-        var languageTag: String = Locale.getDefault().toLanguageTag(),
         var color: Pixel = Colors.BLACK,
     ) {
         var size: Int = 12
@@ -107,29 +95,28 @@ class TextShaper private constructor(
         private var tail: Piece = head
 
         private val maxHeight: FPU
-            get() = (this as Iterable<Piece>).maxBy { it.shaper.height.value }.shaper.height
+            get() = (this as Iterable<Piece>).asSequence().map { it.atlas.baselineToBaseline }.maxOrNull() ?: FPU(0)
         val maxAscender: FPU
-            get() = (this as Iterable<Piece>).maxBy { it.shaper.ascender.value }.shaper.ascender
+            get() =
+                (this as Iterable<Piece>)
+                    .asSequence()
+                    .flatMap { it.glyphs.asSequence() }
+                    .map { -it.bearing.y }
+                    .maxOrNull() ?: FPU(0)
 
         fun shape(
             lastBaselineOrigin: FPU2D,
-            intBuffer: IntBuffer,
             shapedGlyphs: MutableList<ShapedGlyph>,
-        ): FPU2D = doShape(lastBaselineOrigin + (FPU(0) by maxHeight), intBuffer, shapedGlyphs)
+        ): FPU2D = doShape(lastBaselineOrigin + (FPU(0) by maxHeight), shapedGlyphs)
 
         fun doShape(
             currentBaselineOrigin: FPU2D,
-            intBuffer: IntBuffer,
             shapedGlyphs: MutableList<ShapedGlyph>,
         ): FPU2D {
-            // Fill the buffer with the used codepoints
-            codePoints().forEach(intBuffer.clear()::put)
-
             var penPositionStart = currentBaselineOrigin
             forEach { piece ->
-                penPositionStart = piece.shape(penPositionStart, intBuffer, shapedGlyphs)
+                penPositionStart = piece.shape(penPositionStart, shapedGlyphs)
             }
-
             return currentBaselineOrigin
         }
 
@@ -153,52 +140,61 @@ class TextShaper private constructor(
             val startInclusive: Int,
             val codePointsStartInclusive: Int,
         ) {
-            val face = currentFace
-            val size = currentSize
-            val scriptTag = currentScriptTag
-            val languageTag = currentLanguageTag
-            val color = currentColor
+            val face = this@TextShaper.face
+            val size = this@TextShaper.size
+            val color = this@TextShaper.color
 
-            val shaper = face.shaper(size)
+            val atlas: GlyphAtlas
+                get() = face.atlas(size)
 
-            val isEmpty: Boolean
+            val glyphs: Stream<GlyphAtlas.GlyphInfo>
+                get() =
+                    text
+                        .codePoints()
+                        .skip(codePointsStartInclusive.toLong())
+                        .limit((codePointsEndExclusive - codePointsStartInclusive).toLong())
+                        .map(face::glyphIndex)
+                        .mapToObj(atlas::glyph)
+
+            private val isEmpty: Boolean
                 get() = codePointsStartInclusive == codePointsEndExclusive
 
             var next: Piece? = null
                 private set
 
-            var endExclusive: Int = startInclusive
-                private set
-            var codePointsEndExclusive: Int = codePointsStartInclusive
-                private set
+            private var endExclusive: Int = startInclusive
+            private var codePointsEndExclusive: Int = codePointsStartInclusive
 
             fun shape(
                 penPositionStart: FPU2D,
-                intBuffer: IntBuffer,
                 shapedGlyphs: MutableList<ShapedGlyph>,
             ): FPU2D {
                 if (isEmpty) {
                     return penPositionStart
                 }
-                return shaper.shape(
-                    codePoints = intBuffer.position(codePointsStartInclusive).limit(codePointsEndExclusive),
-                    language = languageTag,
-                    script = scriptTag,
-                    penPositionStart = penPositionStart,
-                    color = color,
-                    shapedGlyphs = shapedGlyphs,
-                )
+                var penPosition = penPositionStart
+                glyphs
+                    .forEach { glyph ->
+                        shapedGlyphs +=
+                            ShapedGlyph(
+                                face = face,
+                                size = size,
+                                glyphIndex = glyph.index,
+                                color = color,
+                                origin = penPosition,
+                            )
+                        penPosition += glyph.advance
+                    }
+                return penPosition
             }
 
             operator fun plus(otherText: String): Piece {
                 check(next == null) { "This piece is not the tail: $this" }
                 val piece =
                     if (
-                        face == currentFace &&
-                        size == currentSize &&
-                        scriptTag == currentScriptTag &&
-                        languageTag == currentLanguageTag &&
-                        color == currentColor
+                        this@Piece.face == this@TextShaper.face &&
+                        this@Piece.size == this@TextShaper.size &&
+                        this@Piece.color == this@TextShaper.color
                     ) {
                         this
                     } else {
@@ -213,8 +209,8 @@ class TextShaper private constructor(
                     }
                 }
 
-                piece.endExclusive += otherText.length
-                piece.codePointsEndExclusive += otherText.codePoints().count().toInt()
+                piece.endExclusive = text.length
+                piece.codePointsEndExclusive = text.codePointCount(0, text.length)
 
                 return piece
             }

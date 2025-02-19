@@ -3,8 +3,8 @@ package dev.staticsanches.kge.renderer
 import dev.staticsanches.kge.configuration.Configuration
 import dev.staticsanches.kge.engine.Window
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.pixelmap.OptionalRGBAPixelMap
-import dev.staticsanches.kge.image.pixelmap.RGBAPixelMap
+import dev.staticsanches.kge.image.WithOptionalRGBAData
+import dev.staticsanches.kge.image.WithRGBAData
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.spi.KGESPIExtensible
@@ -25,17 +25,17 @@ interface Renderer : KGESPIExtensible {
 
     fun initializeTexture(
         id: Int,
-        pixmap: OptionalRGBAPixelMap,
+        withOptionalRGBAData: WithOptionalRGBAData,
     )
 
     fun updateTexture(
         id: Int,
-        pixmap: RGBAPixelMap,
+        withRGBAData: WithRGBAData,
     )
 
     fun readTexture(
         id: Int,
-        pixmap: RGBAPixelMap,
+        withRGBAData: WithRGBAData,
     )
 
     fun applyTexture(id: Int)

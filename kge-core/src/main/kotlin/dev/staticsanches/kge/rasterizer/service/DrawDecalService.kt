@@ -54,8 +54,8 @@ internal object DefaultDrawDecalService : DrawDecalService {
         val screenSpacePosX = 2f * position.x * invertedScreenSize.x - 1f
         val screenSpacePosY = -2f * position.y * invertedScreenSize.y + 1f
 
-        val screenSpaceDimX = screenSpacePosX + 2f * decal.size.x * invertedScreenSize.x * scale.x
-        val screenSpaceDimY = screenSpacePosY - 2f * decal.size.y * invertedScreenSize.y * scale.y
+        val screenSpaceDimX = screenSpacePosX + 2f * decal.textureDimension.x * invertedScreenSize.x * scale.x
+        val screenSpaceDimY = screenSpacePosY - 2f * decal.textureDimension.y * invertedScreenSize.y * scale.y
 
         override val numberOfVertices: Int
             get() = 4

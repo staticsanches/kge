@@ -1,6 +1,6 @@
 package dev.staticsanches.kge.resource
 
-class IntResource(
+internal class IntResource(
     type: String,
     idCreator: () -> Int,
     idDeleter: (Int) -> KGECleanAction,
@@ -17,7 +17,7 @@ class IntResource(
     init {
         val id = idCreator()
         this.id = id
-        representation = "$type $id"
+        representation = "$type (id=$id)"
         cleanable = KGELeakDetector.register(this, representation, idDeleter(id))
     }
 

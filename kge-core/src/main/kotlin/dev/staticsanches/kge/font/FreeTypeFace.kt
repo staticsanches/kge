@@ -9,19 +9,19 @@ import dev.staticsanches.kge.resource.andThen
 import dev.staticsanches.kge.resource.invokeIfFailed
 import dev.staticsanches.kge.utils.pointerRepresentation
 import org.lwjgl.PointerBuffer
-import org.lwjgl.system.Configuration
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.util.freetype.FT_Face
 import org.lwjgl.util.freetype.FreeType
 import java.io.InputStream
 import java.lang.ref.WeakReference
 import java.net.URL
-import java.util.Collections
-import java.util.SortedMap
-import java.util.TreeMap
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 internal class FreeTypeFace private constructor(
     face: FT_Face,
@@ -30,54 +30,68 @@ internal class FreeTypeFace private constructor(
     val faceIndex: Long = face.face_index()
     val name: String = "${face.family_nameString()} (${face.style_nameString()})"
 
-    val glyphIndexByCodePoint: SortedMap<Int, Int>
-
     private val resource = PointerResource("FT_Face", "($name)", { face.address() }, handleDeleter)
     private val currentSize = AtomicInteger()
 
+    private val glyphIndexByCodepoint = ConcurrentHashMap<Int, Int>(face.num_glyphs().toInt())
+
+    init {
+        MemoryStack.stackPush().use { memoryStack ->
+            val indexBuffer = memoryStack.mallocInt(1)
+            var codepoint = FreeType.FT_Get_First_Char(face, indexBuffer)
+            var index = indexBuffer[0]
+            while (index != 0) {
+                glyphIndexByCodepoint[codepoint.toInt()] = index
+                codepoint = FreeType.FT_Get_Next_Char(face, codepoint, indexBuffer)
+                index = indexBuffer[0]
+            }
+        }
+    }
+
+    fun glyphIndex(codepoint: Int): Int = glyphIndexByCodepoint.computeIfAbsent(codepoint, ::findGlyphIndex)
+
+    @OptIn(ExperimentalContracts::class)
     inline fun <R> withSize(
         size: Int,
-        block: (face: FT_Face) -> R,
-    ): R =
+        block: (face: SizedFace) -> R,
+    ): R {
+        contract {
+            callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+        }
         synchronized(resource) {
-            check(size > 0) { "Size must be greater than 0" }
+            check(size > 0) { "[$this] Size must be greater than 0" }
             val mustSetSize = currentSize.compareAndSet(0, size)
             if (!mustSetSize) {
-                check(currentSize.compareAndSet(size, size)) { "Unable to change size to $size" }
+                check(currentSize.compareAndSet(size, size)) { "[$this] Unable to change size to $size" }
             }
             try {
-                val face = FT_Face.create(resource.handle)
+                val face = SizedFace(size)
                 if (mustSetSize) {
                     FreeType.FT_Set_Pixel_Sizes(face, 0, size).handleFTError { errorCode, errorString ->
-                        "[$this]: Unable to set pixel size to $size (error code $errorCode): $errorString"
+                        "[$this] Unable to set pixel size to $size (error code $errorCode): $errorString"
                     }
                 }
-                block(face)
+                return block(face)
             } finally {
                 if (mustSetSize) {
                     currentSize.set(0)
                 }
             }
         }
+    }
+
+    private fun findGlyphIndex(codepoint: Int): Int =
+        synchronized(resource) { FreeType.FT_Get_Char_Index(FT_Face.create(resource.handle), codepoint.toLong()) }
 
     @KGESensitiveAPI
     override fun close() = resource.close()
 
     override fun toString(): String = resource.toString()
 
-    init {
-        MemoryStack.stackPush().use { memoryStack ->
-            val glyphIndexBuffer = memoryStack.mallocInt(1)
-            var codePoint = FreeType.FT_Get_First_Char(face, glyphIndexBuffer)
-            var glyphIndex = glyphIndexBuffer[0]
-            val glyphIndexByCodePoint = TreeMap<Int, Int>()
-            while (glyphIndex != 0) {
-                glyphIndexByCodePoint[codePoint.toInt()] = glyphIndex
-                codePoint = FreeType.FT_Get_Next_Char(face, codePoint, glyphIndexBuffer)
-                glyphIndex = glyphIndexBuffer[0]
-            }
-            this.glyphIndexByCodePoint = Collections.unmodifiableSortedMap(glyphIndexByCodePoint)
-        }
+    inner class SizedFace(
+        val size: Int,
+    ) : FT_Face(resource.handle, null) {
+        override fun toString(): String = "$name (${size}px)"
     }
 
     companion object {
@@ -201,10 +215,6 @@ private class FTLibrary {
                 }
                 return pointer[0]
             }
-
-        init {
-            Configuration.HARFBUZZ_LIBRARY_NAME.set(FreeType.getLibrary())
-        }
     }
 }
 

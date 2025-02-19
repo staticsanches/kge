@@ -4,6 +4,7 @@ package dev.staticsanches.kge.image.pixelmap
 
 import dev.staticsanches.kge.image.IntColorComponent
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.WithRGBAData
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Viewport
@@ -33,7 +34,7 @@ interface PixelMap :
     /**
      * width x height
      */
-    val size: Int2D
+    override val size: Int2D
 
     operator fun get(
         x: Int,
@@ -154,3 +155,7 @@ interface MutablePixelMap : PixelMap {
         pixel: Pixel,
     ): Boolean = set(position.x, position.y, pixel)
 }
+
+interface MutablePixelMapWithRGBAData :
+    MutablePixelMap,
+    WithRGBAData
