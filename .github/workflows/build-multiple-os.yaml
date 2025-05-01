@@ -24,6 +24,10 @@ jobs:
     name: Build on Windows (latest)
     runs-on: windows-latest
     steps:
+      - name: Install Mesa3D
+        uses: ssciwr/setup-mesa-dist-win@v2
+        with:
+          version: '25.0.4'
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Setup Java
