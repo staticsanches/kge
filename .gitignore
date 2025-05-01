@@ -445,3 +445,6 @@ gradle-app.setting
 ### Profiler ###
 *.jfr
 .profileconfig.json
+
+### Kotlin ###
+.kotlin

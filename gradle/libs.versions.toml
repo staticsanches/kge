@@ -1,40 +1,35 @@
 [versions]
-dokka = "1.9.20"
-junit = "4.13.1"
-kotlin = "2.0.20"
-kotlinLogging = "7.0.0"
-ktlint = "12.1.1"
-logback = "1.5.8"
-lwjgl = "3.3.4"
-slf4j = "2.0.16"
-vanniktechMavenPublish = "0.29.0"
+
+kotlin = "2.1.20"
+kotlin-logging = "7.0.6"
+kotlinx-coroutines = "1.10.1"
+ktlint = "12.2.0"
+logback = "1.5.13"
+lwjgl = "3.3.6"
+slf4j = "2.0.17"
 
 [libraries]
-dokka-plugin = { group = "org.jetbrains.dokka", name = "dokka-gradle-plugin", version.ref = "dokka" }
 
-junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging", version.ref = "kotlin-logging" }
 
-kotlin-jvm-plugin = { group = "org.jetbrains.kotlin.jvm", name = "org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
-
-kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "kotlinLogging" }
-
-ktlint-plugin = { group = "org.jlleitschuh.gradle", name = "ktlint-gradle", version.ref = "ktlint" }
+kotlinx-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 
 lwjgl = { group = "org.lwjgl", name = "lwjgl" }
 lwjgl-bom = { group = "org.lwjgl", name = "lwjgl-bom", version.ref = "lwjgl" }
-lwjgl-freetype = { group = "org.lwjgl", name = "lwjgl-freetype" }
 lwjgl-glfw = { group = "org.lwjgl", name = "lwjgl-glfw" }
-lwjgl-harfbuzz = { group = "org.lwjgl", name = "lwjgl-harfbuzz" }
 lwjgl-opengl = { group = "org.lwjgl", name = "lwjgl-opengl" }
-lwjgl-opengles = { group = "org.lwjgl", name = "lwjgl-opengles" }
 lwjgl-stb = { group = "org.lwjgl", name = "lwjgl-stb" }
 
 slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 
-vanniktech-maven-publish-plugin = { group = "com.vanniktech.maven.publish", name = "com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktechMavenPublish" }
-
 [bundles]
-logging = ["kotlin-logging", "slf4j"]
-lwjgl = ["lwjgl", "lwjgl-freetype", "lwjgl-glfw", "lwjgl-harfbuzz", "lwjgl-opengl", "lwjgl-opengles", "lwjgl-stb"]
+
+lwjgl = ["lwjgl", "lwjgl-glfw", "lwjgl-opengl", "lwjgl-stb"]
+
+[plugins]
+
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }

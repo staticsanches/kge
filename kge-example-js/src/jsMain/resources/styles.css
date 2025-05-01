@@ -1,0 +1,11 @@
+#page {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#canvas-holder {
+    width: 80%;
+    height: 80%;
+}
