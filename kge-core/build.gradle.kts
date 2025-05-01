@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     `maven-publish`
@@ -8,6 +10,7 @@ kotlin {
         browser()
         binaries.library()
         generateTypeScriptDefinitions()
+        yarn.ignoreScripts = false
     }
 
     jvm()
