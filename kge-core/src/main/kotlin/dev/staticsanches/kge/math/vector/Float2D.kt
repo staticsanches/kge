@@ -1,30 +1,28 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.math.vector
 
-val FloatZeroByZero: Float2D = Float2D(0f, 0f)
-val FloatOneByOne: Float2D = Float2D(1f, 1f)
-
-infix fun Float.by(y: Float): Float2D =
-    if (this == 0f && y == 0f) {
-        FloatZeroByZero
-    } else if (this == 1f && y == 1f) {
-        FloatOneByOne
-    } else {
-        Float2D(this, y)
-    }
-
-class Float2D internal constructor(
-    val x: Float,
-    val y: Float,
+@JvmInline
+value class Float2D private constructor(
+    private val xy: Long,
 ) {
-    operator fun plus(other: Float2D): Float2D = (x + other.x) by (y + other.y)
+    constructor(
+        x: Float,
+        y: Float,
+    ) : this(
+        ((x.toRawBits()).toLong() shl 32) or ((y.toRawBits()).toLong() and 0xffffffffL),
+    )
 
-    operator fun minus(other: Float2D): Float2D = (x - other.x) by (y - other.y)
+    val x: Float
+        get() = Float.fromBits((xy shr 32).toInt())
+    val y: Float
+        get() = Float.fromBits(xy.toInt())
 
-    operator fun div(other: Float2D): Float2D = (x / other.x) by (y / other.y)
+    operator fun plus(other: Float2D): Float2D = Float2D(x + other.x, y + other.y)
 
-    operator fun div(other: Int2D): Float2D = (x / other.x) by (y / other.y)
+    operator fun minus(other: Float2D): Float2D = Float2D(x - other.x, y - other.y)
+
+    operator fun div(other: Float2D): Float2D = Float2D(x / other.x, y / other.y)
+
+    operator fun div(other: Int2D): Float2D = Float2D(x / other.x, y / other.y)
 
     operator fun component1(): Float = x
 
@@ -32,21 +30,10 @@ class Float2D internal constructor(
 
     override fun toString(): String = "($x, $y)"
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    companion object {
+        val zeroByZero: Float2D = Float2D(0L)
+        val oneByOne: Float2D = Float2D(1f, 1f)
 
-        other as Float2D
-
-        if (x != other.x) return false
-        if (y != other.y) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = x.hashCode()
-        result = 31 * result + y.hashCode()
-        return result
+        infix fun Float.by(y: Float): Float2D = Float2D(this, y)
     }
 }

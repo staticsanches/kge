@@ -5,8 +5,9 @@ import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.SpriteDecal
-import dev.staticsanches.kge.math.vector.IntZeroByZero
-import dev.staticsanches.kge.math.vector.by
+import dev.staticsanches.kge.math.vector.Float2D.Companion.by
+import dev.staticsanches.kge.math.vector.Int2D.Companion.by
+import dev.staticsanches.kge.renderer.GL11Renderer
 import dev.staticsanches.kge.utils.invokeForAll
 import kotlin.random.Random
 
@@ -34,11 +35,11 @@ class FirstExample : KotlinGameEngine<FirstExample>("First Example") {
         pixelMode = Pixel.Mode.Alpha()
         repeat(1_000) {
             drawPartialDecal(10f by 50f, decal, 1 by 1, 2 by 3, 4f by 4f)
-            drawPartialDecal(50f by 50f, decal, 1 by 1, 2 by 3, 4f by 4f)
-            drawPartialDecal(70f by 70f, decal, IntZeroByZero, decal.size, 4f by 4f)
+//            drawPartialDecal(50f by 50f, decal, 1 by 1, 2 by 3, 4f by 4f)
+//            drawPartialDecal(70f by 70f, decal, Int2D.zeroByZero, decal.size, 4f by 4f)
 //            drawSprite(30, 30, sprite, 4u)
-            drawDecal(10f by 10f, decal, 4f by 4f)
-            drawDecal(60f by 10f, decal, 4f by 4f)
+//            drawDecal(10f by 10f, decal, 4f by 4f)
+//            drawDecal(60f by 10f, decal, 4f by 4f)
         }
         pixelMode = Pixel.Mode.Normal
 
@@ -50,7 +51,7 @@ class FirstExample : KotlinGameEngine<FirstExample>("First Example") {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            Configuration.useOpenGL11 = false
+            Configuration.defaultRenderer = GL11Renderer
             FirstExample().run {
                 resizable = true
                 vSync = false

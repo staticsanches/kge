@@ -7,8 +7,6 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.SpriteDecal
 import dev.staticsanches.kge.math.vector.Float2D
-import dev.staticsanches.kge.math.vector.FloatOneByOne
-import dev.staticsanches.kge.math.vector.FloatZeroByZero
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.utils.invokeForAll
@@ -26,6 +24,7 @@ class LayerDescriptor private constructor(
     var drawTarget: SpriteDecal = drawTarget
         private set
 
+    @KGESensitiveAPI
     fun resize(
         width: Int,
         height: Int,
@@ -43,8 +42,8 @@ class LayerDescriptor private constructor(
             window: Window,
             width: Int,
             height: Int,
-            offset: Float2D = FloatZeroByZero,
-            scale: Float2D = FloatOneByOne,
+            offset: Float2D = Float2D.zeroByZero,
+            scale: Float2D = Float2D.oneByOne,
             show: Boolean = false,
             update: Boolean = false,
             decalInstances: MutableList<DecalInstance> = mutableListOf(),

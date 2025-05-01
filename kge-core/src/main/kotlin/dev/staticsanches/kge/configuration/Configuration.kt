@@ -1,9 +1,11 @@
 package dev.staticsanches.kge.configuration
 
+import dev.staticsanches.kge.renderer.GL33Renderer
+import dev.staticsanches.kge.renderer.Renderer
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 data object Configuration {
-    var useOpenGL11: Boolean = System.getProperty("dev.staticsanches.kge.useOpenGL11").toBoolean()
+    var defaultRenderer: Renderer = GL33Renderer
 
     var glyphChartDimension: Int = 512
         set(value) {

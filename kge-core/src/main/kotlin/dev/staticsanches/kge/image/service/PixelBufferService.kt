@@ -63,7 +63,7 @@ interface PixelBufferService : KGESPIExtensible {
 /**
  * Default implementation of a [PixelBufferService] that uses the stb_image.h.
  */
-internal data object STBPixelBufferService : PixelBufferService {
+private data object STBPixelBufferService : PixelBufferService {
     override fun <PB : PixelBuffer<PB, T>, T : PixelBuffer.Type<PB, T>> create(
         type: T,
         width: Int,

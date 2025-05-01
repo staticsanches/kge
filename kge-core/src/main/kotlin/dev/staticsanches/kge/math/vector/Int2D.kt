@@ -1,32 +1,27 @@
 package dev.staticsanches.kge.math.vector
 
-val IntZeroByZero: Int2D = Int2D(0, 0)
-val IntOneByOne: Int2D = Int2D(1, 1)
-
-infix fun Int.by(y: Int): Int2D =
-    if (this == 0 && y == 0) {
-        IntZeroByZero
-    } else if (this == 1 && y == 1) {
-        IntOneByOne
-    } else {
-        Int2D(this, y)
-    }
-
-class Int2D internal constructor(
-    val x: Int,
-    val y: Int,
+@JvmInline
+value class Int2D private constructor(
+    private val xy: Long,
 ) {
-    operator fun plus(other: Int2D): Int2D = (x + other.x) by (y + other.y)
+    constructor(x: Int, y: Int) : this((x.toLong() shl 32) or (y.toLong() and 0xffffffffL))
 
-    operator fun minus(other: Int2D): Int2D = (x - other.x) by (y - other.y)
+    val x: Int
+        get() = (xy shr 32).toInt()
+    val y: Int
+        get() = xy.toInt()
 
-    operator fun times(other: Int2D): Int2D = (x * other.x) by (y * other.y)
+    operator fun plus(other: Int2D): Int2D = Int2D(x + other.x, y + other.y)
 
-    operator fun div(other: Int2D): Int2D = (x / other.x) by (y / other.y)
+    operator fun minus(other: Int2D): Int2D = Int2D(x - other.x, y - other.y)
 
-    operator fun times(value: Int): Int2D = (x * value) by (y * value)
+    operator fun times(other: Int2D): Int2D = Int2D(x * other.x, y * other.y)
 
-    operator fun div(value: Int): Int2D = (x / value) by (y / value)
+    operator fun div(other: Int2D): Int2D = Int2D(x / other.x, y / other.y)
+
+    operator fun times(value: Int): Int2D = Int2D(x * value, y * value)
+
+    operator fun div(value: Int): Int2D = Int2D(x / value, y / value)
 
     operator fun component1(): Int = x
 
@@ -34,21 +29,9 @@ class Int2D internal constructor(
 
     override fun toString(): String = "($x, $y)"
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    companion object {
+        val zeroByZero: Int2D = Int2D(0L)
 
-        other as Int2D
-
-        if (x != other.x) return false
-        if (y != other.y) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = x
-        result = 31 * result + y
-        return result
+        infix fun Int.by(y: Int): Int2D = Int2D(this, y)
     }
 }

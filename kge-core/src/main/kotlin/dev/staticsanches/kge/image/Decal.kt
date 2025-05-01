@@ -3,7 +3,6 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.math.vector.Float2D
-import dev.staticsanches.kge.math.vector.FloatOneByOne
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.resource.IntResource
@@ -19,7 +18,7 @@ abstract class Decal private constructor(
     val size: Int2D,
 ) : KGEResource by texture {
     val id: Int by texture::id
-    val uvScale: Float2D = FloatOneByOne / size
+    val uvScale: Float2D = Float2D.oneByOne / size
 
     constructor(size: Int2D, filtered: Boolean = false, clamp: Boolean = true) : this(
         IntResource(

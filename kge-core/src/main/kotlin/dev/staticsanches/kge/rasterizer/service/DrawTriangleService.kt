@@ -3,7 +3,7 @@ package dev.staticsanches.kge.rasterizer.service
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.pixelmap.MutablePixelMap
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.math.vector.by
+import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.utils.SortedTriangleVertices
 import dev.staticsanches.kge.spi.KGESPIExtensible

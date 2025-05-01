@@ -10,8 +10,7 @@ import dev.staticsanches.kge.image.pixelmap.buffer.PixelBuffer.Type
 import dev.staticsanches.kge.image.service.PixelBufferService
 import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.math.vector.IntZeroByZero
-import dev.staticsanches.kge.math.vector.by
+import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.utils.humanReadableByteCountBin
 import java.nio.ByteBuffer
@@ -44,7 +43,7 @@ sealed class PixelBuffer<PB : PixelBuffer<PB, T>, T : Type<PB, T>>(
     final override val size: Int2D = width by height
 
     override val lowerBoundInclusive: Int2D
-        get() = IntZeroByZero
+        get() = Int2D.zeroByZero
 
     override val upperBoundExclusive: Int2D
         get() = size

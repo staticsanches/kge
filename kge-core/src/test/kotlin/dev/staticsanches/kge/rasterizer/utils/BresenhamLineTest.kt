@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.utils
 
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.math.vector.by
+import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.rasterizer.Viewport
 import org.junit.jupiter.api.Nested
 import kotlin.test.Test

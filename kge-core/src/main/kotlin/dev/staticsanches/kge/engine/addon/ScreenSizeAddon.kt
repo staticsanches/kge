@@ -9,7 +9,8 @@ interface ScreenSizeAddon : WindowDependentAddon {
         dimensionState.screenSize = newScreenSize
         dimensionState.updateViewport()
 
-        layers.forEach { it.resize(newScreenSize.x, newScreenSize.y) }
+        val (x, y) = newScreenSize
+        layers.forEach { it.resize(x, y) }
         drawTarget = null
 
         Renderer.clearBuffer(Colors.BLACK, true)

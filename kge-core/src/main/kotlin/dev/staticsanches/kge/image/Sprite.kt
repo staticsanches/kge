@@ -22,7 +22,8 @@ import kotlin.math.min
  */
 @KGEAllOpen
 class Sprite(
-    @property:KGESensitiveAPI val pixmap: RGBABuffer,
+    @property:KGESensitiveAPI
+    val pixmap: RGBABuffer,
     var sampleMode: SampleMode,
 ) : MutableRGBAPixelMap by pixmap,
     KGEResource by pixmap {
@@ -35,8 +36,6 @@ class Sprite(
             SampleMode.PERIODIC -> uncheckedGet(abs(x % width), abs(y % height))
             SampleMode.CLAMP -> uncheckedGet(max(0, min(x, width - 1)), max(0, min(y, height - 1)))
         }
-
-    override fun get(position: Int2D): Pixel = super.get(position)
 
     fun duplicate(): Sprite = Sprite(pixmap.duplicate(), sampleMode)
 

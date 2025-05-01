@@ -12,60 +12,60 @@ import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MAJOR
 import org.lwjgl.glfw.GLFW.GLFW_CONTEXT_VERSION_MINOR
 import org.lwjgl.glfw.GLFW.glfwSwapBuffers
 import org.lwjgl.glfw.GLFW.glfwWindowHint
-import org.lwjgl.opengl.GL11.GL_BLEND
-import org.lwjgl.opengl.GL11.GL_CLAMP
-import org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT
-import org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT
-import org.lwjgl.opengl.GL11.GL_DST_COLOR
-import org.lwjgl.opengl.GL11.GL_LINEAR
-import org.lwjgl.opengl.GL11.GL_LINE_LOOP
-import org.lwjgl.opengl.GL11.GL_MODULATE
-import org.lwjgl.opengl.GL11.GL_NEAREST
-import org.lwjgl.opengl.GL11.GL_NICEST
-import org.lwjgl.opengl.GL11.GL_ONE
-import org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA
-import org.lwjgl.opengl.GL11.GL_PERSPECTIVE_CORRECTION_HINT
-import org.lwjgl.opengl.GL11.GL_QUADS
-import org.lwjgl.opengl.GL11.GL_REPEAT
-import org.lwjgl.opengl.GL11.GL_RGBA
-import org.lwjgl.opengl.GL11.GL_SRC_ALPHA
-import org.lwjgl.opengl.GL11.GL_TEXTURE_2D
-import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV
-import org.lwjgl.opengl.GL11.GL_TEXTURE_ENV_MODE
-import org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER
-import org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER
-import org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_S
-import org.lwjgl.opengl.GL11.GL_TEXTURE_WRAP_T
-import org.lwjgl.opengl.GL11.GL_TRIANGLES
-import org.lwjgl.opengl.GL11.GL_TRIANGLE_FAN
-import org.lwjgl.opengl.GL11.GL_TRIANGLE_STRIP
-import org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE
-import org.lwjgl.opengl.GL11.GL_ZERO
-import org.lwjgl.opengl.GL11.glBegin
-import org.lwjgl.opengl.GL11.glBindTexture
-import org.lwjgl.opengl.GL11.glBlendFunc
-import org.lwjgl.opengl.GL11.glClear
-import org.lwjgl.opengl.GL11.glClearColor
-import org.lwjgl.opengl.GL11.glColor4ub
-import org.lwjgl.opengl.GL11.glDeleteTextures
-import org.lwjgl.opengl.GL11.glEnable
-import org.lwjgl.opengl.GL11.glEnd
-import org.lwjgl.opengl.GL11.glGenTextures
-import org.lwjgl.opengl.GL11.glHint
-import org.lwjgl.opengl.GL11.glReadPixels
-import org.lwjgl.opengl.GL11.glTexCoord2f
-import org.lwjgl.opengl.GL11.glTexCoord4f
-import org.lwjgl.opengl.GL11.glTexEnvi
-import org.lwjgl.opengl.GL11.glTexImage2D
-import org.lwjgl.opengl.GL11.glTexParameteri
-import org.lwjgl.opengl.GL11.glVertex2f
-import org.lwjgl.opengl.GL11.glVertex3f
-import org.lwjgl.opengl.GL11.glViewport
+import org.lwjgl.opengl.GL12.GL_BLEND
+import org.lwjgl.opengl.GL12.GL_CLAMP
+import org.lwjgl.opengl.GL12.GL_COLOR_BUFFER_BIT
+import org.lwjgl.opengl.GL12.GL_DEPTH_BUFFER_BIT
+import org.lwjgl.opengl.GL12.GL_DST_COLOR
+import org.lwjgl.opengl.GL12.GL_LINEAR
+import org.lwjgl.opengl.GL12.GL_LINE_LOOP
+import org.lwjgl.opengl.GL12.GL_MODULATE
+import org.lwjgl.opengl.GL12.GL_NEAREST
+import org.lwjgl.opengl.GL12.GL_NICEST
+import org.lwjgl.opengl.GL12.GL_ONE
+import org.lwjgl.opengl.GL12.GL_ONE_MINUS_SRC_ALPHA
+import org.lwjgl.opengl.GL12.GL_PERSPECTIVE_CORRECTION_HINT
+import org.lwjgl.opengl.GL12.GL_QUADS
+import org.lwjgl.opengl.GL12.GL_REPEAT
+import org.lwjgl.opengl.GL12.GL_RGBA
+import org.lwjgl.opengl.GL12.GL_SRC_ALPHA
+import org.lwjgl.opengl.GL12.GL_TEXTURE_2D
+import org.lwjgl.opengl.GL12.GL_TEXTURE_ENV
+import org.lwjgl.opengl.GL12.GL_TEXTURE_ENV_MODE
+import org.lwjgl.opengl.GL12.GL_TEXTURE_MAG_FILTER
+import org.lwjgl.opengl.GL12.GL_TEXTURE_MIN_FILTER
+import org.lwjgl.opengl.GL12.GL_TEXTURE_WRAP_S
+import org.lwjgl.opengl.GL12.GL_TEXTURE_WRAP_T
+import org.lwjgl.opengl.GL12.GL_TRIANGLES
+import org.lwjgl.opengl.GL12.GL_TRIANGLE_FAN
+import org.lwjgl.opengl.GL12.GL_TRIANGLE_STRIP
+import org.lwjgl.opengl.GL12.GL_UNSIGNED_BYTE
+import org.lwjgl.opengl.GL12.GL_ZERO
+import org.lwjgl.opengl.GL12.glBegin
+import org.lwjgl.opengl.GL12.glBindTexture
+import org.lwjgl.opengl.GL12.glBlendFunc
+import org.lwjgl.opengl.GL12.glClear
+import org.lwjgl.opengl.GL12.glClearColor
+import org.lwjgl.opengl.GL12.glColor4ub
+import org.lwjgl.opengl.GL12.glDeleteTextures
+import org.lwjgl.opengl.GL12.glEnable
+import org.lwjgl.opengl.GL12.glEnd
+import org.lwjgl.opengl.GL12.glGenTextures
+import org.lwjgl.opengl.GL12.glHint
+import org.lwjgl.opengl.GL12.glReadPixels
+import org.lwjgl.opengl.GL12.glTexCoord2f
+import org.lwjgl.opengl.GL12.glTexCoord4f
+import org.lwjgl.opengl.GL12.glTexEnvi
+import org.lwjgl.opengl.GL12.glTexImage2D
+import org.lwjgl.opengl.GL12.glTexParameteri
+import org.lwjgl.opengl.GL12.glVertex2f
+import org.lwjgl.opengl.GL12.glVertex3f
+import org.lwjgl.opengl.GL12.glViewport
 import org.lwjgl.opengl.GL33.glTexSubImage2D
 
 private val logger = KotlinLogging.logger {}
 
-internal data object GL11Renderer : Renderer {
+data object GL11Renderer : Renderer {
     private var glfwHandle: Long = -1
     private var decalMode: Decal.Mode = Decal.Mode.NORMAL
         set(decalMode) {
@@ -83,9 +83,9 @@ internal data object GL11Renderer : Renderer {
         }
 
     override fun beforeWindowCreation() {
-        logger.debug { "Requesting OpenGL 1.1" }
+        logger.debug { "Requesting OpenGL 1.2" }
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 1)
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1)
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2)
     }
 
     override fun afterWindowCreation(window: Window) {
@@ -98,8 +98,8 @@ internal data object GL11Renderer : Renderer {
 
     override fun prepareDrawing() {
         glEnable(GL_BLEND)
-        decalMode = Decal.Mode.NORMAL
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        decalMode = Decal.Mode.NORMAL
     }
 
     override fun createTexture(

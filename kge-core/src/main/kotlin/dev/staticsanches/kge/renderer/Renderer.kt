@@ -61,5 +61,5 @@ interface Renderer : KGESPIExtensible {
     )
 
     companion object : Renderer by KGESPIExtensible.getOptionalWithHigherPriority()
-        ?: if (Configuration.useOpenGL11) GL11Renderer else GL33Renderer
+        ?: Configuration.defaultRenderer
 }

@@ -12,6 +12,7 @@ interface KGESPIExtensible {
      * @see [getOptionalWithHigherPriority]
      */
     val servicePriority: Int
+        get() = Int.MIN_VALUE
 
     companion object {
         /**

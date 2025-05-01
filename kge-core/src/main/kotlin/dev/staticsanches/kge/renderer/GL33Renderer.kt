@@ -11,7 +11,7 @@ import dev.staticsanches.kge.image.pixelmap.OptionalRGBAPixelMap
 import dev.staticsanches.kge.image.pixelmap.RGBAPixelMap
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.renderer.QuadBuffer.Companion.MAX_NUMBER_OF_VERTICES
+import dev.staticsanches.kge.renderer.GL33Renderer.QuadBuffer.Companion.MAX_NUMBER_OF_VERTICES
 import dev.staticsanches.kge.resource.IntResource
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.KGECleanable
@@ -100,7 +100,7 @@ import java.nio.IntBuffer
 
 private val logger = KotlinLogging.logger { }
 
-internal data object GL33Renderer : Renderer {
+data object GL33Renderer : Renderer {
     private var glfwHandle: Long = -1
     private var decalMode: Decal.Mode = Decal.Mode.NORMAL
         set(decalMode) {
@@ -360,208 +360,203 @@ internal data object GL33Renderer : Renderer {
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE
-}
 
-private class QuadInfo private constructor(
-    val program: Program,
-    val quadBuffer: QuadBuffer,
-    val emptyDecal: SpriteDecal,
-) : KGEInternalResource {
-    val firstBuffer = IntBufferResource("First Buffer", MAX_NUMBER_OF_VERTICES / 3)
-    val countBuffer = IntBufferResource("Count Buffer", MAX_NUMBER_OF_VERTICES / 3)
+    private class QuadInfo private constructor(
+        val program: Program,
+        val quadBuffer: QuadBuffer,
+        val emptyDecal: SpriteDecal,
+    ) : KGEInternalResource {
+        val firstBuffer = IntBufferResource("First Buffer", MAX_NUMBER_OF_VERTICES / 3)
+        val countBuffer = IntBufferResource("Count Buffer", MAX_NUMBER_OF_VERTICES / 3)
 
-    override fun close() =
-        invokeForAll(firstBuffer, countBuffer, program, quadBuffer, emptyDecal, emptyDecal.sprite) { it.close() }
+        override fun close() =
+            invokeForAll(firstBuffer, countBuffer, program, quadBuffer, emptyDecal, emptyDecal.sprite) { it.close() }
 
-    companion object {
-        operator fun invoke(window: Window): QuadInfo =
-            Program(
-                """
-                #version 330 core
-                layout(location = 0) in vec3 aPos;
-                layout(location = 1) in vec2 aTex;
-                layout(location = 2) in vec4 aCol;
-                out vec2 oTex;
-                out vec4 oCol;
-                void main(){
-                	float p = 1.0 / aPos.z;
-                	gl_Position = p * vec4(aPos.x, aPos.y, 0.0, 1.0);
-                	oTex = p * aTex;
-                	oCol = aCol;
-                }
-                """.trimIndent(),
-                """
-                #version 330 core
-                out vec4 pixel;
-                in vec2 oTex;
-                in vec4 oCol;
-                uniform sampler2D sprTex;
-                void main(){
-                	pixel = texture(sprTex, oTex) * oCol;
-                }
-                """.trimIndent(),
-            ).closeIfFailed { program ->
-                QuadBuffer().closeIfFailed { quadBuffer ->
-                    Sprite.create(1, 1, defaultPixel = Colors.WHITE).closeIfFailed { sprite ->
-                        SpriteDecal(sprite).closeIfFailed { decal ->
-                            QuadInfo(program, quadBuffer, decal).applyAndCloseIfFailed(window::bindResource)
+        companion object {
+            operator fun invoke(window: Window): QuadInfo =
+                Program(
+                    """
+                    #version 330 core
+                    layout(location = 0) in vec3 aPos;
+                    layout(location = 1) in vec2 aTex;
+                    layout(location = 2) in vec4 aCol;
+                    out vec2 oTex;
+                    out vec4 oCol;
+                    void main(){
+                    	float p = 1.0 / aPos.z;
+                    	gl_Position = p * vec4(aPos.x, aPos.y, 0.0, 1.0);
+                    	oTex = p * aTex;
+                    	oCol = aCol;
+                    }
+                    """.trimIndent(),
+                    """
+                    #version 330 core
+                    out vec4 pixel;
+                    in vec2 oTex;
+                    in vec4 oCol;
+                    uniform sampler2D sprTex;
+                    void main(){
+                    	pixel = texture(sprTex, oTex) * oCol;
+                    }
+                    """.trimIndent(),
+                ).closeIfFailed { program ->
+                    QuadBuffer().closeIfFailed { quadBuffer ->
+                        Sprite.create(1, 1, defaultPixel = Colors.WHITE).closeIfFailed { sprite ->
+                            SpriteDecal(sprite).closeIfFailed { decal ->
+                                QuadInfo(program, quadBuffer, decal).applyAndCloseIfFailed(window::bindResource)
+                            }
                         }
                     }
                 }
-            }
-    }
-}
-
-private class Program private constructor(
-    private val programID: IntResource,
-    private val vertexShader: Shader,
-    private val fragmentShader: Shader,
-) : KGEInternalResource {
-    val id: Int by programID::id
-
-    init {
-        glAttachShader(id, vertexShader.id)
-        glAttachShader(id, fragmentShader.id)
-        glLinkProgram(id)
+        }
     }
 
-    @KGESensitiveAPI
-    override fun close() = invokeForAll(programID, vertexShader, fragmentShader) { it.close() }
+    private class Program private constructor(
+        private val programID: IntResource,
+        private val vertexShader: IntResource,
+        private val fragmentShader: IntResource,
+    ) : KGEInternalResource {
+        val id: Int by programID::id
 
-    companion object {
-        operator fun invoke(
-            vertexShader: String,
-            fragmentShader: String,
-        ): Program =
-            Shader(ShaderType.VERTEX, vertexShader).closeIfFailed { vs ->
-                Shader(ShaderType.FRAGMENT, fragmentShader).closeIfFailed { fs ->
-                    IntResource("Program", ::glCreateProgram, ::DeleteProgramAction).closeIfFailed { id ->
-                        Program(id, vs, fs)
+        init {
+            glAttachShader(id, vertexShader.id)
+            glAttachShader(id, fragmentShader.id)
+            glLinkProgram(id)
+        }
+
+        @KGESensitiveAPI
+        override fun close() = invokeForAll(programID, vertexShader, fragmentShader) { it.close() }
+
+        companion object {
+            operator fun invoke(
+                vertexShader: String,
+                fragmentShader: String,
+            ): Program =
+                ShaderType.VERTEX(vertexShader).closeIfFailed { vs ->
+                    ShaderType.FRAGMENT(fragmentShader).closeIfFailed { fs ->
+                        IntResource("Program", ::glCreateProgram, ::DeleteProgramAction).closeIfFailed { id ->
+                            Program(id, vs, fs)
+                        }
                     }
                 }
+        }
+    }
+
+    private enum class ShaderType(
+        val glType: Int,
+    ) {
+        VERTEX(GL_VERTEX_SHADER) {
+            override fun toString(): String = "Vertex Shader"
+        },
+        FRAGMENT(GL_FRAGMENT_SHADER) {
+            override fun toString(): String = "Fragment Shader"
+        }, ;
+
+        operator fun invoke(source: String): IntResource =
+            IntResource("$this", { glCreateShader(glType) }, ::DeleteShaderAction).applyAndCloseIfFailed {
+                glShaderSource(it.id, source)
+                glCompileShader(it.id)
             }
     }
-}
 
-private typealias Shader = IntResource
+    private class QuadBuffer private constructor(
+        val bufferResource: ByteBufferResource,
+        val bufferID: IntResource,
+        val arrayID: IntResource,
+    ) : KGEResource {
+        override fun close() = invokeForAll(bufferResource, bufferID, arrayID) { it.close() }
 
-private fun Shader(
-    type: ShaderType,
-    source: String,
-): Shader =
-    IntResource("$type", { glCreateShader(type.glType) }, ::DeleteShaderAction).applyAndCloseIfFailed {
-        glShaderSource(it.id, source)
-        glCompileShader(it.id)
-    }
+        companion object {
+            const val VERTEX_BYTES_COUNT = 5 * Float.SIZE_BYTES + 1 * Int.SIZE_BYTES
+            const val MAX_NUMBER_OF_VERTICES = 1_048_576 / VERTEX_BYTES_COUNT
 
-private enum class ShaderType(
-    val glType: Int,
-) {
-    VERTEX(GL_VERTEX_SHADER) {
-        override fun toString(): String = "Vertex Shader"
-    },
-    FRAGMENT(GL_FRAGMENT_SHADER) {
-        override fun toString(): String = "Fragment Shader"
-    },
-}
+            operator fun invoke(): QuadBuffer =
+                ByteBufferResource(VERTEX_BYTES_COUNT * MAX_NUMBER_OF_VERTICES).closeIfFailed { bufferResource ->
+                    IntResource("Quad Buffer", ::glGenBuffers, ::DeleteBuffersAction).closeIfFailed { bufferID ->
+                        IntResource(
+                            "Quad Array",
+                            ::glGenVertexArrays,
+                            ::DeleteVertexArraysAction,
+                        ).closeIfFailed { arrayID ->
+                            glBindVertexArray(arrayID.id)
+                            glBindBuffer(GL_ARRAY_BUFFER, bufferID.id)
 
-private class QuadBuffer private constructor(
-    val bufferResource: ByteBufferResource,
-    val bufferID: IntResource,
-    val arrayID: IntResource,
-) : KGEResource {
-    override fun close() = invokeForAll(bufferResource, bufferID, arrayID) { it.close() }
+                            glBufferData(GL_ARRAY_BUFFER, bufferResource.buffer, GL_STREAM_DRAW)
 
-    companion object {
-        const val VERTEX_BYTES_COUNT = 5 * Float.SIZE_BYTES + 1 * Int.SIZE_BYTES
-        const val MAX_NUMBER_OF_VERTICES = 1_048_576 / VERTEX_BYTES_COUNT
+                            glVertexAttribPointer(0, 3, GL_FLOAT, false, VERTEX_BYTES_COUNT, 0)
+                            glEnableVertexAttribArray(0)
+                            glVertexAttribPointer(1, 2, GL_FLOAT, false, VERTEX_BYTES_COUNT, 3 * 4)
+                            glEnableVertexAttribArray(1)
+                            glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, true, VERTEX_BYTES_COUNT, 5 * 4)
+                            glEnableVertexAttribArray(2)
 
-        operator fun invoke(): QuadBuffer =
-            ByteBufferResource(VERTEX_BYTES_COUNT * MAX_NUMBER_OF_VERTICES).closeIfFailed { bufferResource ->
-                IntResource("Quad Buffer", ::glGenBuffers, ::DeleteBuffersAction).closeIfFailed { bufferID ->
-                    IntResource(
-                        "Quad Array",
-                        ::glGenVertexArrays,
-                        ::DeleteVertexArraysAction,
-                    ).closeIfFailed { arrayID ->
-                        glBindVertexArray(arrayID.id)
-                        glBindBuffer(GL_ARRAY_BUFFER, bufferID.id)
-
-                        glBufferData(GL_ARRAY_BUFFER, bufferResource.buffer, GL_STREAM_DRAW)
-
-                        glVertexAttribPointer(0, 3, GL_FLOAT, false, VERTEX_BYTES_COUNT, 0)
-                        glEnableVertexAttribArray(0)
-                        glVertexAttribPointer(1, 2, GL_FLOAT, false, VERTEX_BYTES_COUNT, 3 * 4)
-                        glEnableVertexAttribArray(1)
-                        glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, true, VERTEX_BYTES_COUNT, 5 * 4)
-                        glEnableVertexAttribArray(2)
-
-                        glBindBuffer(GL_ARRAY_BUFFER, 0)
-                        glBindVertexArray(0)
-                        QuadBuffer(bufferResource, bufferID, arrayID)
+                            glBindBuffer(GL_ARRAY_BUFFER, 0)
+                            glBindVertexArray(0)
+                            QuadBuffer(bufferResource, bufferID, arrayID)
+                        }
                     }
                 }
-            }
-    }
-}
-
-private class ByteBufferResource(
-    size: Int,
-) : KGEInternalResource {
-    val buffer: ByteBuffer
-    private val cleanable: KGECleanable
-
-    init {
-        val offHeapBuffer = OffHeapByteBuffer(size)
-        buffer = offHeapBuffer.buffer
-        cleanable = KGELeakDetector.register(this, "Quad Byte Buffer", offHeapBuffer)
+        }
     }
 
-    @KGESensitiveAPI
-    override fun close() = cleanable.clean()
-}
+    private class ByteBufferResource(
+        size: Int,
+    ) : KGEInternalResource {
+        val buffer: ByteBuffer
+        private val cleanable: KGECleanable
 
-private class IntBufferResource(
-    name: String,
-    size: Int,
-) : KGEInternalResource {
-    val buffer: IntBuffer
-    private val cleanable: KGECleanable
+        init {
+            val offHeapBuffer = OffHeapByteBuffer(size)
+            buffer = offHeapBuffer.buffer
+            cleanable = KGELeakDetector.register(this, "Quad Byte Buffer", offHeapBuffer)
+        }
 
-    init {
-        val offHeapBuffer = OffHeapIntBuffer(size)
-        buffer = offHeapBuffer.buffer
-        cleanable = KGELeakDetector.register(this, name, offHeapBuffer)
+        @KGESensitiveAPI
+        override fun close() = cleanable.clean()
     }
 
-    @KGESensitiveAPI
-    override fun close() = cleanable.clean()
-}
+    private class IntBufferResource(
+        name: String,
+        size: Int,
+    ) : KGEInternalResource {
+        val buffer: IntBuffer
+        private val cleanable: KGECleanable
 
-@JvmInline
-private value class DeleteShaderAction(
-    val id: Int,
-) : KGECleanAction {
-    override fun invoke() = glDeleteShader(id)
-}
+        init {
+            val offHeapBuffer = OffHeapIntBuffer(size)
+            buffer = offHeapBuffer.buffer
+            cleanable = KGELeakDetector.register(this, name, offHeapBuffer)
+        }
 
-@JvmInline
-private value class DeleteProgramAction(
-    val id: Int,
-) : KGECleanAction {
-    override fun invoke() = glDeleteProgram(id)
-}
+        @KGESensitiveAPI
+        override fun close() = cleanable.clean()
+    }
 
-@JvmInline
-private value class DeleteVertexArraysAction(
-    val id: Int,
-) : KGECleanAction {
-    override fun invoke() = glDeleteVertexArrays(id)
-}
+    @JvmInline
+    private value class DeleteShaderAction(
+        val id: Int,
+    ) : KGECleanAction {
+        override fun invoke() = glDeleteShader(id)
+    }
 
-@JvmInline
-private value class DeleteBuffersAction(
-    val id: Int,
-) : KGECleanAction {
-    override fun invoke() = glDeleteBuffers(id)
+    @JvmInline
+    private value class DeleteProgramAction(
+        val id: Int,
+    ) : KGECleanAction {
+        override fun invoke() = glDeleteProgram(id)
+    }
+
+    @JvmInline
+    private value class DeleteVertexArraysAction(
+        val id: Int,
+    ) : KGECleanAction {
+        override fun invoke() = glDeleteVertexArrays(id)
+    }
+
+    @JvmInline
+    private value class DeleteBuffersAction(
+        val id: Int,
+    ) : KGECleanAction {
+        override fun invoke() = glDeleteBuffers(id)
+    }
 }

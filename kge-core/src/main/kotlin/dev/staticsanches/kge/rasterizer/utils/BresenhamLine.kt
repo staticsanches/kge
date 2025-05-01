@@ -1,8 +1,7 @@
 package dev.staticsanches.kge.rasterizer.utils
 
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.math.vector.IntZeroByZero
-import dev.staticsanches.kge.math.vector.by
+import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.rasterizer.CohenSutherlandOutCode
 import dev.staticsanches.kge.rasterizer.Viewport
 import dev.staticsanches.kge.rasterizer.contains
@@ -31,7 +30,7 @@ fun BresenhamLine(
 
     val d = end - start
     return when {
-        d == IntZeroByZero -> SinglePoint(start)
+        d == Int2D.zeroByZero -> SinglePoint(start)
         d.x == 0 -> Vertical.line(start, end, viewport)
         d.y == 0 -> Horizontal.line(start, end, viewport)
         d.x == d.y || d.x == -d.y -> Diagonal.line(start, end, viewport)

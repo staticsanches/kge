@@ -29,7 +29,7 @@ class Window
         glfwHandle: Long,
     ) : WithKGEState,
         KGEInternalResource {
-        private val glfwWindow = PointerResource("GLFWWindow", { glfwHandle }, ::ClearGLFWWindowAction)
+        internal val glfwWindow = PointerResource("GLFWWindow", { glfwHandle }, ::ClearGLFWWindowAction)
         private val boundResources = LinkedList<KGEResource>()
 
         init {
@@ -72,14 +72,6 @@ class Window
 
         @KGESensitiveAPI
         override fun close() = boundResources.invokeForAllRemoving(KGEResource::close)
-
-        companion object {
-            private fun clearGLFWWindow(handle: Long) =
-                invokeForAll(
-                    { Callbacks.glfwFreeCallbacks(handle) },
-                    { GLFW.glfwDestroyWindow(handle) },
-                ) { it() }
-        }
     }
 
 @JvmInline

@@ -30,7 +30,7 @@ import dev.staticsanches.kge.input.KeyboardModifiers
 import dev.staticsanches.kge.input.PressAction
 import dev.staticsanches.kge.input.ReleaseAction
 import dev.staticsanches.kge.input.RepeatAction
-import dev.staticsanches.kge.math.vector.by
+import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.renderer.Renderer
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.glfw.GLFWErrorCallback
