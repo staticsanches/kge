@@ -2,8 +2,7 @@ name: Build on Multiple OSs
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   build-on-ubuntu-latest:
