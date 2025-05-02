@@ -27,6 +27,14 @@ dependencyResolutionManagement {
 
 include("kge-core")
 include("kge-example-js", "kge-example-jvm")
-include("kge-linux", "kge-linux-arm32", "kge-linux-arm64")
-include("kge-macos", "kge-macos-arm64")
-include("kge-windows", "kge-windows-arm64", "kge-windows-x86")
+include(
+    "kge-natives",
+    "kge-natives:kge-linux",
+    "kge-natives:kge-linux-arm32",
+    "kge-natives:kge-linux-arm64",
+    "kge-natives:kge-macos",
+    "kge-natives:kge-macos-arm64",
+    "kge-natives:kge-windows",
+    "kge-natives:kge-windows-arm64",
+    "kge-natives:kge-windows-x86",
+)
