@@ -85,6 +85,7 @@ kotlin {
             compileTaskProvider.configure {
                 compilerOptions {
                     freeCompilerArgs.add("-Xexpect-actual-classes")
+                    freeCompilerArgs.add("-opt-in=dev.staticsanches.kge.annotations.KGESensitiveAPI")
                 }
             }
         }
