@@ -16,13 +16,15 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.nio.file.Files
+import java.nio.file.Paths
+import kotlin.io.path.absolutePathString
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SpriteJVMTest {
     @Test
     fun shouldLoadFromFile(): Unit =
-        Sprite.loadPNG(xmas5x5URL.file).use { sprite ->
+        Sprite.loadPNG(Paths.get(xmas5x5URL.toURI()).absolutePathString()).use { sprite ->
             assertEquals(xmas5x5Pixels, sprite.toList())
         }
 
