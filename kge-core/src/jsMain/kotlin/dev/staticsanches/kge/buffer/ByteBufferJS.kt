@@ -5,7 +5,7 @@ package dev.staticsanches.kge.buffer
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import js.buffer.ArrayBufferLike
 
-actual abstract class ByteBuffer internal constructor(
+actual abstract class ByteBuffer(
     private val capacity: Int,
 ) {
     // Invariants: mark <= position <= limit <= capacity
