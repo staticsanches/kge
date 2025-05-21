@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.image.Colors.BLANK
 import dev.staticsanches.kge.image.Colors.LIGHT_BLUE
 import dev.staticsanches.kge.image.Colors.LIGHT_CORAL
 import dev.staticsanches.kge.image.Colors.OLIVE_DRAB
@@ -16,10 +17,10 @@ import kotlin.test.assertEquals
 class SpriteTest {
     @Test
     fun shouldDuplicateSuccessfully(): Unit =
-        Sprite.create(2, 3).use { original ->
+        Sprite.create(2, 3, color = BLANK).use { original ->
             assertEquals(2, original.width)
             assertEquals(3, original.height)
-            assertEquals(setOf(Colors.BLANK), original.toSet())
+            assertEquals(setOf(BLANK), original.toSet())
 
             original[0, 0] = LIGHT_BLUE
             original[0, 1] = LIGHT_CORAL
