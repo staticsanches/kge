@@ -7,7 +7,13 @@ plugins {
 
 kotlin {
     js {
-        browser()
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+        }
         binaries.library()
         generateTypeScriptDefinitions()
         yarn.ignoreScripts = false

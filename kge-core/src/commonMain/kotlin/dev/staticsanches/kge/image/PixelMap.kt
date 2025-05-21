@@ -138,6 +138,8 @@ interface MutablePixelMap : PixelMap {
 
     fun clear(pixelByXY: (x: Int, y: Int) -> Pixel)
 
+    fun clear(pixels: Iterable<Pixel>)
+
     fun inv()
 
     fun setPixel(
@@ -192,6 +194,15 @@ interface RGBABuffer :
                 for (x in 0..<width) {
                     putInt(pixelByXY(x, y).nativeRGBA)
                 }
+            }
+        }
+
+    override fun clear(pixels: Iterable<Pixel>) =
+        with(resource) {
+            clear()
+            val iterator = pixels.iterator()
+            while (hasRemaining() && iterator.hasNext()) {
+                putInt(iterator.next().nativeRGBA)
             }
         }
 

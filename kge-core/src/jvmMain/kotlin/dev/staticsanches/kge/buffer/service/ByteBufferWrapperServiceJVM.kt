@@ -16,7 +16,7 @@ private data object DefaultByteBufferWrapperService : ByteBufferWrapperService {
         name: String,
     ): ByteBufferWrapper =
         MemoryUtil.memAlloc(capacity).let { buffer ->
-            ResourceWrapper(name, buffer, KGECleanAction { MemoryUtil.memFree(buffer) })
+            ResourceWrapper(name, buffer, KGECleanAction { MemoryUtil.memFree(buffer.clear()) })
         }
 
     override fun duplicate(

@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.image.extension
 
 import dev.staticsanches.kge.image.Sprite
