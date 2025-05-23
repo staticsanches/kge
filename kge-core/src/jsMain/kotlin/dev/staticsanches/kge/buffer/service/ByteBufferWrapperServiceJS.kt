@@ -4,12 +4,33 @@ import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.buffer.ByteBufferWrapper
 import dev.staticsanches.kge.buffer.ByteOrder
 import dev.staticsanches.kge.buffer.isNative
+import dev.staticsanches.kge.extensible.KGEExtensibleService
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.ResourceWrapper.Companion.invoke
 import js.buffer.ArrayBuffer
 import js.buffer.ArrayBufferLike
 import js.buffer.DataView
+
+actual interface ByteBufferWrapperService : KGEExtensibleService {
+    actual fun create(
+        capacity: Int,
+        name: String,
+    ): ByteBufferWrapper
+
+    fun create(
+        arrayBuffer: ArrayBufferLike,
+        name: String,
+    ): ByteBufferWrapper
+
+    actual fun duplicate(
+        original: ByteBufferWrapper,
+        newName: String?,
+    ): ByteBufferWrapper
+
+    actual companion object : ByteBufferWrapperService by KGEExtensibleService.getOptionalWithHigherPriority()
+        ?: originalByteBufferWrapperServiceImplementation
+}
 
 actual val originalByteBufferWrapperServiceImplementation: ByteBufferWrapperService
     get() = DefaultByteBufferWrapperService
@@ -29,7 +50,7 @@ private data object DefaultByteBufferWrapperService : ByteBufferWrapperService {
             return@with create(duplicate(), newName ?: original.toString())
         }
 
-    private fun create(
+    override fun create(
         arrayBuffer: ArrayBufferLike,
         name: String,
     ): ByteBufferWrapper = ArrayBufferWrapper(arrayBuffer).let { wrapper -> ResourceWrapper(name, wrapper, wrapper) }

@@ -14,8 +14,8 @@ fun Sprite.Companion.create(
 ): Sprite =
     SpriteService
         .create(width, height, sampleMode, name)
-        .applyAndCloseIfFailed {
-            if (color != null) it.clear(color)
-        }
+        .applyAndCloseIfFailed { if (color != null) it.clear(color) }
 
 fun Sprite.duplicate(newName: String? = null): Sprite = SpriteService.duplicate(this, newName)
+
+fun Sprite.toBase64PNG(): String = SpriteService.toBase64PNG(this)

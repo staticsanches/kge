@@ -23,7 +23,7 @@ kotlin {
 
             implementation(kotlinWrappers.browser)
             implementation(libs.kotlin.logging)
-            implementation(libs.kotlinx.coroutines)
+            implementation(libs.kotlinx.coroutines.core)
         }
     }
 }

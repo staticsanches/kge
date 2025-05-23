@@ -3,7 +3,7 @@ package dev.staticsanches.kge.buffer.service
 import dev.staticsanches.kge.buffer.ByteBufferWrapper
 import dev.staticsanches.kge.extensible.KGEExtensibleService
 
-interface ByteBufferWrapperService : KGEExtensibleService {
+expect interface ByteBufferWrapperService : KGEExtensibleService {
     fun create(
         capacity: Int,
         name: String,
@@ -14,8 +14,19 @@ interface ByteBufferWrapperService : KGEExtensibleService {
         newName: String?,
     ): ByteBufferWrapper
 
-    companion object : ByteBufferWrapperService by KGEExtensibleService.getOptionalWithHigherPriority()
-        ?: originalByteBufferWrapperServiceImplementation
+    companion object : ByteBufferWrapperService {
+        override fun create(
+            capacity: Int,
+            name: String,
+        ): ByteBufferWrapper
+
+        override fun duplicate(
+            original: ByteBufferWrapper,
+            newName: String?,
+        ): ByteBufferWrapper
+
+        override val servicePriority: Int
+    }
 }
 
 expect val originalByteBufferWrapperServiceImplementation: ByteBufferWrapperService

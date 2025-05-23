@@ -6,6 +6,8 @@ import kotlin.concurrent.Volatile
 interface ResourceWrapper<R> : KGEResource {
     val resource: R
 
+    operator fun component1(): R = resource
+
     operator fun invoke(): R = resource
 
     companion object {

@@ -28,7 +28,7 @@ class Sprite(
     init {
         check(width > 0 && height > 0) { "Invalid buffer dimension ${width}x$height" }
 
-        val rgbaData = delegate()
+        val (rgbaData) = delegate
         val expectedBufferCapacity = BytesSize { width * height * int }
         check(expectedBufferCapacity == rgbaData.capacity()) {
             "Invalid buffer capacity. Expected: $expectedBufferCapacity. Actual: ${rgbaData.capacity()}"

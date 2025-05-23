@@ -36,5 +36,3 @@ fun Sprite.writePNG(fileName: String) = SpriteService.writePNG(this, fileName)
 fun Sprite.writePNG(os: OutputStream) = SpriteService.writePNG(this, os)
 
 fun Sprite.writePNG(channel: WritableByteChannel) = SpriteService.writePNG(this, channel)
-
-fun Sprite.toBase64PNG(): String = SpriteService.toBase64PNG(this)

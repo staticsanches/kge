@@ -32,9 +32,12 @@ kotlin {
 
         jsMain.dependencies {
             implementation(kotlinWrappers.browser)
-            implementation(libs.kotlinx.coroutines)
+            implementation(libs.kotlinx.coroutines.core)
 
             implementation(npm("pngjs", "7.0.0"))
+        }
+        jsTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
         }
 
         jvmMain.dependencies {

@@ -16,6 +16,8 @@ expect interface SpriteService : KGEExtensibleService {
         newName: String?,
     ): Sprite
 
+    fun toBase64PNG(sprite: Sprite): String
+
     companion object : SpriteService {
         override fun create(
             width: Int,
@@ -28,6 +30,8 @@ expect interface SpriteService : KGEExtensibleService {
             original: Sprite,
             newName: String?,
         ): Sprite
+
+        override fun toBase64PNG(sprite: Sprite): String
 
         override val servicePriority: Int
     }

@@ -78,7 +78,7 @@ actual interface SpriteService : KGEExtensibleService {
         channel: WritableByteChannel,
     )
 
-    fun toBase64PNG(sprite: Sprite): String
+    actual fun toBase64PNG(sprite: Sprite): String
 
     actual companion object : SpriteService by KGEExtensibleService.getOptionalWithHigherPriority()
         ?: originalSpriteServiceImplementation
@@ -134,7 +134,7 @@ private data object DefaultSpriteService : SpriteService {
         data: String,
         sampleMode: Sprite.SampleMode,
         name: String?,
-    ): Sprite = loadPNG({ ByteArrayInputStream(Base64.getUrlDecoder().decode(data)) }, sampleMode, name)
+    ): Sprite = loadPNG({ ByteArrayInputStream(Base64.getDecoder().decode(data)) }, sampleMode, name)
 
     override fun writePNG(
         sprite: Sprite,
@@ -161,7 +161,7 @@ private data object DefaultSpriteService : SpriteService {
     override fun toBase64PNG(sprite: Sprite): String =
         ByteArrayOutputStream(BytesSize { sprite.width * sprite.height * 4 }).use { os ->
             writePNG(sprite, os)
-            Base64.getUrlEncoder().encodeToString(os.toByteArray())
+            Base64.getEncoder().encodeToString(os.toByteArray())
         }
 
     override val servicePriority: Int

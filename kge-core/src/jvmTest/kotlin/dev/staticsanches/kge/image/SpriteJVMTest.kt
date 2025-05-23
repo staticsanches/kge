@@ -152,7 +152,7 @@ class SpriteJVMTest {
 
         @Suppress("SpellCheckingInspection")
         private const val XMAS_5_X_5_BASE64 =
-            "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAPUlEQVR4XmNkYPj_n4EBRDIyMDKCmQxMYAEGoACYwQgiIYJQBQz_IW" +
-                "JAJf-B-oEcdAmwlv9LGSAGMjAwAACtexCnoHY4qwAAAABJRU5ErkJggg=="
+            "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAPUlEQVR4XmNkYPj/n4EBRDIyMDKCmQxMYAEGoACYwQgiIYJQBQz" +
+                "/IWJAJf+B+oEcdAmwlv9LGSAGMjAwAACtexCnoHY4qwAAAABJRU5ErkJggg=="
     }
 }
