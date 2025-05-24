@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.extensible.KGEExtensibleService
@@ -13,7 +15,7 @@ interface DrawLineService : KGEExtensibleService {
         start: Int2D,
         end: Int2D,
         color: Pixel,
-        pattern: UInt,
+        pattern: Pattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
@@ -24,10 +26,34 @@ interface DrawLineService : KGEExtensibleService {
         endX: Int,
         endY: Int,
         color: Pixel,
-        pattern: UInt,
+        pattern: Pattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
+
+    sealed interface Pattern {
+        fun shouldDrawPixel(): Boolean
+
+        data object Empty : Pattern {
+            override fun shouldDrawPixel(): Boolean = false
+        }
+
+        data object Filled : Pattern {
+            override fun shouldDrawPixel(): Boolean = true
+        }
+
+        class Dotted(
+            private var current: Boolean = true,
+        ) : Pattern {
+            override fun shouldDrawPixel(): Boolean {
+                val next = current
+                current = !current
+                return next
+            }
+        }
+
+        interface Custom : Pattern
+    }
 
     companion object : DrawLineService by KGEExtensibleService.getOptionalWithHigherPriority()
         ?: originalDrawLineServiceImplementation
@@ -44,7 +70,7 @@ private data object DefaultDrawLineService : DrawLineService {
         start: Int2D,
         end: Int2D,
         color: Pixel,
-        pattern: UInt,
+        pattern: DrawLineService.Pattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = drawLine(
@@ -62,10 +88,12 @@ private data object DefaultDrawLineService : DrawLineService {
         endX: Int,
         endY: Int,
         color: Pixel,
-        pattern: UInt,
+        pattern: DrawLineService.Pattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
+        if (pattern == DrawLineService.Pattern.Empty) return
+
         var x1 = startX
         var y1 = startY
         var x2 = endX
@@ -76,13 +104,11 @@ private data object DefaultDrawLineService : DrawLineService {
         if (!Rasterizer.clipLine(target, p1, p2)) return // outside target bounds
 
         val draw: (Int, Int) -> Unit =
-            if (pattern == 0xFF_FF_FF_FFu) {
+            if (pattern == DrawLineService.Pattern.Filled) {
                 { x, y -> Rasterizer.draw(x, y, color, target, pixelMode) }
             } else {
-                var rol = pattern
                 { x, y ->
-                    rol = (rol shl 1) and (rol shr 31)
-                    if (rol and 1u != 0u) Rasterizer.draw(x, y, color, target, pixelMode)
+                    if (pattern.shouldDrawPixel()) Rasterizer.draw(x, y, color, target, pixelMode)
                 }
             }
 
