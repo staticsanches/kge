@@ -3,7 +3,7 @@
 kotlin = "2.1.20"
 kotlin-logging = "7.0.6"
 kotlinx-coroutines = "1.10.2"
-ktlint = "12.2.0"
+ktlint = "12.3.0"
 logback = "1.5.13"
 lwjgl = "3.3.6"
 slf4j = "2.0.17"
