@@ -5,21 +5,23 @@ import dev.staticsanches.kge.image.MutablePixelMap
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
+import dev.staticsanches.kge.rasterizer.fittestX
+import dev.staticsanches.kge.rasterizer.fittestY
 
 interface FillRectService : KGEExtensibleService {
     fun fillRect(
-        position: Int2D,
-        size: Int2D,
+        diagonalStart: Int2D,
+        diagonalEnd: Int2D,
         color: Pixel,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
     fun fillRect(
-        x: Int,
-        y: Int,
-        width: Int,
-        height: Int,
+        diagonalStartX: Int,
+        diagonalStartY: Int,
+        diagonalEndX: Int,
+        diagonalEndY: Int,
         color: Pixel,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
@@ -34,47 +36,42 @@ val originalFillRectServiceImplementation: FillRectService
 
 private data object DefaultFillRectService : FillRectService {
     override fun fillRect(
-        position: Int2D,
-        size: Int2D,
+        diagonalStart: Int2D,
+        diagonalEnd: Int2D,
         color: Pixel,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
-    ) = fillRect(
-        x = position.x,
-        y = position.y,
-        width = size.x,
-        height = size.y,
-        color = color,
-        target = target,
-        pixelMode = pixelMode,
-    )
+    ) = fillRect(diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, target, pixelMode)
 
     override fun fillRect(
-        x: Int,
-        y: Int,
-        width: Int,
-        height: Int,
+        diagonalStartX: Int,
+        diagonalStartY: Int,
+        diagonalEndX: Int,
+        diagonalEndY: Int,
         color: Pixel,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
-        var x1 = x
-        var y1 = y
-        if (x1 < 0) x1 = 0
-        if (x1 > target.width) x1 = target.width
-        if (y1 < 0) y1 = 0
-        if (y1 > target.height) y1 = target.height
+        var x0 = diagonalStartX
+        var y0 = diagonalStartY
+        var x1 = diagonalEndX
+        var y1 = diagonalEndY
 
-        var x2 = x + width
-        var y2 = y + height
-        if (x2 < 0) x2 = 0
-        if (x2 > target.width) x2 = target.width
-        if (y2 < 0) y2 = 0
-        if (y2 > target.height) y2 = target.height
+        // Ensures x0 <= x1 and y0 <= y1
+        if (x0 > x1) x0 = x1.also { x1 = x0 }
+        if (y0 > y1) y0 = y1.also { y1 = y0 }
 
-        for (i in x1..<x2) {
-            for (j in y1..<y2) {
-                Rasterizer.draw(i, j, color, target, pixelMode)
+        if (x1 < 0 || y1 < 0 || x0 >= target.width || y0 >= target.height) return // outside viewport
+
+        // Clip to target
+        x0 = target.fittestX(x0)
+        y0 = target.fittestY(y0)
+        x1 = target.fittestX(x1)
+        y1 = target.fittestY(y1)
+
+        for (x in x0..x1) {
+            for (y in y0..y1) {
+                Rasterizer.draw(x, y, color, target, pixelMode)
             }
         }
     }

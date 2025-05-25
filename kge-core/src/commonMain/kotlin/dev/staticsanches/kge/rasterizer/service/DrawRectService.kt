@@ -5,25 +5,25 @@ import dev.staticsanches.kge.image.MutablePixelMap
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
-import dev.staticsanches.kge.rasterizer.service.DrawLineService.Pattern
+import dev.staticsanches.kge.rasterizer.service.DrawLineService.LinePattern
 
 interface DrawRectService : KGEExtensibleService {
     fun drawRect(
-        position: Int2D,
-        size: Int2D,
+        diagonalStart: Int2D,
+        diagonalEnd: Int2D,
         color: Pixel,
-        pattern: Pattern,
+        pattern: LinePattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
 
     fun drawRect(
-        x: Int,
-        y: Int,
-        width: Int,
-        height: Int,
+        diagonalStartX: Int,
+        diagonalStartY: Int,
+        diagonalEndX: Int,
+        diagonalEndY: Int,
         color: Pixel,
-        pattern: Pattern,
+        pattern: LinePattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     )
@@ -37,17 +37,17 @@ private val originalDrawRectServiceImplementation: DrawRectService
 
 private data object DefaultDrawRectService : DrawRectService {
     override fun drawRect(
-        position: Int2D,
-        size: Int2D,
+        diagonalStart: Int2D,
+        diagonalEnd: Int2D,
         color: Pixel,
-        pattern: Pattern,
+        pattern: LinePattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) = drawRect(
-        x = position.x,
-        y = position.y,
-        width = size.x,
-        height = size.y,
+        diagonalStartX = diagonalStart.x,
+        diagonalStartY = diagonalStart.y,
+        diagonalEndX = diagonalEnd.x,
+        diagonalEndY = diagonalEnd.y,
         color = color,
         pattern = pattern,
         target = target,
@@ -55,19 +55,39 @@ private data object DefaultDrawRectService : DrawRectService {
     )
 
     override fun drawRect(
-        x: Int,
-        y: Int,
-        width: Int,
-        height: Int,
+        diagonalStartX: Int,
+        diagonalStartY: Int,
+        diagonalEndX: Int,
+        diagonalEndY: Int,
         color: Pixel,
-        pattern: Pattern,
+        pattern: LinePattern,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
-        Rasterizer.drawLine(x, y, x + width, y, color, pattern, target, pixelMode) // top
-        Rasterizer.drawLine(x + width, y, x + width, y + height, color, pattern, target, pixelMode) // right
-        Rasterizer.drawLine(x + width, y + height, x, y + height, color, pattern, target, pixelMode) // bottom
-        Rasterizer.drawLine(x, y + height, x, y, color, pattern, target, pixelMode) // left
+        // Top edge
+        Rasterizer.drawLine(
+            startX = diagonalStartX, startY = diagonalStartY,
+            endX = diagonalEndX, endY = diagonalStartY,
+            color = color, pattern = pattern, target = target, pixelMode = pixelMode,
+        )
+        // Right edge
+        Rasterizer.drawLine(
+            startX = diagonalEndX, startY = diagonalStartY,
+            endX = diagonalEndX, endY = diagonalEndY,
+            color = color, pattern = pattern, target = target, pixelMode = pixelMode,
+        )
+        // Bottom edge
+        Rasterizer.drawLine(
+            startX = diagonalEndX, startY = diagonalEndY,
+            endX = diagonalStartX, endY = diagonalEndY,
+            color = color, pattern = pattern, target = target, pixelMode = pixelMode,
+        )
+        // Left edge
+        Rasterizer.drawLine(
+            startX = diagonalStartX, startY = diagonalEndY,
+            endX = diagonalStartX, endY = diagonalStartY,
+            color = color, pattern = pattern, target = target, pixelMode = pixelMode,
+        )
     }
 
     override val servicePriority: Int
