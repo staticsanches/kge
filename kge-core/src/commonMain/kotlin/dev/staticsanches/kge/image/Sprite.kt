@@ -20,10 +20,6 @@ class Sprite(
 ) : RGBABuffer,
     ByteBufferWrapper by delegate {
     override val size: Int2D = width by height
-    override val lowerBoundInclusive: Int2D
-        get() = Int2D.zeroByZero
-    override val upperBoundExclusive: Int2D
-        get() = size
 
     init {
         check(width > 0 && height > 0) { "Invalid buffer dimension ${width}x$height" }

@@ -37,6 +37,12 @@ interface PixelMap :
      */
     val size: Int2D
 
+    override val lowerBoundInclusive: Int2D
+        get() = Int2D.zeroByZero
+
+    override val upperBoundExclusive: Int2D
+        get() = size
+
     operator fun get(
         x: Int,
         y: Int,
