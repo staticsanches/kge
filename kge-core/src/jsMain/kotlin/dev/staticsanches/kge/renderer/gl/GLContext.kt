@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.renderer.gl
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI

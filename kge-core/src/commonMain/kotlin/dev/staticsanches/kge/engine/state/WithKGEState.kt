@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.engine.state
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
@@ -40,4 +38,10 @@ interface WithKGEState {
 
     var drawTarget: Sprite?
         @KGESensitiveAPI set
+
+    // Text draw
+
+    @KGESensitiveAPI
+    val fontSheet: Decal
+    var tabSizeInSpaces: Int
 }

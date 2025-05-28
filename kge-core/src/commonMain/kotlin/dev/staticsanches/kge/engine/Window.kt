@@ -9,10 +9,12 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.renderer.LayerDescriptor
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.ResourceWrapper
+import dev.staticsanches.kge.resource.closeIfFailed
 import dev.staticsanches.kge.utils.invokeForAllRemoving
 import kotlin.getValue
 
@@ -23,10 +25,6 @@ class Window
     ) : WithKGEState,
         KGEInternalResource {
         private val boundResources = mutableListOf<KGEResource>()
-
-        init {
-            bindResource(mainResourceWrapper)
-        }
 
         @KGESensitiveAPI
         override val mainResource: WindowMainResource by mainResourceWrapper::resource
@@ -58,6 +56,19 @@ class Window
                     field = value
                 }
             }
+
+        override val fontSheet: Decal
+        override var tabSizeInSpaces: Int = 4
+            set(value) {
+                check(value > 0) { "Invalid tab size in spaces: $value" }
+                field = value
+            }
+
+        init {
+            bindResource(mainResourceWrapper)
+            fontSheet = closeIfFailed { Rasterizer.createFontSheet() }
+            bindResource(fontSheet)
+        }
 
         @KGESensitiveAPI
         fun bindResource(resource: KGEResource) = boundResources.add(0, resource)

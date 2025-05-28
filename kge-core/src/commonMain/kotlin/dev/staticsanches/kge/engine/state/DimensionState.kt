@@ -1,5 +1,3 @@
-@file:Suppress("MemberVisibilityCanBePrivate", "unused")
-
 package dev.staticsanches.kge.engine.state
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
