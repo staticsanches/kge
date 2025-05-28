@@ -9,10 +9,10 @@ import dev.staticsanches.kge.renderer.gl.GLsizei
 import dev.staticsanches.kge.renderer.gl.gl
 import js.typedarrays.Uint8Array
 
-actual val originalGLTextureServiceImplementation: GLTextureService
-    get() = DefaultGLTextureService
+actual val originalGLServiceImplementation: GLService
+    get() = DefaultGLService
 
-private data object DefaultGLTextureService : GLTextureService {
+private data object DefaultGLService : GLService {
     override fun createTexture(): GLTexture = gl.createTexture()
 
     override fun deleteTexture(texture: GLTexture) = gl.deleteTexture(texture)

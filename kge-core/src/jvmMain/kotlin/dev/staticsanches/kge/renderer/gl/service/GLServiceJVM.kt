@@ -7,10 +7,10 @@ import dev.staticsanches.kge.renderer.gl.GLint
 import dev.staticsanches.kge.renderer.gl.GLsizei
 import org.lwjgl.opengl.GL33
 
-actual val originalGLTextureServiceImplementation: GLTextureService
-    get() = DefaultGLTextureService
+actual val originalGLServiceImplementation: GLService
+    get() = DefaultGLService
 
-private data object DefaultGLTextureService : GLTextureService {
+private data object DefaultGLService : GLService {
     override fun createTexture(): GLTexture = GL33.glGenTextures()
 
     override fun deleteTexture(texture: GLTexture) = GL33.glDeleteTextures(texture)

@@ -1,8 +1,8 @@
 package dev.staticsanches.kge.renderer.gl
 
-import dev.staticsanches.kge.renderer.gl.service.GLTextureService
+import dev.staticsanches.kge.renderer.gl.service.GLService
 
-data object GL : GLTextureService by GLTextureService {
+data object GL : GLService by GLService {
     // Texture target
 
     const val TEXTURE_2D: GLenum = 0x0DE1

@@ -7,7 +7,7 @@ import dev.staticsanches.kge.renderer.gl.GLenum
 import dev.staticsanches.kge.renderer.gl.GLint
 import dev.staticsanches.kge.renderer.gl.GLsizei
 
-interface GLTextureService : KGEExtensibleService {
+interface GLService : KGEExtensibleService {
     fun createTexture(): GLTexture
 
     fun deleteTexture(texture: GLTexture)
@@ -45,8 +45,8 @@ interface GLTextureService : KGEExtensibleService {
         dstData: ByteBuffer,
     )
 
-    companion object : GLTextureService by KGEExtensibleService.getOptionalWithHigherPriority()
-        ?: originalGLTextureServiceImplementation
+    companion object : GLService by KGEExtensibleService.getOptionalWithHigherPriority()
+        ?: originalGLServiceImplementation
 }
 
-expect val originalGLTextureServiceImplementation: GLTextureService
+expect val originalGLServiceImplementation: GLService
