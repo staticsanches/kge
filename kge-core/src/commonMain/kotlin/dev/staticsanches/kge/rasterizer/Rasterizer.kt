@@ -2,7 +2,9 @@ package dev.staticsanches.kge.rasterizer
 
 import dev.staticsanches.kge.rasterizer.service.ClearService
 import dev.staticsanches.kge.rasterizer.service.DrawCircleService
+import dev.staticsanches.kge.rasterizer.service.DrawDecalService
 import dev.staticsanches.kge.rasterizer.service.DrawLineService
+import dev.staticsanches.kge.rasterizer.service.DrawPartialDecalService
 import dev.staticsanches.kge.rasterizer.service.DrawRectService
 import dev.staticsanches.kge.rasterizer.service.DrawService
 import dev.staticsanches.kge.rasterizer.service.DrawSpriteService
@@ -15,7 +17,9 @@ import dev.staticsanches.kge.rasterizer.service.FillTriangleService
 data object Rasterizer :
     ClearService by ClearService,
     DrawCircleService by DrawCircleService,
+    DrawDecalService by DrawDecalService,
     DrawLineService by DrawLineService,
+    DrawPartialDecalService by DrawPartialDecalService,
     DrawRectService by DrawRectService,
     DrawService by DrawService,
     DrawSpriteService by DrawSpriteService,
