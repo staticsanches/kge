@@ -2,18 +2,23 @@ package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.extensible.KGEExtensibleService
 import dev.staticsanches.kge.image.Colors
+import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.MutablePixelMap
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.extension.create
+import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.Float2D.Companion.by
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.MutableInt2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
+import dev.staticsanches.kge.renderer.DecalInstance
 import dev.staticsanches.kge.resource.applyAndCloseIfFailed
+import dev.staticsanches.kge.resource.closeIfFailed
 import kotlin.math.max
 
 interface DrawStringService : KGEExtensibleService {
-    fun createFontSheet(): Sprite
+    fun createFontSheet(): Decal
 
     fun getTextSize(
         text: String,
@@ -41,6 +46,20 @@ interface DrawStringService : KGEExtensibleService {
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
         fontSheet: Sprite,
+    )
+
+    fun drawStringDecal(
+        position: Float2D,
+        text: String,
+        color: Pixel,
+        scale: Float2D,
+        tabSizeInSpaces: Int,
+        fontSheet: Decal,
+        screenSize: Int2D,
+        invertedScreenSize: Float2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        decalInstanceCollector: (DecalInstance) -> Unit,
     )
 
     fun getTextSizeProp(
@@ -71,6 +90,20 @@ interface DrawStringService : KGEExtensibleService {
         fontSheet: Sprite,
     )
 
+    fun drawStringPropDecal(
+        position: Float2D,
+        text: String,
+        color: Pixel,
+        scale: Float2D,
+        tabSizeInSpaces: Int,
+        fontSheet: Decal,
+        screenSize: Int2D,
+        invertedScreenSize: Float2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        decalInstanceCollector: (DecalInstance) -> Unit,
+    )
+
     companion object : DrawStringService by KGEExtensibleService.getOptionalWithHigherPriority()
         ?: originalDrawStringServiceImplementation
 }
@@ -79,25 +112,27 @@ val originalDrawStringServiceImplementation: DrawStringService
     get() = DefaultDrawStringService
 
 private data object DefaultDrawStringService : DrawStringService {
-    override fun createFontSheet(): Sprite =
-        Sprite.create(128, 48, name = "KGE Font Sheet").applyAndCloseIfFailed { sprite ->
-            var px = 0
-            var py = 0
-            for (b in 0..<1024 step 4) {
-                val sym1 = FONT_SHEET_DATA[b + 0].code - 48
-                val sym2 = FONT_SHEET_DATA[b + 1].code - 48
-                val sym3 = FONT_SHEET_DATA[b + 2].code - 48
-                val sym4 = FONT_SHEET_DATA[b + 3].code - 48
-                val r = (sym1 shl 18) or (sym2 shl 12) or (sym3 shl 6) or sym4
-                for (i in 0..<24) {
-                    sprite[px, py] = if ((r and (1 shl i) != 0)) Colors.WHITE else Colors.BLANK
-                    if (++py == 48) {
-                        px++
-                        py = 0
+    override fun createFontSheet(): Decal =
+        Sprite
+            .create(128, 48, name = "KGE Font Sheet")
+            .applyAndCloseIfFailed { sprite ->
+                var px = 0
+                var py = 0
+                for (b in 0..<1024 step 4) {
+                    val sym1 = FONT_SHEET_DATA[b + 0].code - 48
+                    val sym2 = FONT_SHEET_DATA[b + 1].code - 48
+                    val sym3 = FONT_SHEET_DATA[b + 2].code - 48
+                    val sym4 = FONT_SHEET_DATA[b + 3].code - 48
+                    val r = (sym1 shl 18) or (sym2 shl 12) or (sym3 shl 6) or sym4
+                    for (i in 0..<24) {
+                        sprite[px, py] = if ((r and (1 shl i) != 0)) Colors.WHITE else Colors.BLANK
+                        if (++py == 48) {
+                            px++
+                            py = 0
+                        }
                     }
                 }
-            }
-        }
+            }.closeIfFailed { Decal(it) }
 
     override fun getTextSize(
         text: String,
@@ -145,6 +180,32 @@ private data object DefaultDrawStringService : DrawStringService {
         pixelMode: Pixel.Mode,
         fontSheet: Sprite,
     ) = drawString(x, y, text, color, scale, tabSizeInSpaces, target, pixelMode, fontSheet) { monoSpacing }
+
+    override fun drawStringDecal(
+        position: Float2D,
+        text: String,
+        color: Pixel,
+        scale: Float2D,
+        tabSizeInSpaces: Int,
+        fontSheet: Decal,
+        screenSize: Int2D,
+        invertedScreenSize: Float2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        decalInstanceCollector: (DecalInstance) -> Unit,
+    ) = drawStringDecal(
+        position = position,
+        text = text,
+        color = color,
+        scale = scale,
+        tabSizeInSpaces = tabSizeInSpaces,
+        fontSheet = fontSheet,
+        screenSize = screenSize,
+        invertedScreenSize = invertedScreenSize,
+        decalMode = decalMode,
+        decalStructure = decalStructure,
+        decalInstanceCollector = decalInstanceCollector,
+    ) { monoSpacing }
 
     override fun getTextSizeProp(
         text: String,
@@ -194,6 +255,32 @@ private data object DefaultDrawStringService : DrawStringService {
     ) = drawString(x, y, text, color, scale, tabSizeInSpaces, target, pixelMode, fontSheet) {
         fontSpacing[it.code - 32]
     }
+
+    override fun drawStringPropDecal(
+        position: Float2D,
+        text: String,
+        color: Pixel,
+        scale: Float2D,
+        tabSizeInSpaces: Int,
+        fontSheet: Decal,
+        screenSize: Int2D,
+        invertedScreenSize: Float2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        decalInstanceCollector: (DecalInstance) -> Unit,
+    ) = drawStringDecal(
+        position = position,
+        text = text,
+        color = color,
+        scale = scale,
+        tabSizeInSpaces = tabSizeInSpaces,
+        fontSheet = fontSheet,
+        screenSize = screenSize,
+        invertedScreenSize = invertedScreenSize,
+        decalMode = decalMode,
+        decalStructure = decalStructure,
+        decalInstanceCollector = decalInstanceCollector,
+    ) { fontSpacing[it.code - 32] }
 
     private inline fun drawString(
         x: Int,
@@ -264,6 +351,53 @@ private data object DefaultDrawStringService : DrawStringService {
                     }
                 }
                 sx += spacingY * scale
+            }
+        }
+    }
+
+    private inline fun drawStringDecal(
+        position: Float2D,
+        text: String,
+        color: Pixel,
+        scale: Float2D,
+        tabSizeInSpaces: Int,
+        fontSheet: Decal,
+        screenSize: Int2D,
+        invertedScreenSize: Float2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        noinline decalInstanceCollector: (DecalInstance) -> Unit,
+        spacingByChar: (Char) -> Int2D,
+    ) {
+        var sx = 0f
+        var sy = 0f
+        text.forEach { c ->
+            if (c == '\n') {
+                sx = 0f
+                sy += 8 * scale.y
+            } else if (c == '\t') {
+                sx += 8 * tabSizeInSpaces * scale.x
+            } else {
+                val (spacingX, spacingY) = spacingByChar(c)
+
+                val ox = (c.code - 32) % 16
+                val oy = (c.code - 32) / 16
+
+                Rasterizer.drawPartialDecal(
+                    position = position.x + sx by position.y + sy,
+                    decal = fontSheet,
+                    sourcePosition = 8f * ox + spacingX by 8f * oy,
+                    sourceSize = spacingY.toFloat() by 8f,
+                    scale = scale,
+                    tint = color,
+                    screenSize = screenSize,
+                    invertedScreenSize = invertedScreenSize,
+                    decalMode = decalMode,
+                    decalStructure = decalStructure,
+                    decalInstanceCollector = decalInstanceCollector,
+                )
+
+                sx += spacingY * scale.x
             }
         }
     }

@@ -14,8 +14,8 @@ interface DrawPartialDecalService : KGEExtensibleService {
     fun drawPartialDecal(
         position: Float2D,
         decal: Decal,
-        sourcePosition: Int2D,
-        sourceSize: Int2D,
+        sourcePosition: Float2D,
+        sourceSize: Float2D,
         scale: Float2D,
         tint: Pixel,
         screenSize: Int2D,
@@ -36,8 +36,8 @@ private data object DefaultDrawPartialDecalService : DrawPartialDecalService {
     override fun drawPartialDecal(
         position: Float2D,
         decal: Decal,
-        sourcePosition: Int2D,
-        sourceSize: Int2D,
+        sourcePosition: Float2D,
+        sourceSize: Float2D,
         scale: Float2D,
         tint: Pixel,
         screenSize: Int2D,
@@ -62,8 +62,8 @@ private data object DefaultDrawPartialDecalService : DrawPartialDecalService {
     private class VerticesInfo(
         position: Float2D,
         decal: Decal,
-        sourcePosition: Int2D,
-        sourceSize: Int2D,
+        sourcePosition: Float2D,
+        sourceSize: Float2D,
         scale: Float2D,
         val tint: Pixel,
         screenSize: Int2D,
