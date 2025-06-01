@@ -3,6 +3,7 @@ package dev.staticsanches.kge.engine.state
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 
 class DimensionState {
     /**
@@ -20,9 +21,8 @@ class DimensionState {
         private set
 
     /**
-     * Pixel scale to convert from screen size to window size.
-     * In JVM, the initial [windowSize] is equal to [screenSize] * [pixelSize].
-     * In JS, the initial [screenSize] is equal to [windowSize] / [pixelSize].
+     * Pixel scale to convert from screen size to window size. The initial [windowSize] is equal
+     * to [screenSize] * [pixelSize].
      */
     var pixelSize: Int2D = Int2D.zeroByZero
         @KGESensitiveAPI
@@ -77,7 +77,19 @@ class DimensionState {
      */
     var viewportPosition: Int2D = Int2D.zeroByZero
         @KGESensitiveAPI set
-}
 
-@KGESensitiveAPI
-expect fun DimensionState.recalculateViewport()
+    @KGESensitiveAPI
+    fun recalculateViewport() {
+        val desiredWindowSize = screenSize * pixelSize
+
+        var x = windowSize.x
+        var y = (x * desiredWindowSize.y) / desiredWindowSize.x
+        if (y > windowSize.y) {
+            y = windowSize.y
+            x = (y * desiredWindowSize.x) / desiredWindowSize.y
+        }
+
+        viewportSize = (x by y) * windowPixelSize
+        viewportPosition = (windowSizeInPixels - viewportSize) / 2
+    }
+}

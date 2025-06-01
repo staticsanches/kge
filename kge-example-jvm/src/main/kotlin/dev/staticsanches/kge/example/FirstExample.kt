@@ -31,8 +31,9 @@ class FirstExample : KotlinGameEngine("First Example") {
             }
         }
 
-        drawStringDecal(5f by 10f, "KGE - Kotlin Game Engine", scale = .5f by .5f)
-        drawDecal(20f by 20f, decal, scale = 10f by 10f)
+        drawStringDecal(5f by 10f, "fps: ${timeState.fps}", scale = .5f by .5f)
+        drawStringDecal(5f by 20f, "KGE - Kotlin Game Engine", scale = .5f by .5f)
+        drawDecal(20f by 40f, decal, scale = 7f by 7f)
 
         return true
     }
@@ -44,7 +45,6 @@ class FirstExample : KotlinGameEngine("First Example") {
         fun main(args: Array<String>) {
             FirstExample().run {
                 resizable = true
-                vSync = false
             }
         }
     }

@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.renderer
 
 import dev.staticsanches.kge.buffer.ByteBuffer
@@ -10,6 +8,7 @@ import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.extension.create
+import dev.staticsanches.kge.renderer.DecalInstance.VerticesInfo.Companion.VERTEX_BYTES_COUNT
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.wrapper.GLBufferWrapper
 import dev.staticsanches.kge.renderer.gl.wrapper.GLProgramWrapper
@@ -17,7 +16,6 @@ import dev.staticsanches.kge.renderer.gl.wrapper.GLVertexArrayObjectWrapper
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.letClosingIfFailed
 import dev.staticsanches.kge.utils.BytesSize.FLOAT
-import dev.staticsanches.kge.utils.BytesSize.INT
 import dev.staticsanches.kge.utils.invokeForAll
 
 internal class QuadInfo private constructor(
@@ -25,35 +23,35 @@ internal class QuadInfo private constructor(
     private val bufferWrapper: GLBufferWrapper,
     private val bufferDataWrapper: ByteBufferWrapper,
     private val vaoWrapper: GLVertexArrayObjectWrapper,
-    private val firstWrapper: IntBufferWrapper,
-    private val countWrapper: IntBufferWrapper,
+    private val firstsWrapper: IntBufferWrapper,
+    private val countsWrapper: IntBufferWrapper,
     val blankDecal: Decal,
-    val maxNumberOfVertices: Int,
-    val maxNumberOfDecals: Int,
 ) : KGEResource {
     val program by programWrapper
     val buffer by bufferWrapper
     val vao by vaoWrapper
+    val firsts by firstsWrapper
+    val counts by countsWrapper
 
     init {
         GL.bindVertexArray(vao)
         GL.bindBuffer(GL.ARRAY_BUFFER, buffer)
-        GL.bufferData(GL.ARRAY_BUFFER, maxNumberOfVertices * VERTEX_SIZE, GL.STREAM_DRAW) // allocates buffer data
+        GL.bufferData(GL.ARRAY_BUFFER, bufferDataWrapper.resource.capacity(), GL.STREAM_DRAW) // allocates buffer data
 
-        GL.vertexAttribPointer(0, 4, GL.FLOAT, false, VERTEX_SIZE, 0)
+        GL.vertexAttribPointer(0, 4, GL.FLOAT, false, VERTEX_BYTES_COUNT, 0)
         GL.enableVertexAttribArray(0)
-        GL.vertexAttribPointer(1, 2, GL.FLOAT, false, VERTEX_SIZE, 4 * FLOAT)
+        GL.vertexAttribPointer(1, 2, GL.FLOAT, false, VERTEX_BYTES_COUNT, 4 * FLOAT)
         GL.enableVertexAttribArray(1)
-        GL.vertexAttribPointer(2, 4, GL.UNSIGNED_BYTE, true, VERTEX_SIZE, 6 * FLOAT)
+        GL.vertexAttribPointer(2, 4, GL.UNSIGNED_BYTE, true, VERTEX_BYTES_COUNT, 6 * FLOAT)
         GL.enableVertexAttribArray(2)
 
         GL.bindBuffer(GL.ARRAY_BUFFER, null)
         GL.bindVertexArray(null)
     }
 
-    inline fun bufferSubData(block: ByteBuffer.() -> Unit) =
+    inline fun bufferSubData(block: (ByteBuffer) -> Unit) =
         bufferDataWrapper.resource.clear().apply {
-            block()
+            block(this)
             GL.bufferSubData(GL.ARRAY_BUFFER, 0, flip())
         }
 
@@ -65,13 +63,11 @@ internal class QuadInfo private constructor(
             vaoWrapper,
             blankDecal.sprite,
             blankDecal,
-            firstWrapper,
-            countWrapper,
+            firstsWrapper,
+            countsWrapper,
         ) { it.close() }
 
     companion object {
-        const val VERTEX_SIZE = 4 * FLOAT + 2 * FLOAT + 1 * INT
-
         operator fun invoke(glslVersion: String): QuadInfo =
             GLProgramWrapper(
                 vertexShader =
@@ -162,22 +158,20 @@ internal class QuadInfo private constructor(
         ): QuadInfo {
             val maxNumberOfVertices = KGEConfiguration.maxNumberOfVertices
             val maxNumberOfDecals = maxNumberOfVertices / 4 // each decal by default has 4 vertices
-            return ByteBufferWrapper(VERTEX_SIZE * maxNumberOfVertices) { "Quad Buffer Data" }
+            return ByteBufferWrapper(VERTEX_BYTES_COUNT * maxNumberOfVertices) { "Quad Buffer Data" }
                 .letClosingIfFailed { bufferDataWrapper ->
                     IntBufferWrapper(maxNumberOfDecals) { "Quad First" }
-                        .letClosingIfFailed { firstWrapper ->
+                        .letClosingIfFailed { firstsWrapper ->
                             IntBufferWrapper(maxNumberOfDecals) { "Quad Count" }
-                                .letClosingIfFailed { countWrapper ->
+                                .letClosingIfFailed { countsWrapper ->
                                     QuadInfo(
                                         programWrapper = programWrapper,
                                         bufferWrapper = bufferWrapper,
                                         bufferDataWrapper = bufferDataWrapper,
                                         vaoWrapper = vaoWrapper,
-                                        firstWrapper = firstWrapper,
-                                        countWrapper = countWrapper,
+                                        firstsWrapper = firstsWrapper,
+                                        countsWrapper = countsWrapper,
                                         blankDecal = blankDecal,
-                                        maxNumberOfVertices = maxNumberOfVertices,
-                                        maxNumberOfDecals = maxNumberOfDecals,
                                     )
                                 }
                         }

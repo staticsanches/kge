@@ -5,6 +5,8 @@ package dev.staticsanches.kge.renderer
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.utils.BytesSize.FLOAT
+import dev.staticsanches.kge.utils.BytesSize.INT
 
 class DecalInstance(
     val decal: Decal?,
@@ -30,5 +32,10 @@ class DecalInstance(
         fun tint(index: Int): Pixel
 
         fun putAll(buffer: ByteBuffer)
+
+        companion object {
+            // 4 floats (x y z w) + 2 floats (u v) + 1 int (tint)
+            const val VERTEX_BYTES_COUNT = 4 * FLOAT + 2 * FLOAT + 1 * INT
+        }
     }
 }

@@ -19,7 +19,6 @@ import dev.staticsanches.kge.engine.addon.LayersAddon
 import dev.staticsanches.kge.engine.addon.WindowDependentAddon
 import dev.staticsanches.kge.engine.addon.WindowManipulationAddon
 import dev.staticsanches.kge.engine.state.WithKGEState
-import dev.staticsanches.kge.engine.state.recalculateViewport
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.renderer.Renderer

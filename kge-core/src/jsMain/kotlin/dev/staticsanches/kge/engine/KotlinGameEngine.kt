@@ -16,8 +16,8 @@ import dev.staticsanches.kge.engine.addon.FillCircleAddon
 import dev.staticsanches.kge.engine.addon.FillRectAddon
 import dev.staticsanches.kge.engine.addon.FillTriangleAddon
 import dev.staticsanches.kge.engine.addon.LayersAddon
-import dev.staticsanches.kge.engine.state.recalculateViewport
 import dev.staticsanches.kge.image.Decal
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.renderer.gl.updateGLContext
@@ -92,6 +92,7 @@ actual abstract class KotlinGameEngine :
 
         while (!shouldStop) {
             timeState.reset()
+
             while (!shouldStop) {
                 coreUpdate()
                 awaitAnimationFrame()
@@ -110,6 +111,8 @@ actual abstract class KotlinGameEngine :
         val newWindowSize = mainResource.resizeCanvas()
         if (newWindowSize != dimensionState.windowSize) {
             dimensionState.windowSize = newWindowSize
+            dimensionState.windowSizeInPixels = newWindowSize
+            dimensionState.windowPixelSize = Int2D.oneByOne
             dimensionState.recalculateViewport()
             Renderer.updateViewport(dimensionState.viewportPosition, dimensionState.viewportSize)
         }
@@ -151,6 +154,8 @@ actual abstract class KotlinGameEngine :
     class Configurator internal constructor(
         val canvasHolder: HTMLElement,
     ) {
+        var screenWidth: Int = 150
+        var screenHeight: Int = 100
         var pixelWidth: Int = 4
         var pixelHeight: Int = 4
     }
@@ -169,8 +174,11 @@ actual abstract class KotlinGameEngine :
                     clearGLContext,
                 ),
             ).applyClosingIfFailed {
+                dimensionState.screenSize = screenWidth by screenHeight
                 dimensionState.pixelSize = pixelWidth by pixelHeight
+                dimensionState.windowPixelSize = Int2D.oneByOne
                 dimensionState.windowSize = mainResource.resizeCanvas()
+                dimensionState.windowSizeInPixels = dimensionState.windowSize
                 dimensionState.recalculateViewport()
 
                 Renderer.afterWindowCreation(this)

@@ -6,6 +6,7 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.renderer.DecalInstance.VerticesInfo.Companion.VERTEX_BYTES_COUNT
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.GLTexture
 import dev.staticsanches.kge.resource.ResourceWrapper
@@ -61,42 +62,40 @@ internal abstract class BaseRenderer : Renderer {
         GL.disable(GL.CULL_FACE)
         GL.bindBuffer(GL.ARRAY_BUFFER, quadInfo.buffer)
 
-        quadInfo.bufferSubData {
-            // Vertex 1
-            putFloat(-1f) // x
-            putFloat(-1f) // y
-            putFloat(1f) // z
-            putFloat(0f) // w
-            putFloat(0f * scale.x + offset.x) // u
-            putFloat(1f * scale.y + offset.y) // v
-            putInt(tint.nativeRGBA) // tint
-
-            // Vertex 2
-            putFloat(+1f) // x
-            putFloat(-1f) // y
-            putFloat(1f) // z
-            putFloat(0f) // w
-            putFloat(1f * scale.x + offset.x) // u
-            putFloat(1f * scale.y + offset.y) // v
-            putInt(tint.nativeRGBA) // tint
-
-            // Vertex 3
-            putFloat(-1f) // x
-            putFloat(+1f) // y
-            putFloat(1f) // z
-            putFloat(0f) // w
-            putFloat(0f * scale.x + offset.x) // u
-            putFloat(0f * scale.y + offset.y) // v
-            putInt(tint.nativeRGBA) // tint
-
-            // Vertex 4
-            putFloat(+1f) // x
-            putFloat(+1f) // y
-            putFloat(1f) // z
-            putFloat(0f) // w
-            putFloat(1f * scale.x + offset.x) // u
-            putFloat(0f * scale.y + offset.y) // v
-            putInt(tint.nativeRGBA) // tint
+        quadInfo.bufferSubData { data ->
+            data
+                // Vertex 1
+                .putFloat(-1f) // x
+                .putFloat(-1f) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(0f * scale.x + offset.x) // u
+                .putFloat(1f * scale.y + offset.y) // v
+                .putInt(tint.nativeRGBA) // tint
+                // Vertex 2
+                .putFloat(+1f) // x
+                .putFloat(-1f) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(1f * scale.x + offset.x) // u
+                .putFloat(1f * scale.y + offset.y) // v
+                .putInt(tint.nativeRGBA) // tint
+                // Vertex 3
+                .putFloat(-1f) // x
+                .putFloat(+1f) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(0f * scale.x + offset.x) // u
+                .putFloat(0f * scale.y + offset.y) // v
+                .putInt(tint.nativeRGBA) // tint
+                // Vertex 4
+                .putFloat(+1f) // x
+                .putFloat(+1f) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(1f * scale.x + offset.x) // u
+                .putFloat(0f * scale.y + offset.y) // v
+                .putInt(tint.nativeRGBA) // tint
         }
 
         GL.drawArrays(GL.TRIANGLE_STRIP, 0, 4)
@@ -105,30 +104,85 @@ internal abstract class BaseRenderer : Renderer {
     override fun drawDecals(dis: List<DecalInstance>) {
         GL.disable(GL.CULL_FACE)
         GL.bindBuffer(GL.ARRAY_BUFFER, quadInfo.buffer)
-        dis.forEach(::drawDecal)
-    }
 
-    private fun drawDecal(di: DecalInstance) {
         val quadInfo = quadInfo
+        var index = 0
+        while (index < dis.size) {
+            val di = dis[index]
 
-        decalMode = di.mode
-        GL.bindTexture(GL.TEXTURE_2D, (di.decal ?: quadInfo.blankDecal).resource)
+            val firsts = quadInfo.firsts.clear()
+            val counts = quadInfo.counts.clear()
 
-        quadInfo.bufferSubData { di.verticesInfo.putAll(this) }
+            quadInfo.bufferSubData { data ->
+                var nextFirst = 0
 
-        GL.drawArrays(
-            if (di.mode == Decal.Mode.WIREFRAME) {
-                GL.LINE_LOOP
-            } else {
-                when (di.structure) {
-                    Decal.Structure.FAN -> GL.TRIANGLE_FAN
-                    Decal.Structure.STRIP -> GL.TRIANGLE_STRIP
-                    Decal.Structure.LIST -> GL.TRIANGLES
-                    Decal.Structure.LINE -> GL.LINES
+                fun collect(instance: DecalInstance) =
+                    with(instance.verticesInfo) {
+                        putAll(data)
+                        firsts.put(nextFirst)
+                        nextFirst += numberOfVertices
+                        counts.put(numberOfVertices)
+                    }
+
+                collect(di)
+
+                var peekIndex = index + 1
+                while (peekIndex < dis.size) {
+                    if (
+                        data.remaining() < VERTEX_BYTES_COUNT ||
+                        !firsts.hasRemaining()
+                    ) {
+                        break // filled buffers
+                    }
+
+                    val diPeek = dis[peekIndex++]
+                    if (
+                        di.mode != diPeek.mode ||
+                        di.structure != diPeek.structure ||
+                        di.decal?.uuid != diPeek.decal?.uuid
+                    ) {
+                        break // peek is not compatible
+                    }
+
+                    collect(diPeek)
                 }
-            },
-            0, di.verticesInfo.numberOfVertices,
-        )
+            }
+
+            decalMode = di.mode
+            GL.bindTexture(GL.TEXTURE_2D, (di.decal ?: quadInfo.blankDecal).resource)
+
+            index += firsts.position()
+
+            if (firsts.position() > 1) {
+                GL.multiDrawArrays(
+                    if (di.mode == Decal.Mode.WIREFRAME) {
+                        GL.LINE_LOOP
+                    } else {
+                        when (di.structure) {
+                            Decal.Structure.FAN -> GL.TRIANGLE_FAN
+                            Decal.Structure.STRIP -> GL.TRIANGLE_STRIP
+                            Decal.Structure.LIST -> GL.TRIANGLES
+                            Decal.Structure.LINE -> GL.LINES
+                        }
+                    },
+                    firsts.flip(), counts.flip(),
+                )
+            } else {
+                GL.drawArrays(
+                    if (di.mode == Decal.Mode.WIREFRAME) {
+                        GL.LINE_LOOP
+                    } else {
+                        when (di.structure) {
+                            Decal.Structure.FAN -> GL.TRIANGLE_FAN
+                            Decal.Structure.STRIP -> GL.TRIANGLE_STRIP
+                            Decal.Structure.LIST -> GL.TRIANGLES
+                            Decal.Structure.LINE -> GL.LINES
+                        }
+                    },
+                    0, di.verticesInfo.numberOfVertices,
+                )
+            }
+        }
     }
 
     override fun createTexture(
