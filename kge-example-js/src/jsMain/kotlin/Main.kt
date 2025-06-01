@@ -17,7 +17,7 @@ class FirstExample : KotlinGameEngine() {
     private lateinit var decal: Decal
 
     override suspend fun onUserCreate() {
-        sprite = Sprite.loadPNG("/xmas_5x5.png").await()
+        sprite = Sprite.loadPNG("xmas_5x5.png").await()
         decal = Decal(sprite)
     }
 
