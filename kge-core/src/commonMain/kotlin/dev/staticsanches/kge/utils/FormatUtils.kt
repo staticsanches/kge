@@ -11,7 +11,7 @@ fun Int.toHumanReadableByteCountBin() = toLong().toHumanReadableByteCountBin()
 fun Long.toHumanReadableByteCountBin() =
     when {
         this == Long.MIN_VALUE || this < 0 -> "N/A"
-        this < 1024L -> "$this B"
+        this < 1024L -> "${this}B"
         this <= 0xfffccccccccccccL shr 40 -> (toDouble() / (0x1 shl 10)).toHumanReadableByteCountBin("KiB")
         this <= 0xfffccccccccccccL shr 30 -> (toDouble() / (0x1 shl 20)).toHumanReadableByteCountBin("MiB")
         this <= 0xfffccccccccccccL shr 20 -> (toDouble() / (0x1 shl 30)).toHumanReadableByteCountBin("GiB")

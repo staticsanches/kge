@@ -1,8 +1,5 @@
 package dev.staticsanches.kge.image.service
 
-import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.ByteOrder
-import dev.staticsanches.kge.buffer.isNative
 import dev.staticsanches.kge.buffer.service.BufferWrapperService
 import dev.staticsanches.kge.buffer.wrapper.BufferWrapperType
 import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
@@ -10,7 +7,6 @@ import dev.staticsanches.kge.extensible.KGEExtensibleService
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.resource.letClosingIfFailed
 import dev.staticsanches.kge.utils.BytesSize
-import dev.staticsanches.kge.utils.BytesSize.INT
 import dev.staticsanches.kge.utils.toHumanReadableByteCountBin
 import ext.pngjs.PNG
 import js.buffer.ArrayBufferLike
@@ -103,11 +99,6 @@ private data object DefaultSpriteService : SpriteService {
 
         // Fill image data, fixing endianness if necessary
         png.data.set(sprite.resource.clear().asUint8Array())
-        if (ByteOrder.littleEndian.isNative) {
-            BufferWrapperService
-                .create(BufferWrapperType.Byte, png.data.buffer, "PNG Buffer")
-                .use { reverseBytes(it.resource) }
-        }
 
         // Write PNG data
         return toBase64(PNG.sync.write(png))
@@ -136,10 +127,7 @@ private data object DefaultSpriteService : SpriteService {
                                     "Sprite ${width}x$height" +
                                         " (${png.data.buffer.byteLength.toHumanReadableByteCountBin()})"
                                 ),
-                            ).letClosingIfFailed { bbw ->
-                                if (ByteOrder.littleEndian.isNative) reverseBytes(bbw.resource)
-                                resolve(Sprite(width, height, bbw, sampleMode))
-                            }
+                            ).letClosingIfFailed { bbw -> resolve(Sprite(width, height, bbw, sampleMode)) }
                     } catch (e: Throwable) {
                         reject(e)
                     }
@@ -161,20 +149,6 @@ private data object DefaultSpriteService : SpriteService {
         }
         return btoa(binary)
     }
-
-    private fun reverseBytes(buffer: ByteBuffer) {
-        check(buffer.clear().capacity() % INT == 0)
-        while (buffer.hasRemaining()) {
-            buffer.mark()
-            val rgba = buffer.getInt()
-            buffer.reset()
-            buffer.putInt(rgba.reverseBytes())
-        }
-        buffer.clear()
-    }
-
-    private fun Int.reverseBytes(): Int =
-        ((this and 0xff) shl 24) or ((this and 0xff00) shl 8) or ((this shr 8) and 0xff00) or ((this shr 24) and 0xff)
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE
