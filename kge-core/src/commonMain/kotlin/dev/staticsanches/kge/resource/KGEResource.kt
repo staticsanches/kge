@@ -17,7 +17,7 @@ interface KGEInternalResource : KGEResource {
     override fun close()
 }
 
-inline fun <T : AutoCloseable?, R> T.closeIfFailed(crossinline block: (T) -> R): R =
+inline fun <T : AutoCloseable?, R> T.letClosingIfFailed(crossinline block: (T) -> R): R =
     try {
         block(this)
     } catch (e: Throwable) {
@@ -31,8 +31,8 @@ inline fun <T : AutoCloseable?, R> T.closeIfFailed(crossinline block: (T) -> R):
         throw e
     }
 
-inline fun <T : AutoCloseable?> T.applyAndCloseIfFailed(crossinline block: (T) -> Any): T =
-    closeIfFailed {
-        block(it)
+inline fun <T : AutoCloseable?> T.applyClosingIfFailed(crossinline block: T.() -> Any): T =
+    letClosingIfFailed {
+        it.block()
         it
     }

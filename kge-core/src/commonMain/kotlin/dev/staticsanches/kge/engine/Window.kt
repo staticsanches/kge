@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.engine
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.configuration.KGEConfiguration
 import dev.staticsanches.kge.engine.state.DimensionState
 import dev.staticsanches.kge.engine.state.TimeState
 import dev.staticsanches.kge.engine.state.WithKGEState
@@ -14,20 +15,20 @@ import dev.staticsanches.kge.renderer.LayerDescriptor
 import dev.staticsanches.kge.resource.KGEInternalResource
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.ResourceWrapper
-import dev.staticsanches.kge.resource.closeIfFailed
+import dev.staticsanches.kge.resource.letClosingIfFailed
 import dev.staticsanches.kge.utils.invokeForAllRemoving
 import kotlin.getValue
 
 class Window
     @KGESensitiveAPI
     constructor(
-        private val mainResourceWrapper: ResourceWrapper<WindowMainResource>,
+        mainResourceWrapper: ResourceWrapper<WindowMainResource>,
     ) : WithKGEState,
         KGEInternalResource {
         private val boundResources = mutableListOf<KGEResource>()
 
         @KGESensitiveAPI
-        override val mainResource: WindowMainResource by mainResourceWrapper::resource
+        override val mainResource: WindowMainResource by mainResourceWrapper
 
         override val dimensionState: DimensionState = DimensionState()
         override val screenSize: Int2D by dimensionState::screenSize
@@ -58,7 +59,7 @@ class Window
             }
 
         override val fontSheet: Decal
-        override var tabSizeInSpaces: Int = 4
+        override var tabSizeInSpaces: Int = KGEConfiguration.defaultTabSizeInSpaces
             set(value) {
                 check(value > 0) { "Invalid tab size in spaces: $value" }
                 field = value
@@ -66,7 +67,7 @@ class Window
 
         init {
             bindResource(mainResourceWrapper)
-            fontSheet = closeIfFailed { Rasterizer.createFontSheet() }
+            fontSheet = letClosingIfFailed { Rasterizer.createFontSheet() }
             bindResource(fontSheet)
         }
 

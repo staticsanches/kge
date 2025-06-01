@@ -1,38 +1,38 @@
-@file:Suppress("ktlint:standard:property-naming", "ConstPropertyName", "unused")
+@file:Suppress("unused")
 
 package dev.staticsanches.kge.utils
 
 data object BytesSize {
-    const val float: Int = Float.SIZE_BYTES
-    const val int: Int = Int.SIZE_BYTES
-    const val uint: Int = UInt.SIZE_BYTES
+    const val FLOAT: Int = Float.SIZE_BYTES
+    const val INT: Int = Int.SIZE_BYTES
+    const val UINT: Int = UInt.SIZE_BYTES
 
-    const val vec2: Int = 2 * float
-    const val vec3: Int = 3 * float
-    const val vec4: Int = 4 * float
+    const val VEC2: Int = 2 * FLOAT
+    const val VEC3: Int = 3 * FLOAT
+    const val VEC4: Int = 4 * FLOAT
 
-    const val ivec2: Int = 2 * int
-    const val ivec3: Int = 3 * int
-    const val ivec4: Int = 4 * int
+    const val IVEC2: Int = 2 * INT
+    const val IVEC3: Int = 3 * INT
+    const val IVEC4: Int = 4 * INT
 
-    const val uvec2: Int = 2 * uint
-    const val uvec3: Int = 3 * uint
-    const val uvec4: Int = 4 * uint
+    const val UVEC2: Int = 2 * UINT
+    const val UVEC3: Int = 3 * UINT
+    const val UVEC4: Int = 4 * UINT
 
-    const val mat2: Int = 2 * vec2
-    const val mat2x2: Int = mat2
-    const val mat2x3: Int = 2 * vec3
-    const val mat2x4: Int = 2 * vec4
+    const val MAT2: Int = 2 * VEC2
+    const val MAT2_2: Int = MAT2
+    const val MAT2_3: Int = 2 * VEC3
+    const val MAT2_4: Int = 2 * VEC4
 
-    const val mat3: Int = 3 * vec3
-    const val mat3x2: Int = 3 * vec2
-    const val mat3x3: Int = mat3
-    const val mat3x4: Int = 3 * vec4
+    const val MAT3: Int = 3 * VEC3
+    const val MAT3_2: Int = 3 * VEC2
+    const val MAT3_3: Int = MAT3
+    const val MAT3_4: Int = 3 * VEC4
 
-    const val mat4: Int = 4 * vec4
-    const val mat4x2: Int = 4 * vec2
-    const val mat4x3: Int = 4 * vec3
-    const val mat4x4: Int = mat4
+    const val MAT4: Int = 4 * VEC4
+    const val MAT4_2: Int = 4 * VEC2
+    const val MAT4_3: Int = 4 * VEC3
+    const val MAT4_4: Int = MAT4
 
     inline operator fun invoke(block: BytesSize.() -> Int): Int = BytesSize.block()
 }

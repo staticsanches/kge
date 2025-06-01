@@ -1,15 +1,16 @@
 package dev.staticsanches.kge.image.service
 
 import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.ByteBufferWrapper
 import dev.staticsanches.kge.buffer.ByteOrder
 import dev.staticsanches.kge.buffer.isNative
-import dev.staticsanches.kge.buffer.service.ByteBufferWrapperService
+import dev.staticsanches.kge.buffer.service.BufferWrapperService
+import dev.staticsanches.kge.buffer.wrapper.BufferWrapperType
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.extensible.KGEExtensibleService
 import dev.staticsanches.kge.image.Sprite
-import dev.staticsanches.kge.resource.closeIfFailed
+import dev.staticsanches.kge.resource.letClosingIfFailed
 import dev.staticsanches.kge.utils.BytesSize
-import dev.staticsanches.kge.utils.BytesSize.int
+import dev.staticsanches.kge.utils.BytesSize.INT
 import dev.staticsanches.kge.utils.toHumanReadableByteCountBin
 import ext.pngjs.PNG
 import js.buffer.ArrayBufferLike
@@ -62,7 +63,7 @@ private data object DefaultSpriteService : SpriteService {
         sampleMode: Sprite.SampleMode,
         name: String?,
     ): Sprite =
-        ByteBufferWrapper(BytesSize { width * height * int }) { "Sprite ${width}x$height ($it)" }.closeIfFailed {
+        ByteBufferWrapper(BytesSize { width * height * INT }) { "Sprite ${width}x$height ($it)" }.letClosingIfFailed {
             Sprite(width, height, it, sampleMode)
         }
 
@@ -70,7 +71,7 @@ private data object DefaultSpriteService : SpriteService {
         original: Sprite,
         newName: String?,
     ): Sprite =
-        ByteBufferWrapperService.duplicate(original, newName).closeIfFailed {
+        BufferWrapperService.duplicate(original, newName).letClosingIfFailed {
             Sprite(original.width, original.height, it, original.sampleMode)
         }
 
@@ -101,9 +102,11 @@ private data object DefaultSpriteService : SpriteService {
         val png = PNG(js("{ width: width, height: height, filterType: -1 }"))
 
         // Fill image data, fixing endianness if necessary
-        png.data.set(sprite.resource.clear().createView(1, ::Uint8Array))
+        png.data.set(sprite.resource.clear().asUint8Array())
         if (ByteOrder.littleEndian.isNative) {
-            ByteBufferWrapperService.create(png.data.buffer, "PNG Buffer").use { reverseBytes(it.resource) }
+            BufferWrapperService
+                .create(BufferWrapperType.Byte, png.data.buffer, "PNG Buffer")
+                .use { reverseBytes(it.resource) }
         }
 
         // Write PNG data
@@ -125,14 +128,15 @@ private data object DefaultSpriteService : SpriteService {
                     try {
                         val width = png.width
                         val height = png.height
-                        ByteBufferWrapperService
+                        BufferWrapperService
                             .create(
+                                BufferWrapperType.Byte,
                                 png.data.buffer,
                                 name ?: (
                                     "Sprite ${width}x$height" +
                                         " (${png.data.buffer.byteLength.toHumanReadableByteCountBin()})"
                                 ),
-                            ).closeIfFailed { bbw ->
+                            ).letClosingIfFailed { bbw ->
                                 if (ByteOrder.littleEndian.isNative) reverseBytes(bbw.resource)
                                 resolve(Sprite(width, height, bbw, sampleMode))
                             }
@@ -159,7 +163,7 @@ private data object DefaultSpriteService : SpriteService {
     }
 
     private fun reverseBytes(buffer: ByteBuffer) {
-        check(buffer.clear().capacity() % int == 0)
+        check(buffer.clear().capacity() % INT == 0)
         while (buffer.hasRemaining()) {
             buffer.mark()
             val rgba = buffer.getInt()

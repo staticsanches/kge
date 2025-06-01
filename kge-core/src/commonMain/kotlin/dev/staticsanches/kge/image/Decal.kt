@@ -6,7 +6,7 @@ import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.renderer.gl.GLTexture
 import dev.staticsanches.kge.resource.ResourceWrapper
-import dev.staticsanches.kge.resource.applyAndCloseIfFailed
+import dev.staticsanches.kge.resource.applyClosingIfFailed
 
 /**
  * A GPU resident storage of a [Sprite].
@@ -35,6 +35,6 @@ class Decal(
             name: String = "Decal of $sprite",
         ): Decal =
             Decal(Renderer.createTexture(name, filtered = filtered, clamp = clamp), sprite)
-                .applyAndCloseIfFailed { it.update() }
+                .applyClosingIfFailed { update() }
     }
 }

@@ -1,29 +1,19 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.buffer
 
-expect abstract class ByteBuffer {
-    fun capacity(): Int
+expect abstract class ByteBuffer : Buffer {
+    override fun position(newPosition: Int): ByteBuffer
 
-    fun position(): Int
+    override fun limit(newLimit: Int): ByteBuffer
 
-    fun position(newPosition: Int): ByteBuffer
+    override fun mark(): ByteBuffer
 
-    fun limit(): Int
-
-    fun limit(newLimit: Int): ByteBuffer
-
-    fun mark(): ByteBuffer
-
-    fun clear(): ByteBuffer
-
-    fun hasRemaining(): Boolean
+    override fun clear(): ByteBuffer
 
     fun order(): ByteOrder
 
-    fun reset(): ByteBuffer
+    override fun reset(): ByteBuffer
 
-    fun flip(): ByteBuffer
+    override fun flip(): ByteBuffer
 
     abstract fun get(): Byte
 
@@ -58,7 +48,3 @@ expect abstract class ByteBuffer {
         value: Float,
     ): ByteBuffer
 }
-
-expect class ByteOrder
-
-expect val ByteOrder.isNative: Boolean

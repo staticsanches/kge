@@ -2,8 +2,8 @@
 
 package dev.staticsanches.kge.image
 
-import dev.staticsanches.kge.buffer.ByteBufferWrapper
 import dev.staticsanches.kge.buffer.isNative
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.utils.BytesSize
@@ -25,7 +25,7 @@ class Sprite(
         check(width > 0 && height > 0) { "Invalid buffer dimension ${width}x$height" }
 
         val (rgbaData) = delegate
-        val expectedBufferCapacity = BytesSize { width * height * int }
+        val expectedBufferCapacity = BytesSize { width * height * INT }
         check(expectedBufferCapacity == rgbaData.capacity()) {
             "Invalid buffer capacity. Expected: $expectedBufferCapacity. Actual: ${rgbaData.capacity()}"
         }

@@ -4,7 +4,7 @@ import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.buffer.ByteOrder
 import dev.staticsanches.kge.buffer.isNative
 import dev.staticsanches.kge.image.IntColorComponent
-import dev.staticsanches.kge.utils.BytesSize.int
+import dev.staticsanches.kge.utils.BytesSize.INT
 import kotlin.experimental.inv
 
 actual val originalPixelServiceImplementation: PixelService
@@ -33,8 +33,8 @@ private data object BigEndianService : PixelService {
     override fun invNativeRGBA(nativeRGBA: Int): Int = (Integer.toUnsignedLong(nativeRGBA) xor 0xFF_FF_FF_00L).toInt()
 
     override fun invRGBABuffer(buffer: ByteBuffer) {
-        check(buffer.clear().capacity() % int == 0)
-        for (i in 0..<buffer.capacity() step int) {
+        check(buffer.clear().capacity() % INT == 0)
+        for (i in 0..<buffer.capacity() step INT) {
             val r = buffer.position(i).get()
             val g = buffer.get()
             val b = buffer.get()
@@ -74,8 +74,8 @@ private data object LittleEndianService : PixelService {
     override fun invNativeRGBA(nativeRGBA: Int): Int = (Integer.toUnsignedLong(nativeRGBA) xor 0x00_FF_FF_FFL).toInt()
 
     override fun invRGBABuffer(buffer: ByteBuffer) {
-        check(buffer.clear().capacity() % int == 0)
-        for (i in 1..<buffer.capacity() step int) {
+        check(buffer.clear().capacity() % INT == 0)
+        for (i in 1..<buffer.capacity() step INT) {
             val b = buffer.position(i).get()
             val g = buffer.get()
             val r = buffer.get()

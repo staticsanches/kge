@@ -11,7 +11,7 @@ import dev.staticsanches.kge.image.extension.loadPNG
 import dev.staticsanches.kge.image.extension.loadPNGFromBase64
 import dev.staticsanches.kge.image.extension.toBase64PNG
 import dev.staticsanches.kge.image.extension.writePNG
-import dev.staticsanches.kge.resource.applyAndCloseIfFailed
+import dev.staticsanches.kge.resource.applyClosingIfFailed
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
@@ -136,7 +136,7 @@ class SpriteJVMTest {
             assertEquals(xmas5x5Pixels, sprite.toList())
         }
 
-    private fun createXmas5x5(): Sprite = Sprite.create(5, 5).applyAndCloseIfFailed { it.clear(xmas5x5Pixels) }
+    private fun createXmas5x5(): Sprite = Sprite.create(5, 5).applyClosingIfFailed { clear(xmas5x5Pixels) }
 
     companion object {
         private val xmas5x5URL = SpriteJVMTest::class.java.getResource("/xmas_5x5.png")!!

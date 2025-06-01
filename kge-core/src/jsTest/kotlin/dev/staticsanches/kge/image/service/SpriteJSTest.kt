@@ -11,7 +11,7 @@ import dev.staticsanches.kge.image.extension.create
 import dev.staticsanches.kge.image.extension.loadPNG
 import dev.staticsanches.kge.image.extension.loadPNGFromBase64
 import dev.staticsanches.kge.image.extension.toBase64PNG
-import dev.staticsanches.kge.resource.applyAndCloseIfFailed
+import dev.staticsanches.kge.resource.applyClosingIfFailed
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -56,7 +56,7 @@ class SpriteJSTest {
             }
         }
 
-    private fun createXmas5x5(): Sprite = Sprite.create(5, 5).applyAndCloseIfFailed { it.clear(xmas5x5Pixels) }
+    private fun createXmas5x5(): Sprite = Sprite.create(5, 5).applyClosingIfFailed { clear(xmas5x5Pixels) }
 
     companion object {
         private val xmas5x5Pixels =

@@ -3,6 +3,7 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.configuration.KGEConfiguration
 import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.image.service.PixelService.Companion.alphaFromNativeRGBA
 import dev.staticsanches.kge.image.service.PixelService.Companion.blueFromNativeRGBA
@@ -128,14 +129,14 @@ value class Pixel
                 r: IntColorComponent,
                 g: IntColorComponent,
                 b: IntColorComponent,
-                a: IntColorComponent = 0xFF,
+                a: IntColorComponent = KGEConfiguration.defaultPixelAlpha,
             ): Pixel = Pixel(toNativeRGBA(r, g, b, a))
 
             fun rgba(
                 r: FloatColorComponent,
                 g: FloatColorComponent,
                 b: FloatColorComponent,
-                a: FloatColorComponent = 1f,
+                a: FloatColorComponent = KGEConfiguration.defaultPixelAlpha / 255f,
             ): Pixel = Pixel(toNativeRGBA((r * 255).toInt(), (g * 255).toInt(), (b * 255).toInt(), (a * 255).toInt()))
         }
     }

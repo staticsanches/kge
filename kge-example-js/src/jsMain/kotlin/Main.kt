@@ -1,44 +1,46 @@
-import dev.staticsanches.kge.image.Colors
-import dev.staticsanches.kge.image.Colors.BLANK
-import dev.staticsanches.kge.image.Colors.BLUE
-import dev.staticsanches.kge.image.Colors.LIME
-import dev.staticsanches.kge.image.Colors.ORANGE
-import dev.staticsanches.kge.image.Colors.RED
-import dev.staticsanches.kge.image.Colors.YELLOW
+import dev.staticsanches.kge.engine.KotlinGameEngine
+import dev.staticsanches.kge.image.Decal
+import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.extension.loadPNG
-import dev.staticsanches.kge.image.extension.loadPNGFromBase64
-import js.promise.catch
+import dev.staticsanches.kge.math.vector.Float2D.Companion.by
+import dev.staticsanches.kge.utils.invokeForAll
 import web.dom.document
+import kotlin.random.Random
 
 fun main() {
-    document.body.style.backgroundColor = Colors.CADET_BLUE.toString()
-    console.log("KGE JS")
+    FirstExample().run(document.getElementById("canvas-holder")!!) {}
+}
 
-    val xmas5x5Pixels =
-        listOf(
-            BLUE, BLUE, YELLOW, BLUE, BLUE,
-            BLUE, RED, LIME, LIME, BLUE,
-            BLUE, LIME, LIME, RED, BLUE,
-            LIME, RED, LIME, LIME, RED,
-            BLANK, BLANK, ORANGE, BLANK, BLANK,
-        )
+class FirstExample : KotlinGameEngine() {
+    private lateinit var sprite: Sprite
+    private lateinit var decal: Decal
 
-    Sprite
-        .loadPNG("xmas_5x5.png")
-        .then { sprite ->
-            sprite.use {
-                console.log(xmas5x5Pixels == sprite.toList())
+    override suspend fun onUserCreate() {
+        sprite = Sprite.loadPNG("/xmas_5x5.png").await()
+        decal = Decal(sprite)
+    }
+
+    override suspend fun onUserDestroy(): Boolean {
+        invokeForAll(sprite, decal) { it.close() }
+        return super.onUserDestroy()
+    }
+
+    override suspend fun onUserUpdate(): Boolean {
+        (0..<screenSize.x).forEach { x ->
+            (0..<screenSize.y).forEach { y ->
+                draw(x, y, Pixel.rgba(randomComponent(), randomComponent(), randomComponent()).inv())
             }
-        }.catch(console::error)
+        }
 
-    Sprite
-        .loadPNGFromBase64(
-            "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAPUlEQVR4XmNkYPj/n4EBRDIyMDKCmQxMYAEGoACYwQgiIYJQBQz" +
-                "/IWJAJf+B+oEcdAmwlv9LGSAGMjAwAACtexCnoHY4qwAAAABJRU5ErkJggg==",
-        ).then { sprite ->
-            sprite.use {
-                console.log(xmas5x5Pixels == sprite.toList())
-            }
-        }.catch(console::error)
+        drawStringDecal(5f by 10f, "KGE - Kotlin Game Engine", scale = .5f by .5f)
+        drawDecal(20f by 20f, decal, scale = 10f by 10f)
+
+        return true
+        return true
+    }
+
+    companion object {
+        private fun randomComponent(): Int = Random.nextInt(0, 256)
+    }
 }

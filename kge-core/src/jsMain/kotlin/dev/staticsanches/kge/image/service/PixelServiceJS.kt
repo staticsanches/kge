@@ -2,7 +2,7 @@ package dev.staticsanches.kge.image.service
 
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.image.IntColorComponent
-import dev.staticsanches.kge.utils.BytesSize.int
+import dev.staticsanches.kge.utils.BytesSize.INT
 import kotlin.experimental.inv
 
 actual val originalPixelServiceImplementation: PixelService
@@ -32,7 +32,7 @@ private data object DefaultPixelService : PixelService {
         ((nativeRGBA.toLong() and 0xffffffffL) xor 0xFF_FF_FF_00L).toInt()
 
     override fun invRGBABuffer(buffer: ByteBuffer) {
-        check(buffer.clear().capacity() % int == 0)
+        check(buffer.clear().capacity() % INT == 0)
         for (i in 1..<buffer.capacity() step 4) {
             val b = buffer.position(i).get()
             val g = buffer.get()

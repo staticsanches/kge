@@ -39,14 +39,14 @@ actual class WindowMainResource(
     }
 
     @KGESensitiveAPI
-    fun resizeCanvas(): Int2D {
-        val canvas = webGL2Canvas
-        val newWidth = canvas.clientWidth
-        val newHeight = canvas.clientHeight
-        if (newWidth != canvas.width || newHeight != canvas.height) {
-            canvas.width = newWidth
-            canvas.height = newHeight
+    fun resizeCanvas(): Int2D =
+        with(webGL2Canvas) {
+            val newWidth = clientWidth
+            val newHeight = clientHeight
+            if (newWidth != width || newHeight != height) {
+                width = newWidth
+                height = newHeight
+            }
+            return newWidth by newHeight
         }
-        return newWidth by newHeight
-    }
 }

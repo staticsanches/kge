@@ -60,8 +60,8 @@ private data object DefaultDrawDecalService : DrawDecalService {
         val screenSpacePosX = 2f * position.x * invertedScreenSize.x - 1f
         val screenSpacePosY = -2f * position.y * invertedScreenSize.y + 1f
 
-        val screenSpaceDimX = screenSpacePosX + 2f * decal.sprite.size.x * invertedScreenSize.x * scale.x
-        val screenSpaceDimY = screenSpacePosY - 2f * decal.sprite.size.y * invertedScreenSize.y * scale.y
+        val screenSpaceDimX = screenSpacePosX + 2f * decal.sprite.width * invertedScreenSize.x * scale.x
+        val screenSpaceDimY = screenSpacePosY - 2f * decal.sprite.height * invertedScreenSize.y * scale.y
 
         override val numberOfVertices: Int
             get() = 4
@@ -70,7 +70,9 @@ private data object DefaultDrawDecalService : DrawDecalService {
 
         override fun y(index: Int): Float = if (index == 0 || index == 3) screenSpacePosY else screenSpaceDimY
 
-        override fun w(index: Int): Float = 1f
+        override fun z(index: Int): Float = 1f
+
+        override fun w(index: Int): Float = 0f
 
         override fun u(index: Int): Float = if (index <= 1) 0f else 1f
 
@@ -78,36 +80,40 @@ private data object DefaultDrawDecalService : DrawDecalService {
 
         override fun tint(index: Int): Pixel = tint
 
-        override fun putAllXYWUVTint(buffer: ByteBuffer) {
+        override fun putAll(buffer: ByteBuffer) {
             buffer
                 // Vertex 0
-                .putFloat(screenSpacePosX)
-                .putFloat(screenSpacePosY)
-                .putFloat(1f)
-                .putFloat(0f)
-                .putFloat(0f)
-                .putInt(tint.nativeRGBA)
+                .putFloat(screenSpacePosX) // x
+                .putFloat(screenSpacePosY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(0f) // u
+                .putFloat(0f) // v
+                .putInt(tint.nativeRGBA) // tint
                 // Vertex 1
-                .putFloat(screenSpacePosX)
-                .putFloat(screenSpaceDimY)
-                .putFloat(1f)
-                .putFloat(0f)
-                .putFloat(1f)
-                .putInt(tint.nativeRGBA)
+                .putFloat(screenSpacePosX) // x
+                .putFloat(screenSpaceDimY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(0f) // u
+                .putFloat(1f) // v
+                .putInt(tint.nativeRGBA) // tint
                 // Vertex 2
-                .putFloat(screenSpaceDimX)
-                .putFloat(screenSpaceDimY)
-                .putFloat(1f)
-                .putFloat(1f)
-                .putFloat(1f)
-                .putInt(tint.nativeRGBA)
+                .putFloat(screenSpaceDimX) // x
+                .putFloat(screenSpaceDimY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(1f) // u
+                .putFloat(1f) // v
+                .putInt(tint.nativeRGBA) // tint
                 // Vertex 3
-                .putFloat(screenSpaceDimX)
-                .putFloat(screenSpacePosY)
-                .putFloat(1f)
-                .putFloat(1f)
-                .putFloat(0f)
-                .putInt(tint.nativeRGBA)
+                .putFloat(screenSpaceDimX) // x
+                .putFloat(screenSpacePosY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(1f) // u
+                .putFloat(0f) // v
+                .putInt(tint.nativeRGBA) // tint
         }
     }
 }

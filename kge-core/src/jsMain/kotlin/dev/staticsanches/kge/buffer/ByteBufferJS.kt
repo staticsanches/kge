@@ -1,78 +1,39 @@
-@file:Suppress("unused")
+@file:Suppress("ktlint:standard:filename")
 
 package dev.staticsanches.kge.buffer
 
-import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import js.buffer.ArrayBufferLike
-
 actual abstract class ByteBuffer(
-    private val capacity: Int,
-) {
-    // Invariants: mark <= position <= limit <= capacity
-    private var mark: Int = -1
-    private var position: Int = 0
-    private var limit: Int = capacity
-
-    @KGESensitiveAPI
-    abstract fun <V> createView(
-        stride: Int,
-        viewConstructor: (ArrayBufferLike, Int, Int) -> V,
-    ): V
-
-    actual fun capacity(): Int = capacity
-
-    actual fun position(): Int = position
-
-    actual fun position(newPosition: Int): ByteBuffer {
-        if (newPosition < 0 || newPosition > limit) {
-            throw IllegalArgumentException("newPosition must lie in [0, $limit]")
-        }
-        position = newPosition
-        if (mark > newPosition) mark = -1
+    capacity: Int,
+) : Buffer(capacity) {
+    actual override fun position(newPosition: Int): ByteBuffer {
+        super.position(newPosition)
         return this
     }
 
-    actual fun limit(): Int = limit
-
-    actual fun limit(newLimit: Int): ByteBuffer {
-        if (newLimit < 0 || newLimit > capacity) {
-            throw IllegalArgumentException("newLimit must lie in [0, $capacity]")
-        }
-        limit = newLimit
-        if (position > newLimit) position = newLimit
-        if (mark > newLimit) mark = -1
+    actual override fun limit(newLimit: Int): ByteBuffer {
+        super.limit(newLimit)
         return this
     }
 
-    actual fun mark(): ByteBuffer {
-        mark = position
+    actual override fun mark(): ByteBuffer {
+        super.mark()
         return this
     }
 
-    actual fun clear(): ByteBuffer {
-        mark = -1
-        position = 0
-        limit = capacity
+    actual override fun clear(): ByteBuffer {
+        super.clear()
         return this
     }
-
-    actual fun hasRemaining(): Boolean = position < limit
 
     actual fun order(): ByteOrder = ByteOrder.nativeOrder
 
-    actual fun reset(): ByteBuffer {
-        val m = mark
-        if (m < 0) {
-            throw IllegalStateException()
-        }
-        position = m
+    actual override fun reset(): ByteBuffer {
+        super.reset()
         return this
     }
 
-    actual fun flip(): ByteBuffer {
-        limit = position
-        position = 0
-        mark = -1
+    actual override fun flip(): ByteBuffer {
+        super.flip()
         return this
     }
 
@@ -108,37 +69,4 @@ actual abstract class ByteBuffer(
         position: Int,
         value: Float,
     ): ByteBuffer
-
-    protected fun nextPosition(numberOfBytes: Int): Int {
-        val p = position
-        if (limit - p < numberOfBytes) {
-            throw IndexOutOfBoundsException()
-        }
-        position = p + numberOfBytes
-        return p
-    }
-
-    protected fun checkPosition(
-        position: Int,
-        numberOfBytes: Int,
-    ): Int {
-        if (position < 0 || numberOfBytes > limit - position) throw IndexOutOfBoundsException()
-        return position
-    }
 }
-
-actual class ByteOrder private constructor(
-    private val name: String,
-) {
-    override fun toString(): String = name
-
-    companion object {
-        val bigEndian: ByteOrder = ByteOrder("BIG_ENDIAN")
-        val littleEndian: ByteOrder = ByteOrder("LITTLE_ENDIAN")
-        val nativeOrder =
-            if (js("new Uint8Array(new Uint16Array([1]).buffer)[0] === 0")) bigEndian else littleEndian
-    }
-}
-
-actual val ByteOrder.isNative: Boolean
-    get() = this === ByteOrder.nativeOrder

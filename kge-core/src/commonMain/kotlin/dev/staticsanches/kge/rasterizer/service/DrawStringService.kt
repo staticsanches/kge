@@ -13,8 +13,8 @@ import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.MutableInt2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.renderer.DecalInstance
-import dev.staticsanches.kge.resource.applyAndCloseIfFailed
-import dev.staticsanches.kge.resource.closeIfFailed
+import dev.staticsanches.kge.resource.applyClosingIfFailed
+import dev.staticsanches.kge.resource.letClosingIfFailed
 import kotlin.math.max
 
 interface DrawStringService : KGEExtensibleService {
@@ -115,7 +115,7 @@ private data object DefaultDrawStringService : DrawStringService {
     override fun createFontSheet(): Decal =
         Sprite
             .create(128, 48, name = "KGE Font Sheet")
-            .applyAndCloseIfFailed { sprite ->
+            .applyClosingIfFailed {
                 var px = 0
                 var py = 0
                 for (b in 0..<1024 step 4) {
@@ -125,14 +125,14 @@ private data object DefaultDrawStringService : DrawStringService {
                     val sym4 = FONT_SHEET_DATA[b + 3].code - 48
                     val r = (sym1 shl 18) or (sym2 shl 12) or (sym3 shl 6) or sym4
                     for (i in 0..<24) {
-                        sprite[px, py] = if ((r and (1 shl i) != 0)) Colors.WHITE else Colors.BLANK
+                        this[px, py] = if ((r and (1 shl i) != 0)) Colors.WHITE else Colors.BLANK
                         if (++py == 48) {
                             px++
                             py = 0
                         }
                     }
                 }
-            }.closeIfFailed { Decal(it) }
+            }.letClosingIfFailed { Decal(it) }
 
     override fun getTextSize(
         text: String,

@@ -1,14 +1,14 @@
 package dev.staticsanches.kge.image.service
 
 import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.ByteBufferWrapper
-import dev.staticsanches.kge.buffer.service.ByteBufferWrapperService
+import dev.staticsanches.kge.buffer.service.BufferWrapperService
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.extensible.KGEExtensibleService
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.ResourceWrapper
-import dev.staticsanches.kge.resource.applyAndCloseIfFailed
-import dev.staticsanches.kge.resource.closeIfFailed
+import dev.staticsanches.kge.resource.applyClosingIfFailed
+import dev.staticsanches.kge.resource.letClosingIfFailed
 import dev.staticsanches.kge.utils.BytesSize
 import dev.staticsanches.kge.utils.toHumanReadableByteCountBin
 import org.lwjgl.stb.STBIWriteCallback
@@ -94,7 +94,7 @@ private data object DefaultSpriteService : SpriteService {
         sampleMode: Sprite.SampleMode,
         name: String?,
     ): Sprite =
-        ByteBufferWrapper(BytesSize { width * height * int }) { "Sprite ${width}x$height ($it)" }.closeIfFailed {
+        ByteBufferWrapper(BytesSize { width * height * INT }) { "Sprite ${width}x$height ($it)" }.letClosingIfFailed {
             Sprite(width, height, it, sampleMode)
         }
 
@@ -102,7 +102,7 @@ private data object DefaultSpriteService : SpriteService {
         original: Sprite,
         newName: String?,
     ): Sprite =
-        ByteBufferWrapperService.duplicate(original, newName).closeIfFailed {
+        BufferWrapperService.duplicate(original, newName).letClosingIfFailed {
             Sprite(original.width, original.height, it, original.sampleMode)
         }
 
@@ -126,8 +126,8 @@ private data object DefaultSpriteService : SpriteService {
         isProvider().use { inputStream ->
             val bytes = inputStream.readAllBytes()
             ByteBufferWrapper(bytes.size)
-                .applyAndCloseIfFailed { it().clear().put(bytes) }
-                .use { STBBuffer(it()).toSprite(sampleMode, name) }
+                .applyClosingIfFailed { resource.clear().put(bytes) }
+                .use { (buffer) -> STBBuffer(buffer).toSprite(sampleMode, name) }
         }
 
     override fun loadPNGFromBase64(
@@ -139,7 +139,7 @@ private data object DefaultSpriteService : SpriteService {
     override fun writePNG(
         sprite: Sprite,
         fileName: String,
-    ) = check(STBImageWrite.stbi_write_png(fileName, sprite.width, sprite.height, 4, sprite().clear(), 0)) {
+    ) = check(STBImageWrite.stbi_write_png(fileName, sprite.width, sprite.height, 4, sprite.resource.clear(), 0)) {
         "Unable to write $sprite to $fileName"
     }
 
@@ -154,7 +154,7 @@ private data object DefaultSpriteService : SpriteService {
     ) = check(
         STBImageWrite.stbi_write_png_to_func(
             { _, data, size -> channel.write(STBIWriteCallback.getData(data, size)) },
-            MemoryUtil.NULL, sprite.width, sprite.height, 4, sprite().clear(), 0,
+            MemoryUtil.NULL, sprite.width, sprite.height, 4, sprite.resource.clear(), 0,
         ),
     ) { "Unable to write $sprite" }
 
@@ -178,7 +178,7 @@ private data object DefaultSpriteService : SpriteService {
         ): Sprite =
             ResourceWrapper(
                 name ?: "Sprite ${width}x$height (${data.capacity().toHumanReadableByteCountBin()})", data, this,
-            ).closeIfFailed { Sprite(width, height, it, sampleMode) }
+            ).letClosingIfFailed { Sprite(width, height, it, sampleMode) }
 
         override fun invoke() = STBImage.stbi_image_free(data.clear())
 

@@ -108,7 +108,9 @@ private data object DefaultDrawPartialDecalService : DrawPartialDecalService {
 
         override fun y(index: Int): Float = if (index == 0 || index == 3) quantisedPosY else quantisedDimY
 
-        override fun w(index: Int): Float = 1f
+        override fun z(index: Int): Float = 1f
+
+        override fun w(index: Int): Float = 0f
 
         override fun u(index: Int): Float = if (index <= 1) uvtlX else uvbrX
 
@@ -116,36 +118,40 @@ private data object DefaultDrawPartialDecalService : DrawPartialDecalService {
 
         override fun tint(index: Int): Pixel = tint
 
-        override fun putAllXYWUVTint(buffer: ByteBuffer) {
+        override fun putAll(buffer: ByteBuffer) {
             buffer
                 // Vertex 0
-                .putFloat(quantisedPosX)
-                .putFloat(quantisedPosY)
-                .putFloat(1f)
-                .putFloat(uvtlX)
-                .putFloat(uvtlY)
-                .putInt(tint.nativeRGBA)
+                .putFloat(quantisedPosX) // x
+                .putFloat(quantisedPosY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(uvtlX) // u
+                .putFloat(uvtlY) // v
+                .putInt(tint.nativeRGBA) // tint
                 // Vertex 1
-                .putFloat(quantisedPosX)
-                .putFloat(quantisedDimY)
-                .putFloat(1f)
-                .putFloat(uvtlX)
-                .putFloat(uvbrY)
-                .putInt(tint.nativeRGBA)
+                .putFloat(quantisedPosX) // x
+                .putFloat(quantisedDimY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(uvtlX) // u
+                .putFloat(uvbrY) // v
+                .putInt(tint.nativeRGBA) // tint
                 // Vertex 2
-                .putFloat(quantisedDimX)
-                .putFloat(quantisedDimY)
-                .putFloat(1f)
-                .putFloat(uvbrX)
-                .putFloat(uvbrY)
-                .putInt(tint.nativeRGBA)
+                .putFloat(quantisedDimX) // x
+                .putFloat(quantisedDimY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(uvbrX) // u
+                .putFloat(uvbrY) // v
+                .putInt(tint.nativeRGBA) // tint
                 // Vertex 3
-                .putFloat(quantisedDimX)
-                .putFloat(quantisedPosY)
-                .putFloat(1f)
-                .putFloat(uvbrX)
-                .putFloat(uvtlY)
-                .putInt(tint.nativeRGBA)
+                .putFloat(quantisedDimX) // x
+                .putFloat(quantisedPosY) // y
+                .putFloat(1f) // z
+                .putFloat(0f) // w
+                .putFloat(uvbrX) // u
+                .putFloat(uvtlY) // v
+                .putInt(tint.nativeRGBA) // tint
         }
     }
 }

@@ -19,6 +19,8 @@ class DecalInstance(
 
         fun y(index: Int): Float
 
+        fun z(index: Int): Float
+
         fun w(index: Int): Float
 
         fun u(index: Int): Float
@@ -27,6 +29,6 @@ class DecalInstance(
 
         fun tint(index: Int): Pixel
 
-        fun putAllXYWUVTint(buffer: ByteBuffer)
+        fun putAll(buffer: ByteBuffer)
     }
 }

@@ -11,7 +11,7 @@ import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.extension.create
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.resource.KGEInternalResource
-import dev.staticsanches.kge.resource.closeIfFailed
+import dev.staticsanches.kge.resource.letClosingIfFailed
 import dev.staticsanches.kge.utils.invokeForAll
 
 class LayerDescriptor private constructor(
@@ -69,6 +69,6 @@ class LayerDescriptor private constructor(
         ): Decal =
             Sprite
                 .create(width, height, color = Colors.BLANK)
-                .closeIfFailed { Decal(it, filtered = false, clamp = true) }
+                .letClosingIfFailed { Decal(it, filtered = false, clamp = true) }
     }
 }

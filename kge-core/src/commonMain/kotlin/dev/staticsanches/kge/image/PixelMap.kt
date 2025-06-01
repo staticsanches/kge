@@ -3,12 +3,12 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.ByteBufferWrapper
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.image.service.PixelService
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Viewport
-import dev.staticsanches.kge.utils.BytesSize.int
+import dev.staticsanches.kge.utils.BytesSize.INT
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -174,14 +174,14 @@ interface RGBABuffer :
     override fun uncheckedGet(
         x: Int,
         y: Int,
-    ): Pixel = Pixel(resource.getInt((y * width + x) * int))
+    ): Pixel = Pixel(resource.getInt((y * width + x) * INT))
 
     override fun uncheckedSet(
         x: Int,
         y: Int,
         pixel: Pixel,
     ): Boolean {
-        resource.putInt((y * width + x) * int, pixel.nativeRGBA)
+        resource.putInt((y * width + x) * INT, pixel.nativeRGBA)
         return true
     }
 

@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package dev.staticsanches.kge.renderer.gl
 
 typealias GLbitfield = Int
@@ -13,4 +11,14 @@ typealias GLsizeiptr = Int
 typealias GLsizei = Int
 typealias GLuint = Int
 
+expect class GLBuffer
+
+expect class GLProgram
+
+expect class GLShader
+
 expect class GLTexture
+
+expect class GLUniformLocation
+
+expect class GLVertexArrayObject
