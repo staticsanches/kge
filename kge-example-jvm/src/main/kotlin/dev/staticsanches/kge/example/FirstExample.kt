@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.example
 
 import dev.staticsanches.kge.engine.KotlinGameEngine
+import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.image.Decal.Companion.invoke
 import dev.staticsanches.kge.image.Pixel
@@ -31,8 +32,9 @@ class FirstExample : KotlinGameEngine("First Example") {
             }
         }
 
-        drawStringDecal(5f by 10f, "fps: ${timeState.fps}", scale = .5f by .5f)
-        drawStringDecal(5f by 20f, "KGE - Kotlin Game Engine", scale = .5f by .5f)
+        drawStringPropDecal(5f by 10f, "fps: ${timeState.fps}", scale = .5f by .5f)
+        drawStringDecal(5f by 20f, "KGE - Kotlin Game Engine", scale = .5f by .5f, color = Colors.LIGHT_BLUE)
+        drawStringDecal(5f by 20f, "K E   K t i  Game Engine", scale = .5f by .5f, color = Colors.DARK_RED)
         drawDecal(20f by 40f, decal, scale = 7f by 7f)
 
         return true

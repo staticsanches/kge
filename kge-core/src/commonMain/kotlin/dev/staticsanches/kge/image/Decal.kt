@@ -34,7 +34,7 @@ class Decal(
             clamp: Boolean = true,
             name: String = "Decal of $sprite",
         ): Decal =
-            Decal(Renderer.createTexture(name, filtered = filtered, clamp = clamp), sprite)
+            Decal(Renderer.createTexture(name, filtered = filtered, clamp = clamp, size = sprite.size), sprite)
                 .applyClosingIfFailed { update() }
     }
 }

@@ -51,8 +51,20 @@ private data object DefaultGLService : GLService {
         border: GLint,
         format: GLenum,
         type: GLenum,
-        srcData: ByteBuffer,
+        srcData: ByteBuffer?,
     ) = GL33.glTexImage2D(target, level, internalFormat, width, height, border, format, type, srcData)
+
+    override fun texSubImage2D(
+        target: GLenum,
+        level: GLint,
+        xOffset: GLint,
+        yOffset: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type: GLenum,
+        srcData: ByteBuffer,
+    ) = GL33.glTexSubImage2D(target, level, xOffset, yOffset, width, height, format, type, srcData)
 
     override fun readPixels(
         x: GLint,

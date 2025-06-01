@@ -80,8 +80,7 @@ private data object DefaultPixelService : PixelService {
 
     override fun alphaFromNativeRGBA(nativeRGBA: Int): IntColorComponent = (nativeRGBA ushr 24) and 0xff
 
-    override fun invNativeRGBA(nativeRGBA: Int): Int =
-        (nativeRGBA.inv() and 0xff_ff_ff) or (((nativeRGBA ushr 24) and 0xff) shl 24)
+    override fun invNativeRGBA(nativeRGBA: Int): Int = nativeRGBA xor 0xff_ff_ff
 
     override fun invRGBABuffer(buffer: ByteBuffer) {
         check(buffer.clear().capacity() % INT == 0)

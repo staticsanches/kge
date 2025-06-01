@@ -48,6 +48,18 @@ interface GLService : KGEExtensibleService {
         border: GLint,
         format: GLenum,
         type: GLenum,
+        srcData: ByteBuffer?,
+    )
+
+    fun texSubImage2D(
+        target: GLenum,
+        level: GLint,
+        xOffset: GLint,
+        yOffset: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type: GLenum,
         srcData: ByteBuffer,
     )
 

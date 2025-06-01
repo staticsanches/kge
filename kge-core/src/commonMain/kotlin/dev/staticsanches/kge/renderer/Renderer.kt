@@ -28,6 +28,7 @@ interface Renderer : KGEExtensibleService {
         name: String?,
         filtered: Boolean,
         clamp: Boolean,
+        size: Int2D,
     ): ResourceWrapper<GLTexture>
 
     fun applyTexture(texture: GLTexture)

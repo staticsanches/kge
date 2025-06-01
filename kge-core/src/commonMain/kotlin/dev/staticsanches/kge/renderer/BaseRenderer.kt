@@ -189,6 +189,7 @@ internal abstract class BaseRenderer : Renderer {
         name: String?,
         filtered: Boolean,
         clamp: Boolean,
+        size: Int2D,
     ): ResourceWrapper<GLTexture> =
         ResourceWrapper
             .Companion({ name ?: "GLTexture $it" }, GL::createTexture, GL::deleteTexture.toCleanerProvider())
@@ -210,6 +211,16 @@ internal abstract class BaseRenderer : Renderer {
                     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.REPEAT)
                     GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.REPEAT)
                 }
+
+                // Allocate texture memory
+                GL.texImage2D(
+                    target = GL.TEXTURE_2D, level = 0,
+                    internalFormat = GL.RGBA,
+                    width = size.x, height = size.y,
+                    border = 0,
+                    format = GL.RGBA, type = GL.UNSIGNED_BYTE,
+                    srcData = null,
+                )
             }
 
     override fun applyTexture(texture: GLTexture) = GL.bindTexture(GL.TEXTURE_2D, texture)
@@ -219,16 +230,12 @@ internal abstract class BaseRenderer : Renderer {
         sprite: Sprite,
     ) {
         GL.bindTexture(GL.TEXTURE_2D, texture)
-        GL.texImage2D(
-            GL.TEXTURE_2D,
-            0,
-            GL.RGBA,
-            sprite.width,
-            sprite.height,
-            0,
-            GL.RGBA,
-            GL.UNSIGNED_BYTE,
-            sprite.resource.clear(),
+        GL.texSubImage2D(
+            target = GL.TEXTURE_2D, level = 0,
+            xOffset = 0, yOffset = 0,
+            width = sprite.width, height = sprite.height,
+            format = GL.RGBA, type = GL.UNSIGNED_BYTE,
+            srcData = sprite.resource.clear(),
         )
     }
 

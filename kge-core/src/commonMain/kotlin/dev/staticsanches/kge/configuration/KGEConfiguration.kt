@@ -22,7 +22,7 @@ data object KGEConfiguration {
      *
      * @see dev.staticsanches.kge.renderer.DecalInstance.VerticesInfo
      */
-    var maxNumberOfVertices: Int = 128
+    var maxNumberOfVertices: Int = 65_536 // ~ 1.8 MiB
         set(value) {
             check(value > 4) { "At least 4 vertices must be supported" }
             field = value

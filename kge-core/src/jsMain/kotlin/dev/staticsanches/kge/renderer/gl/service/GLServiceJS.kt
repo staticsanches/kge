@@ -54,7 +54,7 @@ private data object DefaultGLService : GLService {
         border: GLint,
         format: GLenum,
         type: GLenum,
-        srcData: ByteBuffer,
+        srcData: ByteBuffer?,
     ) {
         check(type == GL.UNSIGNED_BYTE) { "Invalid type: $type" }
         gl.texImage2D(
@@ -66,8 +66,30 @@ private data object DefaultGLService : GLService {
             border,
             format.asGLenum(),
             type.asGLenum(),
+            srcData?.asUint8Array(),
+        )
+    }
+
+    override fun texSubImage2D(
+        target: GLenum,
+        level: GLint,
+        xOffset: GLint,
+        yOffset: GLint,
+        width: GLsizei,
+        height: GLsizei,
+        format: GLenum,
+        type: GLenum,
+        srcData: ByteBuffer,
+    ) {
+        check(type == GL.UNSIGNED_BYTE) { "Invalid type: $type" }
+        gl.texSubImage2D(
+            target.asGLenum(),
+            level,
+            xOffset, yOffset,
+            width, height,
+            format.asGLenum(),
+            type.asGLenum(),
             srcData.asUint8Array(),
-            0,
         )
     }
 
