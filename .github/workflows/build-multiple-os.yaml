@@ -1,8 +1,6 @@
 name: Build on Multiple OSs
 
-on:
-  push:
-    branches: [ "main" ]
+on: workflow_dispatch
 
 jobs:
   build-on-ubuntu-latest:

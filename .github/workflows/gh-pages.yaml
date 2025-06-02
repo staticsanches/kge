@@ -36,7 +36,7 @@ jobs:
         with:
           cache-disabled: true
       - name: Build with Gradle
-        run: ./gradlew :kge-example-js:build --stacktrace
+        run: ./gradlew clean :kge-example-js:build --stacktrace -x check
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

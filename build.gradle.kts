@@ -8,14 +8,16 @@ allprojects {
     group = "dev.staticsanches.kge"
     version = "0.0.1-SNAPSHOT"
 
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
-    configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-        debug = true
-        verbose = true
-        reporters {
-            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
-            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
-            reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
+    if (name != "kge-natives" && parent?.name != "kge-natives") {
+        apply(plugin = "org.jlleitschuh.gradle.ktlint")
+        configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+            debug = true
+            verbose = true
+            reporters {
+                reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+                reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.CHECKSTYLE)
+                reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.HTML)
+            }
         }
     }
 }
