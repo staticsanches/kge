@@ -2,6 +2,9 @@
 
 package dev.staticsanches.kge.engine.addon
 
+import dev.staticsanches.kge.engine.state.input.KeyboardKey
+import dev.staticsanches.kge.engine.state.input.KeyboardKeyAction
+import dev.staticsanches.kge.engine.state.input.KeyboardModifiers
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.system.APIUtil
@@ -41,6 +44,16 @@ actual interface CallbacksAddon {
     fun onFrameBufferResize(
         width: Int,
         height: Int,
+    ) = Unit
+
+    /**
+     * Handle keyboard events.
+     */
+    fun onKeyEvent(
+        key: KeyboardKey,
+        newAction: KeyboardKeyAction,
+        scancode: Int,
+        newModifiers: KeyboardModifiers,
     ) = Unit
 
     /**

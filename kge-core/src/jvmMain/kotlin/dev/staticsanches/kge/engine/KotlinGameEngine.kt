@@ -19,6 +19,11 @@ import dev.staticsanches.kge.engine.addon.LayersAddon
 import dev.staticsanches.kge.engine.addon.WindowDependentAddon
 import dev.staticsanches.kge.engine.addon.WindowManipulationAddon
 import dev.staticsanches.kge.engine.state.WithKGEState
+import dev.staticsanches.kge.engine.state.input.KeyboardKey
+import dev.staticsanches.kge.engine.state.input.KeyboardModifiers
+import dev.staticsanches.kge.engine.state.input.PressAction
+import dev.staticsanches.kge.engine.state.input.ReleaseAction
+import dev.staticsanches.kge.engine.state.input.RepeatAction
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.renderer.Renderer
@@ -262,6 +267,27 @@ actual abstract class KotlinGameEngine(
 
             dimensionState.recalculateViewport()
             onFrameBufferResize(width, height)
+        }
+
+        GLFW.glfwSetKeyCallback(windowHandle) { window, key, scancode, action, mods ->
+            check(window == windowHandle) { "Invalid window handle" }
+
+            val keyboardKey = KeyboardKey[key]
+            val keyboardKeyAction =
+                when (action) {
+                    GLFW.GLFW_PRESS -> PressAction
+                    GLFW.GLFW_RELEASE -> ReleaseAction
+                    GLFW.GLFW_REPEAT -> RepeatAction
+                    else -> throw RuntimeException("Invalid keyboard action: $action")
+                }
+
+            val newModifiers = KeyboardModifiers(mods)
+
+            onKeyEvent(keyboardKey, keyboardKeyAction, scancode, newModifiers)
+
+            // Update the state
+            inputState.keyboardModifiers = newModifiers
+            inputState.keyboardKeyState[keyboardKey] = keyboardKeyAction
         }
     }
 

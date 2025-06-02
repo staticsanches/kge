@@ -4,6 +4,7 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.Window
 import dev.staticsanches.kge.engine.WindowMainResource
 import dev.staticsanches.kge.engine.state.DimensionState
+import dev.staticsanches.kge.engine.state.InputState
 import dev.staticsanches.kge.engine.state.TimeState
 import dev.staticsanches.kge.engine.state.WithKGEState
 import dev.staticsanches.kge.image.Decal
@@ -27,6 +28,8 @@ interface WindowDependentAddon : WithKGEState {
         get() = kgeWindow.invertedScreenSize
     override val timeState: TimeState
         get() = kgeWindow.timeState
+    override val inputState: InputState
+        get() = kgeWindow.inputState
     override var decalMode: Decal.Mode
         get() = kgeWindow.decalMode
         set(value) {

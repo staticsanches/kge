@@ -3,6 +3,7 @@ package dev.staticsanches.kge.engine
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.configuration.KGEConfiguration
 import dev.staticsanches.kge.engine.state.DimensionState
+import dev.staticsanches.kge.engine.state.InputState
 import dev.staticsanches.kge.engine.state.TimeState
 import dev.staticsanches.kge.engine.state.WithKGEState
 import dev.staticsanches.kge.image.Decal
@@ -35,6 +36,8 @@ class Window
         override val invertedScreenSize: Float2D by dimensionState::invertedScreenSize
 
         override val timeState: TimeState = TimeState()
+
+        override val inputState: InputState = InputState()
 
         override var decalMode = Decal.Mode.NORMAL
         override var pixelMode: Pixel.Mode = Pixel.Mode.Normal

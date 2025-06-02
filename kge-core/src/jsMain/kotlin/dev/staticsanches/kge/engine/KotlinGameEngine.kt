@@ -16,20 +16,30 @@ import dev.staticsanches.kge.engine.addon.FillCircleAddon
 import dev.staticsanches.kge.engine.addon.FillRectAddon
 import dev.staticsanches.kge.engine.addon.FillTriangleAddon
 import dev.staticsanches.kge.engine.addon.LayersAddon
+import dev.staticsanches.kge.engine.state.input.KeyboardKey
+import dev.staticsanches.kge.engine.state.input.KeyboardModifiers
+import dev.staticsanches.kge.engine.state.input.PressAction
+import dev.staticsanches.kge.engine.state.input.ReleaseAction
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.Int2D.Companion.by
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.renderer.gl.updateGLContext
 import dev.staticsanches.kge.resource.KGECleanAction
+import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.ResourceWrapper.Companion.invoke
 import dev.staticsanches.kge.resource.applyClosingIfFailed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import web.animations.awaitAnimationFrame
+import web.dom.document
+import web.events.addEventListener
+import web.events.removeEventListener
 import web.html.HTMLElement
+import web.uievents.KeyboardEvent
 
 actual abstract class KotlinGameEngine :
     CallbacksAddon,
@@ -53,8 +63,6 @@ actual abstract class KotlinGameEngine :
             internalWindow
                 ?: throw IllegalStateException("Window and its info are only available while the engine is running")
 
-    private var internalScope: CoroutineScope? = null
-
     @KGESensitiveAPI
     var shouldStop: Boolean = false
 
@@ -65,12 +73,14 @@ actual abstract class KotlinGameEngine :
         MainScope().launch {
             Configurator(canvasHolder).apply(init).createWindow().use { window ->
                 try {
-                    internalScope = this@launch
                     internalWindow = window
+
+                    window.registerCallbacks(this@launch)
+
                     start()
                 } finally {
-                    internalScope = null
                     internalWindow = null
+                    this@launch.cancel()
                 }
             }
         }
@@ -151,6 +161,10 @@ actual abstract class KotlinGameEngine :
         Renderer.displayFrame()
     }
 
+    private fun Window.registerCallbacks(scope: CoroutineScope) {
+        bindResource(KeyboardEventHandlerResource(scope))
+    }
+
     class Configurator internal constructor(
         val canvasHolder: HTMLElement,
     ) {
@@ -158,6 +172,38 @@ actual abstract class KotlinGameEngine :
         var screenHeight: Int = 100
         var pixelWidth: Int = 4
         var pixelHeight: Int = 4
+    }
+
+    private inner class KeyboardEventHandlerResource private constructor(
+        val handler: (KeyboardEvent) -> Unit,
+    ) : KGEResource {
+        constructor(scope: CoroutineScope) : this({ e ->
+            scope.launch {
+                val keyboardKey = KeyboardKey[e]
+                val keyboardKeyAction =
+                    when (e.type) {
+                        KeyboardEvent.KEY_DOWN -> PressAction
+                        KeyboardEvent.KEY_UP -> ReleaseAction
+                    }
+                val newModifiers = KeyboardModifiers(e)
+
+                onKeyboardEvent(keyboardKey, keyboardKeyAction, newModifiers, e)
+
+                // Update the state
+                inputState.keyboardModifiers = newModifiers
+                inputState.keyboardKeyState[keyboardKey] = keyboardKeyAction
+            }
+        })
+
+        override fun close() {
+            document.removeEventListener(KeyboardEvent.KEY_DOWN, handler)
+            document.removeEventListener(KeyboardEvent.KEY_UP, handler)
+        }
+
+        init {
+            document.addEventListener(KeyboardEvent.KEY_DOWN, handler)
+            document.addEventListener(KeyboardEvent.KEY_UP, handler)
+        }
     }
 
     companion object {

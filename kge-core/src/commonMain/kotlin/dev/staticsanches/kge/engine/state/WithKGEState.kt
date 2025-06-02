@@ -22,6 +22,8 @@ interface WithKGEState {
 
     val timeState: TimeState
 
+    val inputState: InputState
+
     var decalMode: Decal.Mode
     var pixelMode: Pixel.Mode
     var decalStructure: Decal.Structure
