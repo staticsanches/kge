@@ -104,20 +104,23 @@ value class Pixel
         }
 
         enum class Format {
-            RGBA,
-            HEX,
+            RGBA {
+                override fun invoke(pixel: Pixel): String = "rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})"
+            },
+
+            HEX {
+                private val hexFormat =
+                    HexFormat {
+                        upperCase = true
+                        number.minLength = 8
+                        number.prefix = "#"
+                    }
+
+                override fun invoke(pixel: Pixel): String = pixel.rgba.toHexString(hexFormat)
+            },
             ;
 
-            operator fun invoke(pixel: Pixel): String =
-                when (this) {
-                    RGBA -> "rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})"
-                    HEX ->
-                        "#" +
-                            pixel.rgba
-                                .toString(16)
-                                .uppercase()
-                                .padStart(8, '0')
-                }
+            abstract operator fun invoke(pixel: Pixel): String
         }
 
         companion object {

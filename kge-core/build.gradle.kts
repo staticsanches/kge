@@ -6,7 +6,7 @@ plugins {
 }
 
 kotlin {
-    js {
+    js(IR) {
         browser {
             testTask {
                 useKarma {
@@ -94,6 +94,7 @@ kotlin {
             compileTaskProvider.configure {
                 compilerOptions {
                     freeCompilerArgs.add("-Xexpect-actual-classes")
+                    compilerOptions.optIn.add("kotlin.ExperimentalStdlibApi")
                     compilerOptions.optIn.add("kotlin.uuid.ExperimentalUuidApi")
                     compilerOptions.optIn.add("dev.staticsanches.kge.annotations.KGESensitiveAPI")
                 }

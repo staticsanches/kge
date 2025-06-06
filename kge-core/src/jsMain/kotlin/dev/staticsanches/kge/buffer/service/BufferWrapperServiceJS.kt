@@ -112,7 +112,7 @@ private class ArrayBufferAsByteBuffer(
         position: Int,
         value: Byte,
     ): ByteBuffer {
-        internalDataView().setInt8(nextPosition(1), value)
+        internalDataView().setInt8(checkPosition(position, 1), value)
         return this
     }
 

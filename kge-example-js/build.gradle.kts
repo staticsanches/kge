@@ -5,7 +5,7 @@ plugins {
 }
 
 kotlin {
-    js {
+    js(IR) {
         browser {
             commonWebpackConfig {
                 outputFileName = "bundle.js"
@@ -19,7 +19,8 @@ kotlin {
 
     sourceSets {
         jsMain.dependencies {
-            api(projects.kgeCore)
+            implementation(projects.kgeCore)
+            implementation(projects.knes)
 
             implementation(kotlinWrappers.browser)
             implementation(libs.kotlin.logging)

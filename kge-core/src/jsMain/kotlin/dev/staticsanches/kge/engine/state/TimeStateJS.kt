@@ -29,7 +29,7 @@ private class DefaultClock(
         if (frameTimer >= 1_000) {
             fpsUpdater(frameCount)
             frameCount = 0
-            frameTimer -= 1_000
+            frameTimer %= 1_000
         }
         return elapsedTime
     }

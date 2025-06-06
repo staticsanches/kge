@@ -38,3 +38,4 @@ include(
     "kge-natives:kge-windows-arm64",
     "kge-natives:kge-windows-x86",
 )
+include("knes")

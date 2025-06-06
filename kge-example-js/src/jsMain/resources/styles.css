@@ -6,6 +6,6 @@
 }
 
 #canvas-holder {
-    width: 80%;
-    height: 80%;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
 }

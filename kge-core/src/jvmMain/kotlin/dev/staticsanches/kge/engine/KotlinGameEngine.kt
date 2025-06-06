@@ -203,23 +203,6 @@ actual abstract class KotlinGameEngine(
                 ),
             )
 
-        // Position the window
-        if (!fullScreen) {
-            if (centerWindow) {
-                val mode =
-                    checkNotNull(GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor())) {
-                        "Unable to retrieve monitor video mode"
-                    }
-                GLFW.glfwSetWindowPos(
-                    windowHandle,
-                    (mode.width() - windowWidth) / 2,
-                    (mode.height() - windowHeight) / 2,
-                )
-            } else {
-                GLFW.glfwSetWindowPos(windowHandle, windowPositionX, windowPositionY)
-            }
-        }
-
         GLFW.glfwSwapInterval(if (vSync) 1 else 0)
 
         val dimensionState = window.dimensionState
@@ -296,10 +279,6 @@ actual abstract class KotlinGameEngine(
         var screenHeight: Int = 100
         var pixelWidth: Int = 4
         var pixelHeight: Int = 4
-
-        var centerWindow: Boolean = false
-        var windowPositionX: Int = 50
-        var windowPositionY: Int = 50
 
         var resizable: Boolean = false
         var keepAspectRatio: Boolean = false

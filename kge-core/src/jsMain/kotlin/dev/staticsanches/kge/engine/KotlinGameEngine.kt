@@ -20,6 +20,8 @@ import dev.staticsanches.kge.engine.state.input.KeyboardKey
 import dev.staticsanches.kge.engine.state.input.KeyboardModifiers
 import dev.staticsanches.kge.engine.state.input.PressAction
 import dev.staticsanches.kge.engine.state.input.ReleaseAction
+import dev.staticsanches.kge.engine.state.input.RepeatAction
+import dev.staticsanches.kge.engine.state.input.UnknownAction
 import dev.staticsanches.kge.image.Decal
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.math.vector.Int2D.Companion.by
@@ -182,8 +184,14 @@ actual abstract class KotlinGameEngine :
                 val keyboardKey = KeyboardKey[e]
                 val keyboardKeyAction =
                     when (e.type) {
-                        KeyboardEvent.KEY_DOWN -> PressAction
                         KeyboardEvent.KEY_UP -> ReleaseAction
+                        KeyboardEvent.KEY_DOWN ->
+                            when (inputState.keyboardKeyState[keyboardKey]) {
+                                PressAction -> RepeatAction
+                                ReleaseAction -> PressAction
+                                RepeatAction -> RepeatAction
+                                UnknownAction -> PressAction
+                            }
                     }
                 val newModifiers = KeyboardModifiers(e)
 

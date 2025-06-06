@@ -48,4 +48,5 @@ dependencies {
         }
 
     implementation(kgeNatives)
+    implementation(projects.knes)
 }
