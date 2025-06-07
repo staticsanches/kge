@@ -27,13 +27,13 @@ class NES private constructor(
         address: UInt16,
         data: UInt8,
     ) {
-        ram.put(address.value.toInt(), data.value.toByte())
+        ram.put(address.toInt(), data.value.toByte())
     }
 
     override fun cpuRead(
         address: UInt16,
         readOnly: Boolean,
-    ): UInt8 = ram.get(address.value.toInt()).toUInt8()
+    ): UInt8 = ram.get(address.toInt()).toUInt8()
 
     companion object {
         operator fun invoke(): NES = ByteBufferWrapper(64 * 1_024) { "NES RAM ($it)" }.letClosingIfFailed { NES(it) }

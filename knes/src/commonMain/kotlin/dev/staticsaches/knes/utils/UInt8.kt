@@ -50,6 +50,8 @@ value class UInt8 private constructor(
 
     infix fun shr(bitCount: Int): UInt8 = UInt8(value shr bitCount)
 
+    fun toByte(): Byte = value.toByte()
+
     fun toInt(): Int = value.toInt()
 
     fun toUInt16(): UInt16 = UInt16(value)

@@ -583,7 +583,7 @@ class MP6502(
      *    Positive Number + Positive Number = Positive Result -> OK! No Overflow
      *    Negative Number + Negative Number = Negative Result -> OK! NO Overflow
      */
-    private fun ocADC(): Boolean {
+    private val ocADC: OperationCode = {
         // Grab the data that we are adding to the accumulator
         fetch()
 
@@ -607,7 +607,7 @@ class MP6502(
         aRegister = temp and xFFu
 
         // This instruction has the potential to require an additional clock cycle
-        return true
+        true
     }
 
     /**
@@ -637,7 +637,7 @@ class MP6502(
      * of M, the data(!) therefore we can simply add, exactly the same way we did
      * before.
      */
-    private fun ocSBC(): Boolean {
+    private val ocSBC: OperationCode = {
         fetch()
 
         // Operating in 16-bit domain to capture carry out
@@ -652,7 +652,7 @@ class MP6502(
         V.set((temp xor aRegister) and (temp xor value) and x0080u != x0000u)
         N.set(temp and x0080u != x0000u)
         aRegister = temp and xFFu
-        return true
+        true
     }
 
     /**
@@ -660,12 +660,12 @@ class MP6502(
      * Function:    A = A & M
      * Flags Out:   N, Z
      */
-    private fun ocAND(): Boolean {
+    private val ocAND: OperationCode = {
         fetch()
         aRegister = aRegister and fetched
         Z.set(aRegister == x00u)
         N.set(aRegister and x80u != x00u)
-        return true
+        true
     }
 
     /**
@@ -673,7 +673,7 @@ class MP6502(
      * Function:    A = C <- (A << 1) <- 0
      * Flags Out:   N, Z, C
      */
-    private fun ocASL(): Boolean {
+    private val ocASL: OperationCode = {
         fetch()
         val temp = fetched shl 1
         C.set(temp and xFF00u != x0000u)
@@ -684,93 +684,77 @@ class MP6502(
         } else {
             write(absAddress, temp and xFFu)
         }
-        return false
+        false
     }
 
     /**
      * Instruction: Branch if Carry Clear
      * Function:    if(C == 0) pc = address
      */
-    private fun ocBCC(): Boolean {
-        if (!C
-                .get()
-        ) {
-            doBranch()
-        }
-        return false
+    private val ocBCC: OperationCode = {
+        if (!C.get()) doBranch()
+        false
     }
 
     /**
      * Instruction: Branch if Carry Set
      * Function:    if(C == 1) pc = address
      */
-    private fun ocBCS(): Boolean {
-        if (C
-                .get()
-        ) {
-            doBranch()
-        }
-        return false
+    private val ocBCS: OperationCode = {
+        if (C.get()) doBranch()
+        false
     }
 
     /**
      * Instruction: Branch if Equal
      * Function:    if(Z == 1) pc = address
      */
-    private fun ocBEQ(): Boolean {
-        if (Z.get()) {
-            doBranch()
-        }
-        return false
+    private val ocBEQ: OperationCode = {
+        if (Z.get()) doBranch()
+        false
     }
 
-    private fun ocBIT(): Boolean {
+    private val ocBIT: OperationCode = {
         fetch()
         val temp = aRegister and fetched
         Z.set((temp and xFFu) == x00u)
         N.set(fetched and (1u shl 7) != x00u)
         V.set(fetched and (1u shl 6) != x00u)
-        return false
+        false
     }
 
     /**
      * Instruction: Branch if Negative
      * Function:    if(N == 1) pc = address
      */
-    private fun ocBMI(): Boolean {
-        if (N.get()) {
-            doBranch()
-        }
-        return false
+    private val ocBMI: OperationCode = {
+        if (N.get()) doBranch()
+        false
     }
 
     /**
      * Instruction: Branch if Not Equal
      * Function:    if(Z == 0) pc = address
      */
-    private fun ocBNE(): Boolean {
-        if (!Z.get()) {
-            doBranch()
-        }
-        return false
+    private val ocBNE: OperationCode = {
+        if (!Z.get()) doBranch()
+        false
     }
 
     /**
      * Instruction: Branch if Positive
      * Function:    if(N == 0) pc = address
      */
-    private fun ocBPL(): Boolean {
-        if (!N.get()) {
-            doBranch()
-        }
-        return false
+    private val ocBPL: OperationCode = {
+        if (!N.get()) doBranch()
+        false
     }
 
     /**
      * Instruction: Break
      * Function:    Program Sourced Interrupt
      */
-    private fun ocBRK(): Boolean {
+    private val ocBRK: OperationCode = {
         programCounter++
 
         I.set(true)
@@ -782,29 +766,25 @@ class MP6502(
         B.set(false)
 
         programCounter = read(xFFEEu) or (read(xFFFFu) shl 8)
-        return false
+        false
     }
 
     /**
      * Instruction: Branch if Overflow Clear
      * Function:    if(V == 0) pc = address
      */
-    fun ocBVC(): Boolean {
-        if (!V.get()) {
-            doBranch()
-        }
-        return false
+    val ocBVC: OperationCode = {
+        if (!V.get()) doBranch()
+        false
     }
 
     /**
      * Instruction: Branch if Overflow Set
      * Function:    if(V == 1) pc = address
      */
-    fun ocBVS(): Boolean {
-        if (V.get()) {
-            doBranch()
-        }
-        return false
+    val ocBVS: OperationCode = {
+        if (V.get()) doBranch()
+        false
     }
 
     private fun doBranch() {
@@ -818,36 +798,36 @@ class MP6502(
      * Instruction: Clear Carry Flag
      * Function:    C = 0
      */
-    fun ocCLC(): Boolean {
+    val ocCLC: OperationCode = {
         C.set(false)
-        return false
+        false
     }
 
     /**
      * Instruction: Clear Decimal Flag
      * Function:    D = 0
      */
-    private fun ocCLD(): Boolean {
+    private val ocCLD: OperationCode = {
         D.set(false)
-        return false
+        false
     }
 
     /**
      * Instruction: Disable Interrupts / Clear Interrupt Flag
      * Function:    I = 0
      */
-    private fun ocCLI(): Boolean {
+    private val ocCLI: OperationCode = {
         I.set(false)
-        return false
+        false
     }
 
     /**
      * Instruction: Clear Overflow Flag
      * Function:    V = 0
      */
-    private fun ocCLV(): Boolean {
+    private val ocCLV: OperationCode = {
         V.set(false)
-        return false
+        false
     }
 
     /**
@@ -855,13 +835,13 @@ class MP6502(
      * Function:    C <- A >= M      Z <- (A - M) == 0
      * Flags Out:   N, C, Z
      */
-    private fun ocCMP(): Boolean {
+    private val ocCMP: OperationCode = {
         fetch()
         val temp = aRegister.toUInt16() - fetched
         C.set(aRegister >= fetched)
         Z.set(temp and xFFu == x00u)
         N.set(temp and x80u != x00u)
-        return true
+        true
     }
 
     /**
@@ -869,13 +849,13 @@ class MP6502(
      * Function:    C <- X >= M      Z <- (X - M) == 0
      * Flags Out:   N, C, Z
      */
-    private fun ocCPX(): Boolean {
+    private val ocCPX: OperationCode = {
         fetch()
         val temp = xRegister.toUInt16() - fetched
         C.set(xRegister >= fetched)
         Z.set(temp and xFFu == x00u)
         N.set(temp and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -883,13 +863,13 @@ class MP6502(
      * Function:    C <- Y >= M      Z <- (Y - M) == 0
      * Flags Out:   N, C, Z
      */
-    private fun ocCPY(): Boolean {
+    private val ocCPY: OperationCode = {
         fetch()
         val temp = yRegister.toUInt16() - fetched
         C.set(yRegister >= fetched)
         Z.set(temp and xFFu == x00u)
         N.set(temp and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -897,13 +877,13 @@ class MP6502(
      * Function:    M = M - 1
      * Flags Out:   N, Z
      */
-    private fun ocDEC(): Boolean {
+    private val ocDEC: OperationCode = {
         fetch()
         val temp = fetched.toUInt16() - 1u
         write(absAddress, temp and xFFu)
         Z.set(temp and xFFu == x00u)
         N.set(temp and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -911,11 +891,11 @@ class MP6502(
      * Function:    X = X - 1
      * Flags Out:   N, Z
      */
-    private fun ocDEX(): Boolean {
+    private val ocDEX: OperationCode = {
         xRegister--
         Z.set(xRegister == x00u)
         N.set(xRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -923,11 +903,11 @@ class MP6502(
      * Function:    Y = Y - 1
      * Flags Out:   N, Z
      */
-    private fun ocDEY(): Boolean {
+    private val ocDEY: OperationCode = {
         yRegister--
         Z.set(yRegister == x00u)
         N.set(yRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -935,12 +915,12 @@ class MP6502(
      * Function:    A = A xor M
      * Flags Out:   N, Z
      */
-    private fun ocEOR(): Boolean {
+    private val ocEOR: OperationCode = {
         fetch()
         aRegister = aRegister xor fetched
         Z.set(aRegister == x00u)
         N.set(aRegister and x80u != x00u)
-        return true
+        true
     }
 
     /**
@@ -948,13 +928,13 @@ class MP6502(
      * Function:    M = M + 1
      * Flags Out:   N, Z
      */
-    private fun ocINC(): Boolean {
+    private val ocINC: OperationCode = {
         fetch()
         val temp = fetched.toUInt16() + 1u
         write(absAddress, temp and xFFu)
         Z.set((temp and xFFu) == x00u)
         N.set(temp and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -962,11 +942,11 @@ class MP6502(
      * Function:    X = X + 1
      * Flags Out:   N, Z
      */
-    private fun ocINX(): Boolean {
+    private val ocINX: OperationCode = {
         xRegister++
         Z.set(xRegister == x00u)
         N.set(xRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -974,32 +954,32 @@ class MP6502(
      * Function:    Y = Y + 1
      * Flags Out:   N, Z
      */
-    private fun ocINY(): Boolean {
+    private val ocINY: OperationCode = {
         yRegister++
         Z.set(yRegister == x00u)
         N.set(yRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
      * Instruction: Jump To Location
      * Function:    pc = address
      */
-    private fun ocJMP(): Boolean {
+    private val ocJMP: OperationCode = {
         programCounter = absAddress
-        return false
+        false
     }
 
     /**
      * Instruction: Jump To Sub-Routine
      * Function:    Push current pc to stack, pc = address
      */
-    private fun ocJSR(): Boolean {
+    private val ocJSR: OperationCode = {
         write(x0100u + stackPointer--, (--programCounter shr 8) and xFFu)
         write(x0100u + stackPointer--, programCounter and xFFu)
 
         programCounter = absAddress
-        return false
+        false
     }
 
     /**
@@ -1007,12 +987,12 @@ class MP6502(
      * Function:    A = M
      * Flags Out:   N, Z
      */
-    private fun ocLDA(): Boolean {
+    private val ocLDA: OperationCode = {
         fetch()
         aRegister = fetched
         Z.set(aRegister == x00u)
         N.set(aRegister and x80u != x00u)
-        return true
+        true
     }
 
     /**
@@ -1020,12 +1000,12 @@ class MP6502(
      * Function:    X = M
      * Flags Out:   N, Z
      */
-    private fun ocLDX(): Boolean {
+    private val ocLDX: OperationCode = {
         fetch()
         xRegister = fetched
         Z.set(xRegister == x00u)
         N.set(xRegister and x80u != x00u)
-        return true
+        true
     }
 
     /**
@@ -1033,15 +1013,15 @@ class MP6502(
      * Function:    Y = M
      * Flags Out:   N, Z
      */
-    private fun ocLDY(): Boolean {
+    private val ocLDY: OperationCode = {
         fetch()
         yRegister = fetched
         Z.set(yRegister == x00u)
         N.set(yRegister and x80u != x00u)
-        return true
+        true
     }
 
-    private fun ocLSR(): Boolean {
+    private val ocLSR: OperationCode = {
         fetch()
         C.set(fetched and x01u != x00u)
         val temp = fetched.toUInt16() shr 1
@@ -1052,15 +1032,15 @@ class MP6502(
         } else {
             write(absAddress, temp and xFFu)
         }
-        return false
+        false
     }
 
-    private fun ocNOP(): Boolean {
+    private val ocNOP: OperationCode = {
         // Sadly not all NOPs are equal, I've added a few here
         // based on https://wiki.nesdev.com/w/index.php/CPU_unofficial_opcodes
         // and will add more based on game compatibility, and ultimately
         // I'd like to cover all illegal opcodes too
-        return opcode == 0x1C || opcode == 0x3C || opcode == 0x5C || opcode == 0x7C || opcode == 0xDC || opcode == 0xFC
+        opcode == 0x1C || opcode == 0x3C || opcode == 0x5C || opcode == 0x7C || opcode == 0xDC || opcode == 0xFC
     }
 
     /**
@@ -1068,21 +1048,21 @@ class MP6502(
      * Function:    A = A | M
      * Flags Out:   N, Z
      */
-    private fun ocORA(): Boolean {
+    private val ocORA: OperationCode = {
         fetch()
         aRegister = aRegister or fetched
         Z.set(aRegister == x00u)
         N.set(aRegister and x80u != x00u)
-        return true
+        true
     }
 
     /**
      * Instruction: Push Accumulator to Stack
      * Function:    A -> stack
      */
-    private fun ocPHA(): Boolean {
+    private val ocPHA: OperationCode = {
         write(x0100u + stackPointer--, aRegister)
-        return false
+        false
     }
 
     /**
@@ -1090,15 +1070,12 @@ class MP6502(
      * Function:    status -> stack
      * Note:        Break flag is set to 1 before push
      */
-    private fun ocPHP(): Boolean {
-        write(
-            x0100u + stackPointer,
-            statusRegister or B or U,
-        )
+    private val ocPHP: OperationCode = {
+        write(x0100u + stackPointer, statusRegister or B or U)
         B.set(false)
         U.set(false)
         stackPointer--
-        return false
+        false
     }
 
     /**
@@ -1106,26 +1083,26 @@ class MP6502(
      * Function:    A <- stack
      * Flags Out:   N, Z
      */
-    private fun ocPLA(): Boolean {
+    private val ocPLA: OperationCode = {
         stackPointer++
         aRegister = read(x0100u + stackPointer)
         Z.set(aRegister == x00u)
         N.set(aRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
      * Instruction: Pop Status Register off Stack
      * Function:    Status <- stack
      */
-    private fun ocPLP(): Boolean {
+    private val ocPLP: OperationCode = {
         stackPointer++
         statusRegister = read(x0100u + stackPointer)
         U.set(true)
-        return false
+        false
     }
 
-    private fun ocROL(): Boolean {
+    private val ocROL: OperationCode = {
         fetch()
         val temp = (fetched shl 1) or C.get16()
         C.set(temp and xFF00u != x0000u)
@@ -1136,10 +1113,10 @@ class MP6502(
         } else {
             write(absAddress, temp and xFFu)
         }
-        return false
+        false
     }
 
-    private fun ocROR(): Boolean {
+    private val ocROR: OperationCode = {
         fetch()
         val temp = C.get16() or (fetched shr 1)
         C.set(fetched and x01u != x00u)
@@ -1150,78 +1127,78 @@ class MP6502(
         } else {
             write(absAddress, temp and xFFu)
         }
-        return false
+        false
     }
 
-    private fun ocRTI(): Boolean {
+    private val ocRTI: OperationCode = {
         statusRegister = read(x0100u + ++stackPointer)
         statusRegister = statusRegister and B.invMask
         statusRegister = statusRegister and U.invMask
 
         programCounter = read(x0100u + ++stackPointer).toUInt16()
         programCounter = programCounter or (read(x0100u + ++stackPointer) shl 8)
-        return false
+        false
     }
 
-    private fun ocRTS(): Boolean {
+    private val ocRTS: OperationCode = {
         stackPointer++
         programCounter = read(x0100u + stackPointer++).toUInt16()
         programCounter = programCounter or (read(x0100u + stackPointer++) shl 8)
-        return false
+        false
     }
 
     /**
      * Instruction: Set Carry Flag
      * Function:    C = 1
      */
-    private fun ocSEC(): Boolean {
+    private val ocSEC: OperationCode = {
         C.set(true)
-        return false
+        false
     }
 
     /**
      * Instruction: Set Decimal Flag
      * Function:    D = 1
      */
-    private fun ocSED(): Boolean {
+    private val ocSED: OperationCode = {
         D.set(true)
-        return false
+        false
     }
 
     /**
      * Instruction: Set Interrupt Flag / Enable Interrupts
      * Function:    I = 1
      */
-    private fun ocSEI(): Boolean {
+    private val ocSEI: OperationCode = {
         I.set(true)
-        return false
+        false
     }
 
     /**
      * Instruction: Store Accumulator at Address
      * Function:    M = A
      */
-    private fun ocSTA(): Boolean {
+    private val ocSTA: OperationCode = {
         write(absAddress, aRegister)
-        return false
+        false
     }
 
     /**
      * Instruction: Store X Register at Address
      * Function:    M = X
      */
-    private fun ocSTX(): Boolean {
+    private val ocSTX: OperationCode = {
         write(absAddress, xRegister)
-        return false
+        false
     }
 
     /**
      * Instruction: Store Y Register at Address
      * Function:    M = Y
      */
-    private fun ocSTY(): Boolean {
+    private val ocSTY: OperationCode = {
         write(absAddress, yRegister)
-        return false
+        false
     }
 
     /**
@@ -1229,11 +1206,11 @@ class MP6502(
      * Function:    X = A
      * Flags Out:   N, Z
      */
-    private fun ocTAX(): Boolean {
+    private val ocTAX: OperationCode = {
         xRegister = aRegister
         Z.set(xRegister == x00u)
         N.set(xRegister and x80u == x00u)
-        return false
+        false
     }
 
     /**
@@ -1241,11 +1218,11 @@ class MP6502(
      * Function:    Y = A
      * Flags Out:   N, Z
      */
-    private fun ocTAY(): Boolean {
+    private val ocTAY: OperationCode = {
         yRegister = aRegister
         Z.set(yRegister == x00u)
         N.set(yRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -1253,11 +1230,11 @@ class MP6502(
      * Function:    X = stack pointer
      * Flags Out:   N, Z
      */
-    private fun ocTSX(): Boolean {
+    private val ocTSX: OperationCode = {
         xRegister = stackPointer
         Z.set(xRegister == x00u)
         N.set(xRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
@@ -1265,20 +1242,20 @@ class MP6502(
      * Function:    A = X
      * Flags Out:   N, Z
      */
-    private fun ocTXA(): Boolean {
+    private val ocTXA: OperationCode = {
         aRegister = xRegister
         Z.set(aRegister == x00u)
         N.set(aRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
      * Instruction: Transfer X Register to Stack Pointer
      * Function:    stack pointer = X
      */
-    private fun ocTXS(): Boolean {
+    private val ocTXS: OperationCode = {
         stackPointer = xRegister
-        return false
+        false
     }
 
     /**
@@ -1286,17 +1263,17 @@ class MP6502(
      * Function:    A = Y
      * Flags Out:   N, Z
      */
-    private fun ocTYA(): Boolean {
+    private val ocTYA: OperationCode = {
         aRegister = yRegister
         Z.set(aRegister == x00u)
         N.set(aRegister and x80u != x00u)
-        return false
+        false
     }
 
     /**
      * This function captures illegal opcodes
      */
-    private fun ocXXX(): Boolean = false
+    private val ocXXX: OperationCode = { false }
 
     // Bus connectivity
 
@@ -1336,135 +1313,71 @@ class MP6502(
     // Lookup
 
     private val lookup =
-        listOf<Instruction>(
-            i("BRK", ::ocBRK, amIMM, 7), i("ORA", ::ocORA, amIZX, 6),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 3), i("ORA", ::ocORA, amZP0, 3),
-            i("ASL", ::ocASL, amZP0, 5), i("???", ::ocXXX, amIMP, 5),
-            i("PHP", ::ocPHP, amIMP, 3), i("ORA", ::ocORA, amIMM, 2),
-            i("ASL", ::ocASL, amIMP, 2), i("???", ::ocXXX, amIMP, 2),
-            i("???", ::ocNOP, amIMP, 4), i("ORA", ::ocORA, amABS, 4),
-            i("ASL", ::ocASL, amABS, 6), i("???", ::ocXXX, amIMP, 6),
-            i("BPL", ::ocBPL, amREL, 2), i("ORA", ::ocORA, amIZY, 5),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 4), i("ORA", ::ocORA, amZPX, 4),
-            i("ASL", ::ocASL, amZPX, 6), i("???", ::ocXXX, amIMP, 6),
-            i("CLC", ::ocCLC, amIMP, 2), i("ORA", ::ocORA, amABY, 4),
-            i("???", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 7),
-            i("???", ::ocNOP, amIMP, 4), i("ORA", ::ocORA, amABX, 4),
-            i("ASL", ::ocASL, amABX, 7), i("???", ::ocXXX, amIMP, 7),
-            i("JSR", ::ocJSR, amABS, 6), i("AND", ::ocAND, amIZX, 6),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("BIT", ::ocBIT, amZP0, 3), i("AND", ::ocAND, amZP0, 3),
-            i("ROL", ::ocROL, amZP0, 5), i("???", ::ocXXX, amIMP, 5),
-            i("PLP", ::ocPLP, amIMP, 4), i("AND", ::ocAND, amIMM, 2),
-            i("ROL", ::ocROL, amIMP, 2), i("???", ::ocXXX, amIMP, 2),
-            i("BIT", ::ocBIT, amABS, 4), i("AND", ::ocAND, amABS, 4),
-            i("ROL", ::ocROL, amABS, 6), i("???", ::ocXXX, amIMP, 6),
-            i("BMI", ::ocBMI, amREL, 2), i("AND", ::ocAND, amIZY, 5),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 4), i("AND", ::ocAND, amZPX, 4),
-            i("ROL", ::ocROL, amZPX, 6), i("???", ::ocXXX, amIMP, 6),
-            i("SEC", ::ocSEC, amIMP, 2), i("AND", ::ocAND, amABY, 4),
-            i("???", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 7),
-            i("???", ::ocNOP, amIMP, 4), i("AND", ::ocAND, amABX, 4),
-            i("ROL", ::ocROL, amABX, 7), i("???", ::ocXXX, amIMP, 7),
-            i("RTI", ::ocRTI, amIMP, 6), i("EOR", ::ocEOR, amIZX, 6),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 3), i("EOR", ::ocEOR, amZP0, 3),
-            i("LSR", ::ocLSR, amZP0, 5), i("???", ::ocXXX, amIMP, 5),
-            i("PHA", ::ocPHA, amIMP, 3), i("EOR", ::ocEOR, amIMM, 2),
-            i("LSR", ::ocLSR, amIMP, 2), i("???", ::ocXXX, amIMP, 2),
-            i("JMP", ::ocJMP, amABS, 3), i("EOR", ::ocEOR, amABS, 4),
-            i("LSR", ::ocLSR, amABS, 6), i("???", ::ocXXX, amIMP, 6),
-            i("BVC", ::ocBVC, amREL, 2), i("EOR", ::ocEOR, amIZY, 5),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 4), i("EOR", ::ocEOR, amZPX, 4),
-            i("LSR", ::ocLSR, amZPX, 6), i("???", ::ocXXX, amIMP, 6),
-            i("CLI", ::ocCLI, amIMP, 2), i("EOR", ::ocEOR, amABY, 4),
-            i("???", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 7),
-            i("???", ::ocNOP, amIMP, 4), i("EOR", ::ocEOR, amABX, 4),
-            i("LSR", ::ocLSR, amABX, 7), i("???", ::ocXXX, amIMP, 7),
-            i("RTS", ::ocRTS, amIMP, 6), i("ADC", ::ocADC, amIZX, 6),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 3), i("ADC", ::ocADC, amZP0, 3),
-            i("ROR", ::ocROR, amZP0, 5), i("???", ::ocXXX, amIMP, 5),
-            i("PLA", ::ocPLA, amIMP, 4), i("ADC", ::ocADC, amIMM, 2),
-            i("ROR", ::ocROR, amIMP, 2), i("???", ::ocXXX, amIMP, 2),
-            i("JMP", ::ocJMP, amIND, 5), i("ADC", ::ocADC, amABS, 4),
-            i("ROR", ::ocROR, amABS, 6), i("???", ::ocXXX, amIMP, 6),
-            i("BVS", ::ocBVS, amREL, 2), i("ADC", ::ocADC, amIZY, 5),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 4), i("ADC", ::ocADC, amZPX, 4),
-            i("ROR", ::ocROR, amZPX, 6), i("???", ::ocXXX, amIMP, 6),
-            i("SEI", ::ocSEI, amIMP, 2), i("ADC", ::ocADC, amABY, 4),
-            i("???", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 7),
-            i("???", ::ocNOP, amIMP, 4), i("ADC", ::ocADC, amABX, 4),
-            i("ROR", ::ocROR, amABX, 7), i("???", ::ocXXX, amIMP, 7),
-            i("???", ::ocNOP, amIMP, 2), i("STA", ::ocSTA, amIZX, 6),
-            i("???", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 6),
-            i("STY", ::ocSTY, amZP0, 3), i("STA", ::ocSTA, amZP0, 3),
-            i("STX", ::ocSTX, amZP0, 3), i("???", ::ocXXX, amIMP, 3),
-            i("DEY", ::ocDEY, amIMP, 2), i("???", ::ocNOP, amIMP, 2),
-            i("TXA", ::ocTXA, amIMP, 2), i("???", ::ocXXX, amIMP, 2),
-            i("STY", ::ocSTY, amABS, 4), i("STA", ::ocSTA, amABS, 4),
-            i("STX", ::ocSTX, amABS, 4), i("???", ::ocXXX, amIMP, 4),
-            i("BCC", ::ocBCC, amREL, 2), i("STA", ::ocSTA, amIZY, 6),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 6),
-            i("STY", ::ocSTY, amZPX, 4), i("STA", ::ocSTA, amZPX, 4),
-            i("STX", ::ocSTX, amZPY, 4), i("???", ::ocXXX, amIMP, 4),
-            i("TYA", ::ocTYA, amIMP, 2), i("STA", ::ocSTA, amABY, 5),
-            i("TXS", ::ocTXS, amIMP, 2), i("???", ::ocXXX, amIMP, 5),
-            i("???", ::ocNOP, amIMP, 5), i("STA", ::ocSTA, amABX, 5),
-            i("???", ::ocXXX, amIMP, 5), i("???", ::ocXXX, amIMP, 5),
-            i("LDY", ::ocLDY, amIMM, 2), i("LDA", ::ocLDA, amIZX, 6),
-            i("LDX", ::ocLDX, amIMM, 2), i("???", ::ocXXX, amIMP, 6),
-            i("LDY", ::ocLDY, amZP0, 3), i("LDA", ::ocLDA, amZP0, 3),
-            i("LDX", ::ocLDX, amZP0, 3), i("???", ::ocXXX, amIMP, 3),
-            i("TAY", ::ocTAY, amIMP, 2), i("LDA", ::ocLDA, amIMM, 2),
-            i("TAX", ::ocTAX, amIMP, 2), i("???", ::ocXXX, amIMP, 2),
-            i("LDY", ::ocLDY, amABS, 4), i("LDA", ::ocLDA, amABS, 4),
-            i("LDX", ::ocLDX, amABS, 4), i("???", ::ocXXX, amIMP, 4),
-            i("BCS", ::ocBCS, amREL, 2), i("LDA", ::ocLDA, amIZY, 5),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 5),
-            i("LDY", ::ocLDY, amZPX, 4), i("LDA", ::ocLDA, amZPX, 4),
-            i("LDX", ::ocLDX, amZPY, 4), i("???", ::ocXXX, amIMP, 4),
-            i("CLV", ::ocCLV, amIMP, 2), i("LDA", ::ocLDA, amABY, 4),
-            i("TSX", ::ocTSX, amIMP, 2), i("???", ::ocXXX, amIMP, 4),
-            i("LDY", ::ocLDY, amABX, 4), i("LDA", ::ocLDA, amABX, 4),
-            i("LDX", ::ocLDX, amABY, 4), i("???", ::ocXXX, amIMP, 4),
-            i("CPY", ::ocCPY, amIMM, 2), i("CMP", ::ocCMP, amIZX, 6),
-            i("???", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("CPY", ::ocCPY, amZP0, 3), i("CMP", ::ocCMP, amZP0, 3),
-            i("DEC", ::ocDEC, amZP0, 5), i("???", ::ocXXX, amIMP, 5),
-            i("INY", ::ocINY, amIMP, 2), i("CMP", ::ocCMP, amIMM, 2),
-            i("DEX", ::ocDEX, amIMP, 2), i("???", ::ocXXX, amIMP, 2),
-            i("CPY", ::ocCPY, amABS, 4), i("CMP", ::ocCMP, amABS, 4),
-            i("DEC", ::ocDEC, amABS, 6), i("???", ::ocXXX, amIMP, 6),
-            i("BNE", ::ocBNE, amREL, 2), i("CMP", ::ocCMP, amIZY, 5),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 4), i("CMP", ::ocCMP, amZPX, 4),
-            i("DEC", ::ocDEC, amZPX, 6), i("???", ::ocXXX, amIMP, 6),
-            i("CLD", ::ocCLD, amIMP, 2), i("CMP", ::ocCMP, amABY, 4),
-            i("NOP", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 7),
-            i("???", ::ocNOP, amIMP, 4), i("CMP", ::ocCMP, amABX, 4),
-            i("DEC", ::ocDEC, amABX, 7), i("???", ::ocXXX, amIMP, 7),
-            i("CPX", ::ocCPX, amIMM, 2), i("SBC", ::ocSBC, amIZX, 6),
-            i("???", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("CPX", ::ocCPX, amZP0, 3), i("SBC", ::ocSBC, amZP0, 3),
-            i("INC", ::ocINC, amZP0, 5), i("???", ::ocXXX, amIMP, 5),
-            i("INX", ::ocINX, amIMP, 2), i("SBC", ::ocSBC, amIMM, 2),
-            i("NOP", ::ocNOP, amIMP, 2), i("???", ::ocSBC, amIMP, 2),
-            i("CPX", ::ocCPX, amABS, 4), i("SBC", ::ocSBC, amABS, 4),
-            i("INC", ::ocINC, amABS, 6), i("???", ::ocXXX, amIMP, 6),
-            i("BEQ", ::ocBEQ, amREL, 2), i("SBC", ::ocSBC, amIZY, 5),
-            i("???", ::ocXXX, amIMP, 2), i("???", ::ocXXX, amIMP, 8),
-            i("???", ::ocNOP, amIMP, 4), i("SBC", ::ocSBC, amZPX, 4),
-            i("INC", ::ocINC, amZPX, 6), i("???", ::ocXXX, amIMP, 6),
-            i("SED", ::ocSED, amIMP, 2), i("SBC", ::ocSBC, amABY, 4),
-            i("NOP", ::ocNOP, amIMP, 2), i("???", ::ocXXX, amIMP, 7),
-            i("???", ::ocNOP, amIMP, 4), i("SBC", ::ocSBC, amABX, 4),
-            i("INC", ::ocINC, amABX, 7), i("???", ::ocXXX, amIMP, 7),
+        arrayOf(
+            i("BRK", ocBRK, amIMM, 7), i("ORA", ocORA, amIZX, 6), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 3), i("ORA", ocORA, amZP0, 3), i("ASL", ocASL, amZP0, 5), i("???", ocXXX, amIMP, 5),
+            i("PHP", ocPHP, amIMP, 3), i("ORA", ocORA, amIMM, 2), i("ASL", ocASL, amIMP, 2), i("???", ocXXX, amIMP, 2),
+            i("???", ocNOP, amIMP, 4), i("ORA", ocORA, amABS, 4), i("ASL", ocASL, amABS, 6), i("???", ocXXX, amIMP, 6),
+            i("BPL", ocBPL, amREL, 2), i("ORA", ocORA, amIZY, 5), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 4), i("ORA", ocORA, amZPX, 4), i("ASL", ocASL, amZPX, 6), i("???", ocXXX, amIMP, 6),
+            i("CLC", ocCLC, amIMP, 2), i("ORA", ocORA, amABY, 4), i("???", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 7),
+            i("???", ocNOP, amIMP, 4), i("ORA", ocORA, amABX, 4), i("ASL", ocASL, amABX, 7), i("???", ocXXX, amIMP, 7),
+            i("JSR", ocJSR, amABS, 6), i("AND", ocAND, amIZX, 6), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("BIT", ocBIT, amZP0, 3), i("AND", ocAND, amZP0, 3), i("ROL", ocROL, amZP0, 5), i("???", ocXXX, amIMP, 5),
+            i("PLP", ocPLP, amIMP, 4), i("AND", ocAND, amIMM, 2), i("ROL", ocROL, amIMP, 2), i("???", ocXXX, amIMP, 2),
+            i("BIT", ocBIT, amABS, 4), i("AND", ocAND, amABS, 4), i("ROL", ocROL, amABS, 6), i("???", ocXXX, amIMP, 6),
+            i("BMI", ocBMI, amREL, 2), i("AND", ocAND, amIZY, 5), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 4), i("AND", ocAND, amZPX, 4), i("ROL", ocROL, amZPX, 6), i("???", ocXXX, amIMP, 6),
+            i("SEC", ocSEC, amIMP, 2), i("AND", ocAND, amABY, 4), i("???", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 7),
+            i("???", ocNOP, amIMP, 4), i("AND", ocAND, amABX, 4), i("ROL", ocROL, amABX, 7), i("???", ocXXX, amIMP, 7),
+            i("RTI", ocRTI, amIMP, 6), i("EOR", ocEOR, amIZX, 6), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 3), i("EOR", ocEOR, amZP0, 3), i("LSR", ocLSR, amZP0, 5), i("???", ocXXX, amIMP, 5),
+            i("PHA", ocPHA, amIMP, 3), i("EOR", ocEOR, amIMM, 2), i("LSR", ocLSR, amIMP, 2), i("???", ocXXX, amIMP, 2),
+            i("JMP", ocJMP, amABS, 3), i("EOR", ocEOR, amABS, 4), i("LSR", ocLSR, amABS, 6), i("???", ocXXX, amIMP, 6),
+            i("BVC", ocBVC, amREL, 2), i("EOR", ocEOR, amIZY, 5), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 4), i("EOR", ocEOR, amZPX, 4), i("LSR", ocLSR, amZPX, 6), i("???", ocXXX, amIMP, 6),
+            i("CLI", ocCLI, amIMP, 2), i("EOR", ocEOR, amABY, 4), i("???", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 7),
+            i("???", ocNOP, amIMP, 4), i("EOR", ocEOR, amABX, 4), i("LSR", ocLSR, amABX, 7), i("???", ocXXX, amIMP, 7),
+            i("RTS", ocRTS, amIMP, 6), i("ADC", ocADC, amIZX, 6), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 3), i("ADC", ocADC, amZP0, 3), i("ROR", ocROR, amZP0, 5), i("???", ocXXX, amIMP, 5),
+            i("PLA", ocPLA, amIMP, 4), i("ADC", ocADC, amIMM, 2), i("ROR", ocROR, amIMP, 2), i("???", ocXXX, amIMP, 2),
+            i("JMP", ocJMP, amIND, 5), i("ADC", ocADC, amABS, 4), i("ROR", ocROR, amABS, 6), i("???", ocXXX, amIMP, 6),
+            i("BVS", ocBVS, amREL, 2), i("ADC", ocADC, amIZY, 5), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 4), i("ADC", ocADC, amZPX, 4), i("ROR", ocROR, amZPX, 6), i("???", ocXXX, amIMP, 6),
+            i("SEI", ocSEI, amIMP, 2), i("ADC", ocADC, amABY, 4), i("???", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 7),
+            i("???", ocNOP, amIMP, 4), i("ADC", ocADC, amABX, 4), i("ROR", ocROR, amABX, 7), i("???", ocXXX, amIMP, 7),
+            i("???", ocNOP, amIMP, 2), i("STA", ocSTA, amIZX, 6), i("???", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 6),
+            i("STY", ocSTY, amZP0, 3), i("STA", ocSTA, amZP0, 3), i("STX", ocSTX, amZP0, 3), i("???", ocXXX, amIMP, 3),
+            i("DEY", ocDEY, amIMP, 2), i("???", ocNOP, amIMP, 2), i("TXA", ocTXA, amIMP, 2), i("???", ocXXX, amIMP, 2),
+            i("STY", ocSTY, amABS, 4), i("STA", ocSTA, amABS, 4), i("STX", ocSTX, amABS, 4), i("???", ocXXX, amIMP, 4),
+            i("BCC", ocBCC, amREL, 2), i("STA", ocSTA, amIZY, 6), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 6),
+            i("STY", ocSTY, amZPX, 4), i("STA", ocSTA, amZPX, 4), i("STX", ocSTX, amZPY, 4), i("???", ocXXX, amIMP, 4),
+            i("TYA", ocTYA, amIMP, 2), i("STA", ocSTA, amABY, 5), i("TXS", ocTXS, amIMP, 2), i("???", ocXXX, amIMP, 5),
+            i("???", ocNOP, amIMP, 5), i("STA", ocSTA, amABX, 5), i("???", ocXXX, amIMP, 5), i("???", ocXXX, amIMP, 5),
+            i("LDY", ocLDY, amIMM, 2), i("LDA", ocLDA, amIZX, 6), i("LDX", ocLDX, amIMM, 2), i("???", ocXXX, amIMP, 6),
+            i("LDY", ocLDY, amZP0, 3), i("LDA", ocLDA, amZP0, 3), i("LDX", ocLDX, amZP0, 3), i("???", ocXXX, amIMP, 3),
+            i("TAY", ocTAY, amIMP, 2), i("LDA", ocLDA, amIMM, 2), i("TAX", ocTAX, amIMP, 2), i("???", ocXXX, amIMP, 2),
+            i("LDY", ocLDY, amABS, 4), i("LDA", ocLDA, amABS, 4), i("LDX", ocLDX, amABS, 4), i("???", ocXXX, amIMP, 4),
+            i("BCS", ocBCS, amREL, 2), i("LDA", ocLDA, amIZY, 5), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 5),
+            i("LDY", ocLDY, amZPX, 4), i("LDA", ocLDA, amZPX, 4), i("LDX", ocLDX, amZPY, 4), i("???", ocXXX, amIMP, 4),
+            i("CLV", ocCLV, amIMP, 2), i("LDA", ocLDA, amABY, 4), i("TSX", ocTSX, amIMP, 2), i("???", ocXXX, amIMP, 4),
+            i("LDY", ocLDY, amABX, 4), i("LDA", ocLDA, amABX, 4), i("LDX", ocLDX, amABY, 4), i("???", ocXXX, amIMP, 4),
+            i("CPY", ocCPY, amIMM, 2), i("CMP", ocCMP, amIZX, 6), i("???", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("CPY", ocCPY, amZP0, 3), i("CMP", ocCMP, amZP0, 3), i("DEC", ocDEC, amZP0, 5), i("???", ocXXX, amIMP, 5),
+            i("INY", ocINY, amIMP, 2), i("CMP", ocCMP, amIMM, 2), i("DEX", ocDEX, amIMP, 2), i("???", ocXXX, amIMP, 2),
+            i("CPY", ocCPY, amABS, 4), i("CMP", ocCMP, amABS, 4), i("DEC", ocDEC, amABS, 6), i("???", ocXXX, amIMP, 6),
+            i("BNE", ocBNE, amREL, 2), i("CMP", ocCMP, amIZY, 5), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 4), i("CMP", ocCMP, amZPX, 4), i("DEC", ocDEC, amZPX, 6), i("???", ocXXX, amIMP, 6),
+            i("CLD", ocCLD, amIMP, 2), i("CMP", ocCMP, amABY, 4), i("NOP", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 7),
+            i("???", ocNOP, amIMP, 4), i("CMP", ocCMP, amABX, 4), i("DEC", ocDEC, amABX, 7), i("???", ocXXX, amIMP, 7),
+            i("CPX", ocCPX, amIMM, 2), i("SBC", ocSBC, amIZX, 6), i("???", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("CPX", ocCPX, amZP0, 3), i("SBC", ocSBC, amZP0, 3), i("INC", ocINC, amZP0, 5), i("???", ocXXX, amIMP, 5),
+            i("INX", ocINX, amIMP, 2), i("SBC", ocSBC, amIMM, 2), i("NOP", ocNOP, amIMP, 2), i("???", ocSBC, amIMP, 2),
+            i("CPX", ocCPX, amABS, 4), i("SBC", ocSBC, amABS, 4), i("INC", ocINC, amABS, 6), i("???", ocXXX, amIMP, 6),
+            i("BEQ", ocBEQ, amREL, 2), i("SBC", ocSBC, amIZY, 5), i("???", ocXXX, amIMP, 2), i("???", ocXXX, amIMP, 8),
+            i("???", ocNOP, amIMP, 4), i("SBC", ocSBC, amZPX, 4), i("INC", ocINC, amZPX, 6), i("???", ocXXX, amIMP, 6),
+            i("SED", ocSED, amIMP, 2), i("SBC", ocSBC, amABY, 4), i("NOP", ocNOP, amIMP, 2), i("???", ocXXX, amIMP, 7),
+            i("???", ocNOP, amIMP, 4), i("SBC", ocSBC, amABX, 4), i("INC", ocINC, amABX, 7), i("???", ocXXX, amIMP, 7),
         )
 
     enum class StatusFlag {

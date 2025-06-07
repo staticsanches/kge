@@ -183,6 +183,6 @@ private fun KNES.fillRAM(
     offset: UInt16,
     data: String,
     hexFormat: HexFormat = HexFormat { upperCase },
-) = with(nes.ram.position(offset.value.toInt())) {
+) = with(nes.ram.position(offset.toInt())) {
     data.split(" ").forEach { put(it.hexToInt(hexFormat).toByte()) }
 }

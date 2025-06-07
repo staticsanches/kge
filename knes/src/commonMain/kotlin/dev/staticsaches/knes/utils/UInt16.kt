@@ -50,6 +50,8 @@ value class UInt16 private constructor(
 
     infix fun shr(bitCount: Int): UInt16 = UInt16(value shr bitCount)
 
+    fun toInt(): Int = value.toInt()
+
     override fun compareTo(other: UInt16): Int = value.compareTo(other.value)
 
     override fun toString(): String = value.toHexString(hexFormat)
