@@ -14,6 +14,8 @@ dependencies {
     val kgeNatives =
         with(projects.kgeNatives) {
             when {
+                "FreeBSD" == name -> kgeFreebsd
+
                 arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } ->
                     if (arrayOf("arm", "aarch64").any { arch.startsWith(it) }) {
                         if (arch.contains("64") || arch.startsWith("armv8")) {
@@ -21,6 +23,10 @@ dependencies {
                         } else {
                             kgeLinuxArm32
                         }
+                    } else if (arch.startsWith("ppc")) {
+                        kgeLinuxPpc64le
+                    } else if (arch.startsWith("riscv")) {
+                        kgeLinuxRiscv64
                     } else {
                         kgeLinux
                     }
@@ -48,5 +54,4 @@ dependencies {
         }
 
     implementation(kgeNatives)
-    implementation(projects.knes)
 }

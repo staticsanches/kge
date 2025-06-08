@@ -16,7 +16,7 @@ import dev.staticsanches.kge.engine.addon.FillRectAddon
 import dev.staticsanches.kge.engine.addon.FillTriangleAddon
 import dev.staticsanches.kge.engine.addon.LayersAddon
 
-expect abstract class KotlinGameEngine :
+interface KotlinGameEngineBase :
     CallbacksAddon,
     ClearAddon,
     DrawAddon,
@@ -31,6 +31,4 @@ expect abstract class KotlinGameEngine :
     FillCircleAddon,
     FillRectAddon,
     FillTriangleAddon,
-    LayersAddon {
-    final override val kgeWindow: Window
-}
+    LayersAddon

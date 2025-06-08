@@ -7,6 +7,7 @@ ktlint = "12.3.0"
 logback = "1.5.13"
 lwjgl = "3.3.6"
 slf4j = "2.0.17"
+vanniktech-maven-publish = "0.32.0"
 
 [libraries]
 
@@ -34,3 +35,4 @@ lwjgl = ["lwjgl", "lwjgl-glfw", "lwjgl-opengl", "lwjgl-stb"]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-maven-publish" }

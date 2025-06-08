@@ -14,7 +14,7 @@ dependencies {
     implementation(libs.bundles.lwjgl)
     runtimeOnly(libs.bundles.lwjgl) {
         artifact {
-            classifier = "natives-linux"
+            classifier = "natives-riscv64"
         }
     }
 }

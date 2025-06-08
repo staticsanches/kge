@@ -29,13 +29,15 @@ include("kge-core")
 include("kge-example-js", "kge-example-jvm")
 include(
     "kge-natives",
+    "kge-natives:kge-freebsd",
     "kge-natives:kge-linux",
     "kge-natives:kge-linux-arm32",
     "kge-natives:kge-linux-arm64",
+    "kge-natives:kge-linux-ppc64le",
+    "kge-natives:kge-linux-riscv64",
     "kge-natives:kge-macos",
     "kge-natives:kge-macos-arm64",
     "kge-natives:kge-windows",
     "kge-natives:kge-windows-arm64",
     "kge-natives:kge-windows-x86",
 )
-include("knes")

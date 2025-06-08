@@ -20,7 +20,6 @@ kotlin {
     sourceSets {
         jsMain.dependencies {
             implementation(projects.kgeCore)
-            implementation(projects.knes)
 
             implementation(kotlinWrappers.browser)
             implementation(libs.kotlin.logging)

@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    `maven-publish`
     `java-library`
 }
 
@@ -16,14 +15,6 @@ dependencies {
     runtimeOnly(libs.bundles.lwjgl) {
         artifact {
             classifier = "natives-linux-arm32"
-        }
-    }
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("jvm") {
-            from(components["java"])
         }
     }
 }

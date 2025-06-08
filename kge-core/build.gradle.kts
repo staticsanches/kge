@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    `maven-publish`
 }
 
 kotlin {
