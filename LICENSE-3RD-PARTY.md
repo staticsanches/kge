@@ -1,4 +1,4 @@
-kge is inspired by [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine):
+KGE is inspired by [olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine):
 
 Copyright 2018-2023 OneLoneCoder.com
 
@@ -32,7 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---
 
-kge utilizes [Lightweight Java Game Library](https://www.lwjgl.org):
+KGE utilizes [Lightweight Java Game Library](https://www.lwjgl.org):
 
 Copyright (c) 2012-present Lightweight Java Game Library
 All rights reserved.
@@ -66,7 +66,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---
 
-kge utilizes [ktlint-gradle](https://github.com/JLLeitschuh/ktlint-gradle):
+KGE utilizes [ktlint-gradle](https://github.com/JLLeitschuh/ktlint-gradle):
 
 MIT License
 
@@ -92,7 +92,7 @@ SOFTWARE.
 
 ---
 
-kge utilizes [kotlin-logging](https://github.com/oshai/kotlin-logging):
+KGE utilizes [kotlin-logging](https://github.com/oshai/kotlin-logging):
 
 Copyright (c) 2016-2018 Ohad Shai
 This software is licensed under the Apache 2 license, quoted below.
@@ -301,7 +301,7 @@ limitations under the License.
 
 ---
 
-kge utilizes [slf4j](https://github.com/qos-ch/slf4j):
+KGE utilizes [slf4j](https://github.com/qos-ch/slf4j):
 
 Copyright (c) 2004-2022 QOS.ch Sarl (Switzerland)
 All rights reserved.
@@ -327,7 +327,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
-kge utilizes [logback](https://github.com/qos-ch/logback):
+KGE utilizes [logback](https://github.com/qos-ch/logback):
 
 Logback LICENSE
 ---------------
@@ -346,7 +346,7 @@ as published by the Free Software Foundation.
 
 ---
 
-kge utilizes [pngjs](https://github.com/pngjs/pngjs):
+KGE utilizes [pngjs](https://github.com/pngjs/pngjs):
 
 pngjs original work Copyright (c) 2015 Luke Page & Original Contributors
 pngjs derived work Copyright (c) 2012 Kuba Niegowski
@@ -371,7 +371,7 @@ THE SOFTWARE.
 
 ---
 
-kge utilizes [gradle-maven-publish-plugin](https://github.com/vanniktech/gradle-maven-publish-plugin):
+KGE utilizes [gradle-maven-publish-plugin](https://github.com/vanniktech/gradle-maven-publish-plugin):
 
                                  Apache License
                            Version 2.0, January 2004

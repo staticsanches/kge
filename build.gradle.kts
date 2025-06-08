@@ -7,7 +7,7 @@ plugins {
 
 allprojects {
     group = "dev.staticsanches.kge"
-    version = "0.1.0"
+    version = "0.1.1-SNAPSHOT"
 
     if (name != "kge-natives" && parent?.name != "kge-natives") {
         apply(plugin = "org.jlleitschuh.gradle.ktlint")
@@ -26,7 +26,7 @@ allprojects {
         apply(plugin = "com.vanniktech.maven.publish")
         configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
             pom {
-                name.set("Kotlin Game Engine (kge)")
+                name.set("Kotlin Game Engine (KGE)")
                 description.set("Inspired by olcPixelGame - written in Kotlin")
                 url.set("https://staticsanches.github.io/kge/")
 
