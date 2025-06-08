@@ -52,6 +52,8 @@ kotlin {
             val arch = System.getProperty("os.arch")!!
             val lwjglNatives =
                 when {
+                    "FreeBSD" == name -> "natives-freebsd"
+
                     arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } ->
                         if (arrayOf("arm", "aarch64").any { arch.startsWith(it) }) {
                             "natives-linux${
@@ -61,6 +63,10 @@ kotlin {
                                     "-arm32"
                                 }
                             }"
+                        } else if (arch.startsWith("ppc")) {
+                            "natives-linux-ppc64le"
+                        } else if (arch.startsWith("riscv")) {
+                            "natives-linux-riscv64"
                         } else {
                             "natives-linux"
                         }
@@ -93,9 +99,9 @@ kotlin {
             compileTaskProvider.configure {
                 compilerOptions {
                     freeCompilerArgs.add("-Xexpect-actual-classes")
-                    compilerOptions.optIn.add("kotlin.ExperimentalStdlibApi")
-                    compilerOptions.optIn.add("kotlin.uuid.ExperimentalUuidApi")
-                    compilerOptions.optIn.add("dev.staticsanches.kge.annotations.KGESensitiveAPI")
+                    optIn.add("kotlin.ExperimentalStdlibApi")
+                    optIn.add("kotlin.uuid.ExperimentalUuidApi")
+                    optIn.add("dev.staticsanches.kge.annotations.KGESensitiveAPI")
                 }
             }
         }

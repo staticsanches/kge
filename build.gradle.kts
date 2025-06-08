@@ -7,7 +7,7 @@ plugins {
 
 allprojects {
     group = "dev.staticsanches.kge"
-    version = "0.1.0-SNAPSHOT"
+    version = "0.1.0"
 
     if (name != "kge-natives" && parent?.name != "kge-natives") {
         apply(plugin = "org.jlleitschuh.gradle.ktlint")
