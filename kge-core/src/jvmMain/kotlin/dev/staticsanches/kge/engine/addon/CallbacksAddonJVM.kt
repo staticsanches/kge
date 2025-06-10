@@ -2,6 +2,7 @@
 
 package dev.staticsanches.kge.engine.addon
 
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.engine.state.input.KeyboardKey
 import dev.staticsanches.kge.engine.state.input.KeyboardKeyAction
 import dev.staticsanches.kge.engine.state.input.KeyboardModifiers
@@ -55,6 +56,16 @@ actual interface CallbacksAddon {
         scancode: Int,
         newModifiers: KeyboardModifiers,
     ) = Unit
+
+    /**
+     * Handle file drop events. The return is used to read file contents and call [onFileOpenEvent].
+     */
+    fun onFileDropEvent(fileNames: List<String>): List<String>? = null
+
+    /**
+     * Handle file open events. Works together with [onFileDropEvent]. It MUST close the resources.
+     */
+    fun onFileOpenEvent(files: Map<String, ByteBufferWrapper>) = Unit
 
     /**
      * The associated [GLFW] error code representation.

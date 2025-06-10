@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.example
 
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.engine.KotlinGameEngine
 import dev.staticsanches.kge.engine.state.input.KeyboardKey
 import dev.staticsanches.kge.engine.state.input.KeyboardKeyAction
@@ -58,13 +59,20 @@ class FirstExample : KotlinGameEngine("First Example") {
         if (key == KeyboardKey.KEY_N && newAction == ReleaseAction) generateNoise = !generateNoise
     }
 
+    override fun onFileDropEvent(fileNames: List<String>): List<String>? = fileNames
+
+    override fun onFileOpenEvent(files: Map<String, ByteBufferWrapper>) {
+        files.values.map { it.use { println(it) } }
+    }
+
     companion object {
         private fun randomComponent(): Int = Random.nextInt(0, 256)
 
         @JvmStatic
         fun main(args: Array<String>) {
-            FirstExample().run {
+            FirstExample().start {
                 resizable = true
+                keepAspectRatio = true
             }
         }
     }

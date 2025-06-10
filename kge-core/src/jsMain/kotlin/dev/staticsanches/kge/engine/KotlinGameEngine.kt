@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.engine
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.buffer.service.BufferWrapperService
 import dev.staticsanches.kge.engine.state.input.KeyboardKey
 import dev.staticsanches.kge.engine.state.input.KeyboardModifiers
 import dev.staticsanches.kge.engine.state.input.PressAction
@@ -18,6 +19,7 @@ import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.ResourceWrapper.Companion.invoke
 import dev.staticsanches.kge.resource.applyClosingIfFailed
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -25,7 +27,9 @@ import web.animations.awaitAnimationFrame
 import web.dom.document
 import web.events.addEventListener
 import web.events.removeEventListener
+import web.file.File
 import web.html.HTMLElement
+import web.uievents.DragEvent
 import web.uievents.KeyboardEvent
 
 abstract class KotlinGameEngine : KotlinGameEngineBase {
@@ -38,25 +42,24 @@ abstract class KotlinGameEngine : KotlinGameEngineBase {
     @KGESensitiveAPI
     var shouldStop: Boolean = false
 
-    fun run(
+    fun start(
         canvasHolder: HTMLElement,
         init: Configurator.() -> Unit,
-    ) {
+    ): Job =
         MainScope().launch {
-            Configurator(canvasHolder).apply(init).createWindow().use { window ->
-                try {
+            try {
+                Configurator(canvasHolder).apply(init).createWindow().use { window ->
                     internalWindow = window
 
                     window.registerCallbacks(this@launch)
 
                     start()
-                } finally {
-                    internalWindow = null
-                    this@launch.cancel()
                 }
+            } finally {
+                internalWindow = null
+                this@launch.cancel()
             }
         }
-    }
 
     private suspend fun start() {
         Renderer.updateViewport(dimensionState.viewportPosition, dimensionState.viewportSize)
@@ -135,6 +138,7 @@ abstract class KotlinGameEngine : KotlinGameEngineBase {
 
     private fun Window.registerCallbacks(scope: CoroutineScope) {
         bindResource(KeyboardEventHandlerResource(scope))
+        bindResource(DropFileEventHandlerResource(scope))
     }
 
     class Configurator internal constructor(
@@ -184,6 +188,41 @@ abstract class KotlinGameEngine : KotlinGameEngineBase {
         }
     }
 
+    private inner class DropFileEventHandlerResource private constructor(
+        val dropHandler: (DragEvent) -> Unit,
+    ) : KGEResource {
+        constructor(scope: CoroutineScope) : this({ e ->
+            e.preventDefault()
+            scope.launch {
+                val files = mutableListOf<File>()
+                e.dataTransfer
+                    ?.files
+                    ?.iterator()
+                    ?.forEach { files.add(it) }
+
+                files
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { onFileDropEvent(it) }
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.map { it.name to BufferWrapperService.readFile(it) }
+                    ?.toMap()
+                    ?.let { onFileOpenEvent(it) }
+            }
+        })
+
+        val dragOverHandler = { event: DragEvent -> event.preventDefault() }
+
+        override fun close() {
+            kgeWindow.mainResource.webGL2Canvas.removeEventListener(DragEvent.DRAG_OVER, dragOverHandler)
+            kgeWindow.mainResource.webGL2Canvas.removeEventListener(DragEvent.DROP, dropHandler)
+        }
+
+        init {
+            kgeWindow.mainResource.webGL2Canvas.addEventListener(DragEvent.DRAG_OVER, dragOverHandler)
+            kgeWindow.mainResource.webGL2Canvas.addEventListener(DragEvent.DROP, dropHandler)
+        }
+    }
+
     companion object {
         private fun Configurator.createWindow(): Window {
             check(pixelWidth > 0) { "Pixel width must be greater than 0" }
@@ -195,7 +234,10 @@ abstract class KotlinGameEngine : KotlinGameEngineBase {
                 ResourceWrapper(
                     "KGE Window",
                     WindowMainResource(canvasHolder),
-                    clearGLContext,
+                    KGECleanAction {
+                        updateGLContext(null)
+                        canvasHolder.querySelector("canvas")?.let { canvasHolder.removeChild(it) }
+                    },
                 ),
             ).applyClosingIfFailed {
                 dimensionState.screenSize = screenWidth by screenHeight
@@ -208,7 +250,5 @@ abstract class KotlinGameEngine : KotlinGameEngineBase {
                 Renderer.afterWindowCreation(this)
             }
         }
-
-        private val clearGLContext = KGECleanAction { updateGLContext(null) }
     }
 }

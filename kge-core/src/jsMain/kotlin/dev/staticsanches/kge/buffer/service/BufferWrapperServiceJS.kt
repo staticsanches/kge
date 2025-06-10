@@ -7,14 +7,17 @@ import dev.staticsanches.kge.buffer.FloatBuffer
 import dev.staticsanches.kge.buffer.IntBuffer
 import dev.staticsanches.kge.buffer.isNative
 import dev.staticsanches.kge.buffer.wrapper.BufferWrapperType
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.extensible.KGEExtensibleService
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.utils.BytesSize.FLOAT
 import dev.staticsanches.kge.utils.BytesSize.INT
+import dev.staticsanches.kge.utils.toHumanReadableByteCountBin
 import js.buffer.ArrayBuffer
 import js.buffer.ArrayBufferLike
 import js.buffer.DataView
+import web.file.File
 
 actual interface BufferWrapperService : KGEExtensibleService {
     actual fun <B : Buffer> create(
@@ -33,6 +36,8 @@ actual interface BufferWrapperService : KGEExtensibleService {
         original: ResourceWrapper<B>,
         newName: String?,
     ): ResourceWrapper<B>
+
+    suspend fun readFile(file: File): ByteBufferWrapper
 
     actual companion object : BufferWrapperService by KGEExtensibleService.getOptionalWithHigherPriority()
         ?: originalBufferWrapperServiceImplementation
@@ -84,6 +89,14 @@ private data object DefaultBufferWrapperService : BufferWrapperService {
 
                 else -> throw IllegalArgumentException("Unsupported buffer wrapper")
             } as ResourceWrapper<B>
+        }
+
+    override suspend fun readFile(file: File): ByteBufferWrapper =
+        file.arrayBuffer().let { arrayBuffer ->
+            create(
+                BufferWrapperType.Byte, arrayBuffer,
+                "${file.name} (${arrayBuffer.byteLength.toHumanReadableByteCountBin()})",
+            )
         }
 
     override val servicePriority: Int

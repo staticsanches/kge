@@ -1,3 +1,5 @@
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.engine.KotlinGameEngine
 import dev.staticsanches.kge.engine.state.input.KeyboardKey
 import dev.staticsanches.kge.engine.state.input.KeyboardKeyAction
@@ -10,12 +12,14 @@ import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.extension.loadPNG
 import dev.staticsanches.kge.math.vector.Float2D.Companion.by
 import dev.staticsanches.kge.utils.invokeForAll
+import web.dom.ElementId
 import web.dom.document
+import web.file.File
 import web.uievents.KeyboardEvent
 import kotlin.random.Random
 
 fun main() {
-    FirstExample().run(document.getElementById("canvas-holder")!!) {}
+    FirstExample().start(document.getElementById(ElementId("canvas-holder"))!!) {}
 }
 
 class FirstExample : KotlinGameEngine() {
@@ -52,6 +56,7 @@ class FirstExample : KotlinGameEngine() {
         return true
     }
 
+    @OptIn(KGESensitiveAPI::class)
     override suspend fun onKeyboardEvent(
         key: KeyboardKey,
         newAction: KeyboardKeyAction,
@@ -59,6 +64,13 @@ class FirstExample : KotlinGameEngine() {
         event: KeyboardEvent,
     ) {
         if (key == KeyboardKey.KeyN && newAction == ReleaseAction) generateNoise = !generateNoise
+        if (key == KeyboardKey.KeyQ && newAction == ReleaseAction) shouldStop = true
+    }
+
+    override suspend fun onFileDropEvent(files: List<File>): List<File>? = files
+
+    override suspend fun onFileOpenEvent(files: Map<String, ByteBufferWrapper>) {
+        files.values.forEach { it.use { console.log(it) } }
     }
 
     companion object {

@@ -5,11 +5,14 @@ import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.buffer.FloatBuffer
 import dev.staticsanches.kge.buffer.IntBuffer
 import dev.staticsanches.kge.buffer.wrapper.BufferWrapperType
+import dev.staticsanches.kge.buffer.wrapper.ByteBufferWrapper
 import dev.staticsanches.kge.extensible.KGEExtensibleService
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.applyClosingIfFailed
+import dev.staticsanches.kge.utils.toHumanReadableByteCountBin
 import org.lwjgl.system.MemoryUtil
+import java.io.File
 
 actual interface BufferWrapperService : KGEExtensibleService {
     actual fun <B : Buffer> create(
@@ -22,6 +25,8 @@ actual interface BufferWrapperService : KGEExtensibleService {
         original: ResourceWrapper<B>,
         newName: String?,
     ): ResourceWrapper<B>
+
+    fun readFile(name: String): ByteBufferWrapper
 
     actual companion object : BufferWrapperService by KGEExtensibleService.getOptionalWithHigherPriority()
         ?: originalBufferWrapperServiceImplementation
@@ -67,6 +72,14 @@ private data object DefaultBufferWrapperService : BufferWrapperService {
 
                 else -> throw IllegalArgumentException("Unsupported buffer wrapper")
             } as ResourceWrapper<B>
+        }
+
+    override fun readFile(name: String): ByteBufferWrapper =
+        File(name).readBytes().let { bytes ->
+            create(BufferWrapperType.Byte, bytes.size, "$name (${bytes.size.toHumanReadableByteCountBin()})")
+                .applyClosingIfFailed {
+                    resource.clear().put(bytes)
+                }
         }
 
     override val servicePriority: Int

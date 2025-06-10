@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.engine
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.buffer.service.BufferWrapperService
 import dev.staticsanches.kge.engine.addon.WindowManipulationAddon
 import dev.staticsanches.kge.engine.state.input.KeyboardKey
 import dev.staticsanches.kge.engine.state.input.KeyboardModifiers
@@ -13,6 +14,7 @@ import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.toCleanerProvider
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFWDropCallback
 import org.lwjgl.glfw.GLFWErrorCallback
 import org.lwjgl.opengl.GL
 import org.lwjgl.system.Configuration
@@ -30,17 +32,14 @@ abstract class KotlinGameEngine(
             internalWindow
                 ?: throw IllegalStateException("Window and its info are only available while the engine is running")
 
-    fun run(initializer: Configurator.() -> Unit): Unit =
+    fun start(initializer: Configurator.() -> Unit): Unit =
         try {
-            try {
-                Configurator().apply(initializer).createWindow().use {
-                    internalWindow = it
-                    doStart()
-                }
-            } finally {
-                internalWindow = null
+            Configurator().apply(initializer).createWindow().use {
+                internalWindow = it
+                doStart()
             }
         } finally {
+            internalWindow = null
             GLFW.glfwTerminate()
             GLFW.glfwSetErrorCallback(null)?.free()
         }
@@ -119,7 +118,7 @@ abstract class KotlinGameEngine(
     }
 
     @KGESensitiveAPI
-    fun pollEvents() {
+    open fun pollEvents() {
         GLFW.glfwPollEvents()
     }
 
@@ -238,6 +237,21 @@ abstract class KotlinGameEngine(
             // Update the state
             inputState.keyboardModifiers = newModifiers
             inputState.keyboardKeyState[keyboardKey] = keyboardKeyAction
+        }
+
+        GLFW.glfwSetDropCallback(windowHandle) { window, count, names ->
+            check(window == windowHandle) { "Invalid window handle" }
+
+            val fileNames = mutableListOf<String>()
+            for (i in 0..<count) {
+                fileNames.add(GLFWDropCallback.getName(names, i))
+            }
+
+            onFileDropEvent(fileNames)
+                ?.takeIf { it.isNotEmpty() }
+                ?.map { it to BufferWrapperService.readFile(it) }
+                ?.toMap()
+                ?.let { onFileOpenEvent(it) }
         }
     }
 

@@ -72,6 +72,7 @@ class Window
             bindResource(mainResourceWrapper)
             fontSheet = letClosingIfFailed { Rasterizer.createFontSheet() }
             bindResource(fontSheet)
+            bindResource(fontSheet.sprite)
         }
 
         @KGESensitiveAPI
