@@ -67,3 +67,61 @@ no bump needed, the plan's pin stays.
 The path-based spec in item 4 used `File.path`, whose separator is `\` on Windows —
 the filter would silently stop excluding KSP-generated sources and `ktlintCheck` would
 fail on `windows-latest` CI. Changed to `File.invariantSeparatorsPath` (always `/`).
+
+## 2026-08-30 — Task 4: Scaffold verification + decisions log
+
+Phase 0 gate: `./gradlew :kge-core:allTests ktlintCheck --stacktrace` green (fresh
+run with `--rerun-tasks`: BUILD SUCCESSFUL, all test targets executed + ktlintCheck).
+
+### 7. Default hierarchy template provides `webMain`/`webTest` — webMain present (y), no source-set changes
+
+The plan's inspection command (`:kge-core:sourceSets`) is not a Kotlin Gradle Plugin
+task; the equivalent evidence came from two real tasks:
+
+- `:kge-core:tasks --all`: ktlint emits one task pair per registered source set —
+  `ktlintWebMainSourceSetCheck/Format` and `ktlintWebTestSourceSetCheck/Format` exist.
+- `:kge-core:dependencies`: `webMainApi`, `webMainImplementation`, `webTestApi`,
+  `webTestImplementation` (and friends) exist.
+
+`kge-core/build.gradle.kts` declares no `webMain`/`webTest` and never calls
+`applyDefaultHierarchyTemplate()`, so the web group comes from the default hierarchy
+template that KGP 2.4.10 applies automatically (web group added to the template in
+Kotlin 2.2). Verdict: template-provided, not custom — `build.gradle.kts` untouched.
+
+### 8. wasmJs test runner: node
+
+Confirmed in Task 2 and at the gate: the `wasmJs` target is configured with
+`nodejs()` only, and `wasmJsNodeTest` runs the kotest smoke test. Node is the
+supported runner.
+
+### 9. kotest works on js + wasmJs — yes
+
+Fresh gate run (2026-08-30), one SmokeTest per target, all green:
+
+- `jvmTest`: 1 test, 0 failures (HTML report counters 1/0/0)
+- `jsNodeTest`: 1 test, 0 failures
+- `jsBrowserTest`: 1 test, 0 failures (Chrome)
+- `wasmJsNodeTest`: 1 test, 0 failures
+
+### 10. jvmTarget DSL over jvmToolchain — bytecode evidence re-confirmed at the gate
+
+The `compilerOptions { jvmTarget.set(JvmTarget.JVM_11) }` choice (item 1) stands:
+`SmokeTest.class` from the gate's fresh compile reads major version 55 (Java 11
+bytecode). No `jvmToolchain` fallback needed.
+
+### 11. wasmJs test runner: node + browser (owner option a)
+
+Owner decision on the open scaffold item: **option a — enable the browser, CI stays
+node-only.** The `wasmJs` block now mirrors the `js` block:
+
+```kotlin
+wasmJs {
+    browser {
+        testTask {}
+    }
+    nodejs()
+}
+```
+
+`wasmJsBrowserTest` runs the kotest smoke test locally (Chrome); CI keeps the
+node-only runner per plan.

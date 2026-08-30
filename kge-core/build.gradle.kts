@@ -18,6 +18,9 @@ kotlin {
         nodejs()
     }
     wasmJs {
+        browser {
+            testTask {}
+        }
         nodejs()
     }
 
