@@ -1,0 +1,6 @@
+root = true
+
+[*]
+max_line_length = 120
+# noinspection EditorConfigKeyCorrectness
+ktlint_standard_argument-list-wrapping = disabled

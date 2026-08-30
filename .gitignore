@@ -1,0 +1,16 @@
+# Kotlin/Gradle build
+.gradle/
+build/
+.kotlin/
+# IDE
+.idea/
+*.iml
+.run/
+# macOS
+.DS_Store
+# Profiling/temp
+*.jfr
+*.log
+node_modules/
+# SDD scratch (never commit)
+.superpowers/
