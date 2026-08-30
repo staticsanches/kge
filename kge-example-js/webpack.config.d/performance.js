@@ -1,1 +1,0 @@
-config.performance = { hints: false }
