@@ -6,6 +6,8 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
+import kotlin.math.max
+import kotlin.math.min
 
 interface DrawSpriteService : KGEExtensibleService {
     fun drawSprite(
@@ -130,25 +132,10 @@ private data object DefaultDrawSpriteService : DrawSpriteService {
     ) {
         if (scale <= 0) return // invalid scale
 
-        val minX: Int
-        val maxX: Int
-        if (diagonalStartX <= diagonalEndX) {
-            minX = diagonalStartX
-            maxX = diagonalEndX
-        } else {
-            minX = diagonalEndX
-            maxX = diagonalStartX
-        }
-
-        val minY: Int
-        val maxY: Int
-        if (diagonalStartY <= diagonalEndY) {
-            minY = diagonalStartY
-            maxY = diagonalEndY
-        } else {
-            minY = diagonalEndY
-            maxY = diagonalStartY
-        }
+        val minX = min(diagonalStartX, diagonalEndX)
+        val maxX = max(diagonalStartX, diagonalEndX)
+        val minY = min(diagonalStartY, diagonalEndY)
+        val maxY = max(diagonalStartY, diagonalEndY)
 
         val spriteWidth = maxX - minX + 1
         val spriteHeight = maxY - minY + 1
@@ -159,68 +146,91 @@ private data object DefaultDrawSpriteService : DrawSpriteService {
             return // out of bounds
         }
 
-        val xSpriteStart: Int
-        val xSpriteIncrement: Int
-        if (flip == Sprite.Flip.HORIZONTAL || flip == Sprite.Flip.BOTH) {
-            xSpriteStart = maxX
-            xSpriteIncrement = -1
-        } else {
-            xSpriteStart = minX
-            xSpriteIncrement = 1
+        val xSpriteStart = if (flip == Sprite.Flip.HORIZONTAL || flip == Sprite.Flip.BOTH) maxX else minX
+        val xSpriteIncrement = if (flip == Sprite.Flip.HORIZONTAL || flip == Sprite.Flip.BOTH) -1 else 1
+        val ySpriteStart = if (flip == Sprite.Flip.VERTICAL || flip == Sprite.Flip.BOTH) maxY else minY
+        val ySpriteIncrement = if (flip == Sprite.Flip.VERTICAL || flip == Sprite.Flip.BOTH) -1 else 1
+
+        if (scale == 1 && flip == Sprite.Flip.NONE && pixelMode == Pixel.Mode.Normal) {
+            // Fast path: copies whole rows of the source into the target
+            val destX = max(x, 0)
+            val sourceOffsetX = destX - x
+            val copyWidth = min(spriteWidth - sourceOffsetX, targetWidth - destX)
+            for (j in 0..<spriteHeight) {
+                val targetY = y + j
+                if (targetY !in 0..<targetHeight) continue // out of bounds
+                Rasterizer.copySpan(
+                    destX, targetY,
+                    target, pixelMode,
+                    sprite, minX + sourceOffsetX, minY + j, copyWidth,
+                )
+            }
+            return
         }
 
-        val ySpriteStart: Int
-        val ySpriteIncrement: Int
-        if (flip == Sprite.Flip.VERTICAL || flip == Sprite.Flip.BOTH) {
-            ySpriteStart = maxY
-            ySpriteIncrement = -1
-        } else {
-            ySpriteStart = minY
-            ySpriteIncrement = 1
-        }
+        if (scale > 1 && pixelMode == Pixel.Mode.Normal) {
+            // Fast path: reads the source without bounds checks and draws each row of the
+            // scaled block as a span
+            for (j in 0..<spriteHeight) {
+                val baseTargetY = y + j * scale
+                if (baseTargetY !in 0..<targetHeight) continue // out of bounds
 
-        if (scale == 1) {
-            var xSprite = xSpriteStart
-            for (i in 0..<spriteWidth) {
-                val targetX = x + i
-                if (targetX !in 0..<targetWidth) continue // out of bounds
+                val ySprite = ySpriteStart + j * ySpriteIncrement
+                for (i in 0..<spriteWidth) {
+                    val baseTargetX = x + i * scale
+                    if (baseTargetX !in 0..<targetWidth) continue // out of bounds
 
-                var ySprite = ySpriteStart
-                for (j in 0..<spriteHeight) {
-                    val targetY = y + j
-                    if (targetY !in 0..<targetHeight) continue // out of bounds
-
-                    Rasterizer.draw(targetX, targetY, sprite[xSprite, ySprite], target, pixelMode)
-
-                    ySprite += ySpriteIncrement
+                    val color = sprite.uncheckedGet(xSpriteStart + i * xSpriteIncrement, ySprite)
+                    val spanStart = max(baseTargetX, 0)
+                    val spanEnd = min(baseTargetX + scale - 1, targetWidth - 1)
+                    for (jScale in 0..<scale) {
+                        val targetY = baseTargetY + jScale
+                        if (targetY !in 0..<targetHeight) continue // out of bounds
+                        Rasterizer.drawSpan(spanStart, spanEnd, targetY, color, target, pixelMode)
+                    }
                 }
-                xSprite += xSpriteIncrement
+            }
+            return
+        }
+
+        // Fallback: per-pixel drawing, iterating rows first so the target is written sequentially.
+        if (scale == 1) {
+            for (j in 0..<spriteHeight) {
+                val targetY = y + j
+                if (targetY !in 0..<targetHeight) continue // out of bounds
+
+                val ySprite = ySpriteStart + j * ySpriteIncrement
+                var xSprite = xSpriteStart
+                for (i in 0..<spriteWidth) {
+                    val targetX = x + i
+                    if (targetX in 0..<targetWidth) {
+                        Rasterizer.draw(targetX, targetY, sprite[xSprite, ySprite], target, pixelMode)
+                    }
+                    xSprite += xSpriteIncrement
+                }
             }
         } else {
-            var xSprite = xSpriteStart
-            for (i in 0..<spriteWidth) {
-                val baseTargetX = x + (i * scale)
-                if (baseTargetX !in 0..<targetWidth) continue // out of bounds
+            for (j in 0..<spriteHeight) {
+                val baseTargetY = y + j * scale
+                if (baseTargetY !in 0..<targetHeight) continue // out of bounds
 
-                var ySprite = ySpriteStart
-                for (j in 0..<spriteHeight) {
-                    val baseTargetY = y + (j * scale)
-                    if (baseTargetY !in 0..<targetHeight) continue // out of bounds
+                val ySprite = ySpriteStart + j * ySpriteIncrement
+                for (i in 0..<spriteWidth) {
+                    val baseTargetX = x + i * scale
+                    if (baseTargetX !in 0..<targetWidth) continue // out of bounds
 
-                    val color = sprite[xSprite, ySprite]
-
+                    val color = sprite[xSpriteStart + i * xSpriteIncrement, ySprite]
                     for (iScale in 0..<scale) {
                         val targetX = baseTargetX + iScale
                         if (targetX !in 0..<targetWidth) continue // out of bounds
 
                         for (jScale in 0..<scale) {
-                            Rasterizer.draw(targetX, baseTargetY + jScale, color, target, pixelMode)
+                            val targetY = baseTargetY + jScale
+                            if (targetY !in 0..<targetHeight) continue // out of bounds
+                            Rasterizer.draw(targetX, targetY, color, target, pixelMode)
                         }
                     }
-
-                    ySprite += ySpriteIncrement
                 }
-                xSprite += xSpriteIncrement
             }
         }
     }

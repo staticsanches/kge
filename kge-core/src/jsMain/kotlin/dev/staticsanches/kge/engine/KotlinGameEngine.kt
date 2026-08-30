@@ -158,14 +158,18 @@ abstract class KotlinGameEngine : KotlinGameEngineBase {
                 val keyboardKey = KeyboardKey[e]
                 val keyboardKeyAction =
                     when (e.type) {
-                        KeyboardEvent.KEY_UP -> ReleaseAction
-                        KeyboardEvent.KEY_DOWN ->
+                        KeyboardEvent.KEY_UP -> {
+                            ReleaseAction
+                        }
+
+                        KeyboardEvent.KEY_DOWN -> {
                             when (inputState.keyboardKeyState[keyboardKey]) {
                                 PressAction -> RepeatAction
                                 ReleaseAction -> PressAction
                                 RepeatAction -> RepeatAction
                                 UnknownAction -> PressAction
                             }
+                        }
                     }
                 val newModifiers = KeyboardModifiers(e)
 

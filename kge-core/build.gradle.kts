@@ -52,9 +52,11 @@ kotlin {
             val arch = System.getProperty("os.arch")!!
             val lwjglNatives =
                 when {
-                    "FreeBSD" == name -> "natives-freebsd"
+                    "FreeBSD" == name -> {
+                        "natives-freebsd"
+                    }
 
-                    arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } ->
+                    arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } -> {
                         if (arrayOf("arm", "aarch64").any { arch.startsWith(it) }) {
                             "natives-linux${
                                 if (arch.contains("64") || arch.startsWith("armv8")) {
@@ -70,18 +72,23 @@ kotlin {
                         } else {
                             "natives-linux"
                         }
+                    }
 
-                    arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } ->
+                    arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } -> {
                         "natives-macos${if (arch.startsWith("aarch64")) "-arm64" else ""}"
+                    }
 
-                    arrayOf("Windows").any { name.startsWith(it) } ->
+                    arrayOf("Windows").any { name.startsWith(it) } -> {
                         if (arch.contains("64")) {
                             "natives-windows${if (arch.startsWith("aarch64")) "-arm64" else ""}"
                         } else {
                             "natives-windows-x86"
                         }
+                    }
 
-                    else -> throw Error("Unrecognized or unsupported platform. Please set \"lwjglNatives\" manually")
+                    else -> {
+                        throw Error("Unrecognized or unsupported platform. Please set \"lwjglNatives\" manually")
+                    }
                 }
 
             libs.bundles.lwjgl.get().forEach {
@@ -106,4 +113,12 @@ kotlin {
             }
         }
     }
+}
+
+val benchmark by tasks.registering(JavaExec::class) {
+    group = "verification"
+    description = "Runs the JVM rasterizer baseline benchmark (RasterizerBenchmark.main)."
+    val testCompilation = kotlin.targets.getByName("jvm").compilations.getByName("test")
+    classpath = testCompilation.output.allOutputs + testCompilation.runtimeDependencyFiles
+    mainClass.set("dev.staticsanches.kge.benchmark.RasterizerBenchmarkMain")
 }

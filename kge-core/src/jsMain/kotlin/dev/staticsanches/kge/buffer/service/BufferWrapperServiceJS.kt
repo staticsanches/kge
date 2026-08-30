@@ -17,6 +17,7 @@ import dev.staticsanches.kge.utils.toHumanReadableByteCountBin
 import js.buffer.ArrayBuffer
 import js.buffer.ArrayBufferLike
 import js.buffer.DataView
+import js.typedarrays.Int32Array
 import web.file.File
 
 actual interface BufferWrapperService : KGEExtensibleService {
@@ -78,16 +79,21 @@ private data object DefaultBufferWrapperService : BufferWrapperService {
     ): ResourceWrapper<B> =
         with(original.resource) {
             when (this) {
-                is ArrayBufferAsByteBuffer ->
+                is ArrayBufferAsByteBuffer -> {
                     create(BufferWrapperType.Byte, duplicate(), newName ?: original.toString())
+                }
 
-                is ArrayBufferAsFloatBuffer ->
+                is ArrayBufferAsFloatBuffer -> {
                     create(BufferWrapperType.Float, duplicate(), newName ?: original.toString())
+                }
 
-                is ArrayBufferAsIntBuffer ->
+                is ArrayBufferAsIntBuffer -> {
                     create(BufferWrapperType.Int, duplicate(), newName ?: original.toString())
+                }
 
-                else -> throw IllegalArgumentException("Unsupported buffer wrapper")
+                else -> {
+                    throw IllegalArgumentException("Unsupported buffer wrapper")
+                }
             } as ResourceWrapper<B>
         }
 
@@ -103,6 +109,8 @@ private data object DefaultBufferWrapperService : BufferWrapperService {
         get() = Int.MIN_VALUE
 }
 
+private const val SMALL_SPAN_THRESHOLD = 32
+
 private class ArrayBufferAsByteBuffer(
     arrayBuffer: ArrayBufferLike,
 ) : ByteBuffer(arrayBuffer.byteLength),
@@ -111,6 +119,7 @@ private class ArrayBufferAsByteBuffer(
 
     private var arrayBuffer: ArrayBufferLike? = arrayBuffer
     private var internalDataView: DataView<*>? = DataView(arrayBuffer)
+    private var internalInt32View: Int32Array<ArrayBufferLike>? = Int32Array(arrayBuffer)
 
     override fun get(): Byte = internalDataView().getInt8(nextPosition(1))
 
@@ -178,9 +187,67 @@ private class ArrayBufferAsByteBuffer(
 
     fun duplicate(): ArrayBufferLike = (arrayBuffer ?: throw IllegalStateException("buffer is not available")).slice(0)
 
+    /**
+     * Native bulk fill of [length] consecutive integers with [value], starting at [byteIndex].
+     *
+     * Spans below [SMALL_SPAN_THRESHOLD] use a direct view loop: the native TypedArray.fill has a
+     * fixed call overhead that dominates short spans.
+     */
+    override fun fillIntsNative(
+        byteIndex: Int,
+        length: Int,
+        value: Int,
+    ) {
+        val view = internalInt32View()
+        val start = byteIndex / INT
+        if (length < SMALL_SPAN_THRESHOLD) {
+            var i = start
+            val end = start + length
+            while (i < end) {
+                view[i] = value
+                i++
+            }
+        } else {
+            view.fill(value, start, start + length)
+        }
+    }
+
+    /**
+     * Native bulk copy of [length] consecutive integers from [source] at [sourceByteIndex] into
+     * this buffer at [destByteIndex]. Falls back to per-pixel copy for non-native sources.
+     */
+    override fun copyIntsNative(
+        destByteIndex: Int,
+        source: ByteBuffer,
+        sourceByteIndex: Int,
+        length: Int,
+    ) {
+        val sourceView = (source as? ArrayBufferAsByteBuffer)?.internalInt32View()
+        if (sourceView != null) {
+            val destView = internalInt32View()
+            val sourceStart = sourceByteIndex / INT
+            val destStart = destByteIndex / INT
+            if (length < SMALL_SPAN_THRESHOLD) {
+                var i = 0
+                while (i < length) {
+                    destView[destStart + i] = sourceView[sourceStart + i]
+                    i++
+                }
+            } else {
+                destView.set(sourceView.subarray(sourceStart, sourceStart + length), destStart)
+            }
+        } else {
+            super.copyIntsNative(destByteIndex, source, sourceByteIndex, length)
+        }
+    }
+
+    private fun internalInt32View(): Int32Array<ArrayBufferLike> =
+        internalInt32View ?: throw IllegalStateException("buffer is not available")
+
     override fun invoke() {
         arrayBuffer = null
         internalDataView = null
+        internalInt32View = null
     }
 
     private fun nextPosition(numberOfBytes: Int): Int {

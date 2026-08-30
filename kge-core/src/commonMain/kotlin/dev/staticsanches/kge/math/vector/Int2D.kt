@@ -2,19 +2,10 @@
 
 package dev.staticsanches.kge.math.vector
 
-import kotlin.jvm.JvmInline
-
-@JvmInline
-value class Int2D private constructor(
-    private val xy: Long,
+data class Int2D(
+    val x: Int,
+    val y: Int,
 ) {
-    constructor(x: Int, y: Int) : this((x.toLong() shl 32) or (y.toLong() and 0xffffffffL))
-
-    val x: Int
-        get() = (xy shr 32).toInt()
-    val y: Int
-        get() = xy.toInt()
-
     operator fun plus(other: Int2D): Int2D = Int2D(x + other.x, y + other.y)
 
     operator fun minus(other: Int2D): Int2D = Int2D(x - other.x, y - other.y)
@@ -27,14 +18,10 @@ value class Int2D private constructor(
 
     operator fun div(value: Int): Int2D = Int2D(x / value, y / value)
 
-    operator fun component1(): Int = x
-
-    operator fun component2(): Int = y
-
     override fun toString(): String = "($x, $y)"
 
     companion object {
-        val zeroByZero: Int2D = Int2D(0L)
+        val zeroByZero: Int2D = Int2D(0, 0)
         val oneByOne: Int2D = Int2D(1, 1)
 
         infix fun Int.by(y: Int): Int2D = Int2D(this, y)

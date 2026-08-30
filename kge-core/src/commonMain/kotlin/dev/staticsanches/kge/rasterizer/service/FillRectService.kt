@@ -69,10 +69,9 @@ private data object DefaultFillRectService : FillRectService {
         x1 = target.fittestX(x1)
         y1 = target.fittestY(y1)
 
-        for (x in x0..x1) {
-            for (y in y0..y1) {
-                Rasterizer.draw(x, y, color, target, pixelMode)
-            }
+        // Iterates rows first so the span on each row is written sequentially (cache friendly).
+        for (y in y0..y1) {
+            Rasterizer.drawSpan(x0, x1, y, color, target, pixelMode)
         }
     }
 

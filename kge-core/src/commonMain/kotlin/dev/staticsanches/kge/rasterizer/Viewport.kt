@@ -71,16 +71,24 @@ fun Viewport.fittestX(x: Int): Int =
             }
         }
 
-        Viewport.Unbounded -> x
-        is Viewport.LowerBounded -> if (x < lowerBoundInclusive.x) lowerBoundInclusive.x else x
-        is Viewport.UpperBounded -> if (x >= upperBoundExclusive.x) upperBoundExclusive.x - 1 else x
+        Viewport.Unbounded -> {
+            x
+        }
+
+        is Viewport.LowerBounded -> {
+            if (x < lowerBoundInclusive.x) lowerBoundInclusive.x else x
+        }
+
+        is Viewport.UpperBounded -> {
+            if (x >= upperBoundExclusive.x) upperBoundExclusive.x - 1 else x
+        }
     }
 
 fun Viewport.fittestY(p: Int2D): Int = fittestY(p.y)
 
 fun Viewport.fittestY(y: Int): Int =
     when (this) {
-        is Viewport.Bounded ->
+        is Viewport.Bounded -> {
             if (y < lowerBoundInclusive.y) {
                 lowerBoundInclusive.y
             } else if (y >= upperBoundExclusive.y) {
@@ -88,10 +96,19 @@ fun Viewport.fittestY(y: Int): Int =
             } else {
                 y
             }
+        }
 
-        Viewport.Unbounded -> y
-        is Viewport.LowerBounded -> if (y < lowerBoundInclusive.y) lowerBoundInclusive.y else y
-        is Viewport.UpperBounded -> if (y >= upperBoundExclusive.y) upperBoundExclusive.y - 1 else y
+        Viewport.Unbounded -> {
+            y
+        }
+
+        is Viewport.LowerBounded -> {
+            if (y < lowerBoundInclusive.y) lowerBoundInclusive.y else y
+        }
+
+        is Viewport.UpperBounded -> {
+            if (y >= upperBoundExclusive.y) upperBoundExclusive.y - 1 else y
+        }
     }
 
 fun Viewport.outCode(p: Int2D): CohenSutherlandOutCode = outCode(p.x, p.y)
@@ -101,12 +118,21 @@ fun Viewport.outCode(
     y: Int,
 ): CohenSutherlandOutCode =
     when (this) {
-        is Viewport.Bounded ->
+        is Viewport.Bounded -> {
             (this as Viewport.LowerBounded).outCode(x, y) or (this as Viewport.UpperBounded).outCode(x, y)
+        }
 
-        Viewport.Unbounded -> CohenSutherlandOutCode.INSIDE
-        is Viewport.LowerBounded -> outCode(x, y)
-        is Viewport.UpperBounded -> outCode(x, y)
+        Viewport.Unbounded -> {
+            CohenSutherlandOutCode.INSIDE
+        }
+
+        is Viewport.LowerBounded -> {
+            outCode(x, y)
+        }
+
+        is Viewport.UpperBounded -> {
+            outCode(x, y)
+        }
     }
 
 private fun Viewport.LowerBounded.outCode(
@@ -131,13 +157,22 @@ private fun Viewport.UpperBounded.outCode(
 
 operator fun Viewport.contains(p: Int2D): Boolean =
     when (this) {
-        is Viewport.Bounded ->
+        is Viewport.Bounded -> {
             p.x >= lowerBoundInclusive.x &&
                 p.y >= lowerBoundInclusive.y &&
                 p.x < upperBoundExclusive.x &&
                 p.y < upperBoundExclusive.y
+        }
 
-        Viewport.Unbounded -> true
-        is Viewport.LowerBounded -> p.x >= lowerBoundInclusive.x && p.y >= lowerBoundInclusive.y
-        is Viewport.UpperBounded -> p.x < upperBoundExclusive.x && p.y < upperBoundExclusive.y
+        Viewport.Unbounded -> {
+            true
+        }
+
+        is Viewport.LowerBounded -> {
+            p.x >= lowerBoundInclusive.x && p.y >= lowerBoundInclusive.y
+        }
+
+        is Viewport.UpperBounded -> {
+            p.x < upperBoundExclusive.x && p.y < upperBoundExclusive.y
+        }
     }

@@ -43,13 +43,18 @@ inline fun <T : KGECleanAction?, R> T.use(block: (T) -> R): R {
     } finally {
         when {
             this == null -> {}
-            cause == null -> invoke()
-            else ->
+
+            cause == null -> {
+                invoke()
+            }
+
+            else -> {
                 try {
                     invoke()
                 } catch (cleanError: Throwable) {
                     cause.addSuppressed(cleanError)
                 }
+            }
         }
     }
 }

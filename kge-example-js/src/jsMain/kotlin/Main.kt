@@ -69,9 +69,8 @@ class FirstExample : KotlinGameEngine() {
 
     override suspend fun onFileDropEvent(files: List<File>): List<File>? = files
 
-    override suspend fun onFileOpenEvent(files: Map<String, ByteBufferWrapper>) {
+    override suspend fun onFileOpenEvent(files: Map<String, ByteBufferWrapper>) =
         files.values.forEach { it.use { console.log(it) } }
-    }
 
     companion object {
         private fun randomComponent(): Int = Random.nextInt(0, 256)

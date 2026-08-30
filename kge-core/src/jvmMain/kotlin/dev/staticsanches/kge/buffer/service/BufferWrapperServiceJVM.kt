@@ -58,19 +58,24 @@ private data object DefaultBufferWrapperService : BufferWrapperService {
     ): ResourceWrapper<B> =
         with(original.resource) {
             when (this) {
-                is ByteBuffer ->
+                is ByteBuffer -> {
                     create(BufferWrapperType.Byte, capacity(), newName ?: original.toString())
                         .applyClosingIfFailed { MemoryUtil.memCopy(clear(), resource.clear()) }
+                }
 
-                is FloatBuffer ->
+                is FloatBuffer -> {
                     create(BufferWrapperType.Float, capacity(), newName ?: original.toString())
                         .applyClosingIfFailed { MemoryUtil.memCopy(clear(), resource.clear()) }
+                }
 
-                is IntBuffer ->
+                is IntBuffer -> {
                     create(BufferWrapperType.Int, capacity(), newName ?: original.toString())
                         .applyClosingIfFailed { MemoryUtil.memCopy(clear(), resource.clear()) }
+                }
 
-                else -> throw IllegalArgumentException("Unsupported buffer wrapper")
+                else -> {
+                    throw IllegalArgumentException("Unsupported buffer wrapper")
+                }
             } as ResourceWrapper<B>
         }
 

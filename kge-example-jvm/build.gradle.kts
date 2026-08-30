@@ -14,9 +14,11 @@ dependencies {
     val kgeNatives =
         with(projects.kgeNatives) {
             when {
-                "FreeBSD" == name -> kgeFreebsd
+                "FreeBSD" == name -> {
+                    kgeFreebsd
+                }
 
-                arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } ->
+                arrayOf("Linux", "SunOS", "Unit").any { name.startsWith(it) } -> {
                     if (arrayOf("arm", "aarch64").any { arch.startsWith(it) }) {
                         if (arch.contains("64") || arch.startsWith("armv8")) {
                             kgeLinuxArm64
@@ -30,15 +32,17 @@ dependencies {
                     } else {
                         kgeLinux
                     }
+                }
 
-                arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } ->
+                arrayOf("Mac OS X", "Darwin").any { name.startsWith(it) } -> {
                     if (arch.startsWith("aarch64")) {
                         kgeMacosArm64
                     } else {
                         kgeMacos
                     }
+                }
 
-                arrayOf("Windows").any { name.startsWith(it) } ->
+                arrayOf("Windows").any { name.startsWith(it) } -> {
                     if (arch.contains("64")) {
                         if (arch.startsWith("aarch64")) {
                             kgeWindowsArm64
@@ -48,8 +52,11 @@ dependencies {
                     } else {
                         kgeWindowsX86
                     }
+                }
 
-                else -> throw Error("Unrecognized or unsupported platform. Please set \"kgeNatives\" manually")
+                else -> {
+                    throw Error("Unrecognized or unsupported platform. Please set \"kgeNatives\" manually")
+                }
             }
         }
 

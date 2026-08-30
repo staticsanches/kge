@@ -2,6 +2,8 @@
 
 package dev.staticsanches.kge.buffer
 
+import dev.staticsanches.kge.utils.BytesSize.INT
+
 actual abstract class ByteBuffer(
     capacity: Int,
 ) : Buffer(capacity) {
@@ -69,4 +71,39 @@ actual abstract class ByteBuffer(
         position: Int,
         value: Float,
     ): ByteBuffer
+
+    /**
+     * Native bulk fill hook: subclasses with direct view access override this; the default
+     * implementation falls back to per-pixel writes.
+     */
+    open fun fillIntsNative(
+        byteIndex: Int,
+        length: Int,
+        value: Int,
+    ) {
+        var index = byteIndex
+        for (i in 0..<length) {
+            putInt(index, value)
+            index += INT
+        }
+    }
+
+    /**
+     * Native bulk copy hook: subclasses with direct view access override this; the default
+     * implementation falls back to per-pixel reads/writes.
+     */
+    open fun copyIntsNative(
+        destByteIndex: Int,
+        source: ByteBuffer,
+        sourceByteIndex: Int,
+        length: Int,
+    ) {
+        var destIndex = destByteIndex
+        var sourceIndex = sourceByteIndex
+        for (i in 0..<length) {
+            putInt(destIndex, source.getInt(sourceIndex))
+            destIndex += INT
+            sourceIndex += INT
+        }
+    }
 }

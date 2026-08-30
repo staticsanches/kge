@@ -9,8 +9,8 @@ import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.Viewport
 import dev.staticsanches.kge.rasterizer.utils.BresenhamLine
 import dev.staticsanches.kge.rasterizer.utils.SortedTriangleVertices
-import dev.staticsanches.kge.utils.PeekingIterator
-import dev.staticsanches.kge.utils.peeking
+import kotlin.math.max
+import kotlin.math.min
 
 interface FillTriangleService : KGEExtensibleService {
     fun fillTriangle(
@@ -76,109 +76,157 @@ private data object DefaultFillTriangleService : FillTriangleService {
         }
 
         if (p0.y == p1.y) {
-            return fillFlatTop(p0, p1, p2, color, false, target, pixelMode)
+            return fillFlatTop(
+                topRowY = p0.y,
+                leftTopX = p0.x,
+                rightTopX = p1.x,
+                bottomVertex = p2,
+                color = color,
+                skipFirst = false,
+                target = target,
+                pixelMode = pixelMode,
+            )
         }
 
-        val leftResult: PeekingIterator<Int2D>
-        val rightResult: PeekingIterator<Int2D>
+        val leftWalker: SideWalker
+        val rightWalker: SideWalker
         if (p1.x < p2.x) {
-            leftResult = BresenhamLine(p0, p1, Viewport.Unbounded).peeking()
-            rightResult = BresenhamLine(p0, p2, Viewport.Unbounded).peeking()
+            leftWalker = SideWalker(BresenhamLine(p0, p1, Viewport.Unbounded))
+            rightWalker = SideWalker(BresenhamLine(p0, p2, Viewport.Unbounded))
         } else {
-            leftResult = BresenhamLine(p0, p2, Viewport.Unbounded).peeking()
-            rightResult = BresenhamLine(p0, p1, Viewport.Unbounded).peeking()
+            leftWalker = SideWalker(BresenhamLine(p0, p2, Viewport.Unbounded))
+            rightWalker = SideWalker(BresenhamLine(p0, p1, Viewport.Unbounded))
         }
 
-        while (leftResult.hasNext() && rightResult.hasNext()) {
-            val nextLeft = leftResult.nextLeft()
-            val nextRight = rightResult.nextRight()
+        var rowY = p0.y
+        while (leftWalker.hasMore() && rightWalker.hasMore()) {
+            val minX = leftWalker.consumeRow(rowY, isLeft = true) ?: break
+            val maxX = rightWalker.consumeRow(rowY, isLeft = false) ?: break
 
-            fillNext(nextLeft, nextRight, color, target, pixelMode)
+            fillNext(minX, maxX, rowY, color, target, pixelMode)
+            rowY++
 
-            if (leftResult.hasNext() && !rightResult.hasNext() || !leftResult.hasNext() && rightResult.hasNext()) {
-                return fillFlatTop(nextLeft, nextRight, p2, color, true, target, pixelMode)
+            if (!leftWalker.hasMore() || !rightWalker.hasMore()) {
+                return fillFlatTop(
+                    topRowY = rowY - 1,
+                    leftTopX = minX,
+                    rightTopX = maxX,
+                    bottomVertex = p2,
+                    color = color,
+                    skipFirst = true,
+                    target = target,
+                    pixelMode = pixelMode,
+                )
             }
         }
     }
 
     private fun fillFlatTop(
-        p0: Int2D,
-        p1: Int2D,
-        p2: Int2D,
+        topRowY: Int,
+        leftTopX: Int,
+        rightTopX: Int,
+        bottomVertex: Int2D,
         color: Pixel,
         skipFirst: Boolean,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
-        check(p0.y == p1.y)
-        check(p0.x < p1.x)
+        check(leftTopX < rightTopX)
 
-        val leftResult = BresenhamLine(p0, p2, Viewport.Unbounded).peeking()
-        val rightResult = BresenhamLine(p1, p2, Viewport.Unbounded).peeking()
+        val leftWalker = SideWalker(BresenhamLine(leftTopX by topRowY, bottomVertex, Viewport.Unbounded))
+        val rightWalker = SideWalker(BresenhamLine(rightTopX by topRowY, bottomVertex, Viewport.Unbounded))
 
-        if (skipFirst && leftResult.hasNext() && rightResult.hasNext()) {
-            leftResult.nextLeft()
-            rightResult.nextRight()
+        var rowY = topRowY
+        if (skipFirst) {
+            // The first row was already filled by the caller
+            leftWalker.consumeRow(topRowY, isLeft = true)
+            rightWalker.consumeRow(topRowY, isLeft = false)
+            rowY++
         }
 
-        while (leftResult.hasNext() && rightResult.hasNext()) {
-            fillNext(leftResult.nextLeft(), rightResult.nextRight(), color, target, pixelMode)
+        while (leftWalker.hasMore() && rightWalker.hasMore()) {
+            val minX = leftWalker.consumeRow(rowY, isLeft = true) ?: break
+            val maxX = rightWalker.consumeRow(rowY, isLeft = false) ?: break
+
+            fillNext(minX, maxX, rowY, color, target, pixelMode)
+            rowY++
         }
     }
 
     private fun fillNext(
-        nextLeft: Int2D,
-        nextRight: Int2D,
+        minX: Int,
+        maxX: Int,
+        y: Int,
         color: Pixel,
         target: MutablePixelMap,
         pixelMode: Pixel.Mode,
     ) {
-        val y = nextLeft.y
         if (y !in 0..<target.height) return // out of bounds
 
         val width = target.width
 
-        var minX = nextLeft.x
-        if (minX >= width) {
+        var clippedMinX = minX
+        if (clippedMinX >= width) {
             return // out of bounds
-        } else if (minX < 0) {
-            minX = 0
+        } else if (clippedMinX < 0) {
+            clippedMinX = 0
         }
 
-        var maxX = nextRight.x
-        if (maxX < 0) {
+        var clippedMaxX = maxX
+        if (clippedMaxX < 0) {
             return // out of bounds
-        } else if (maxX >= width) {
-            maxX = width - 1
+        } else if (clippedMaxX >= width) {
+            clippedMaxX = width - 1
         }
 
-        for (x in minX..maxX) {
-            Rasterizer.draw(x, y, color, target, pixelMode)
-        }
-    }
-
-    private fun PeekingIterator<Int2D>.nextLeft(): Int2D {
-        var next = next()
-        while (hasNext() && peek().y == next.y) {
-            val peek = next()
-            if (peek.x < next.x) {
-                next = peek
-            }
-        }
-        return next
-    }
-
-    private fun PeekingIterator<Int2D>.nextRight(): Int2D {
-        var next = next()
-        while (hasNext() && peek().y == next.y) {
-            val peek = next()
-            if (peek.x > next.x) {
-                next = peek
-            }
-        }
-        return next
+        Rasterizer.drawSpan(clippedMinX, clippedMaxX, y, color, target, pixelMode)
     }
 
     override val servicePriority: Int
         get() = Int.MIN_VALUE
+}
+
+/**
+ * Walks one side of a triangle without allocating [Int2D]s: it consumes the points of the
+ * [BresenhamLine] through [BresenhamLine.processNext] and groups them by row.
+ */
+private class SideWalker(
+    private val line: BresenhamLine,
+) {
+    private var pendingX: Int = 0
+    private var pendingY: Int = 0
+    private var hasPending: Boolean = false
+
+    fun hasMore(): Boolean = hasPending || line.hasNext()
+
+    /**
+     * Consumes all the points of this side whose y equals [rowY] and returns the extreme x
+     * (minimum for a left side, maximum for a right side), or null when the side has no point in
+     * that row (i.e. it has already ended).
+     */
+    fun consumeRow(
+        rowY: Int,
+        isLeft: Boolean,
+    ): Int? {
+        if (!loadNext() || pendingY != rowY) return null
+
+        var extreme = pendingX
+        hasPending = false
+        while (loadNext() && pendingY == rowY) {
+            extreme = if (isLeft) min(extreme, pendingX) else max(extreme, pendingX)
+            hasPending = false
+        }
+        return extreme
+    }
+
+    private fun loadNext(): Boolean {
+        if (hasPending) return true
+        if (!line.hasNext()) return false
+        line.processNext { x, y ->
+            pendingX = x
+            pendingY = y
+        }
+        hasPending = true
+        return true
+    }
 }
