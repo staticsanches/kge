@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Pre-commit hook — auto-format Kotlin sources with ktlintFormat.
+# Enabled per-clone with: git config core.hooksPath .githooks
+# Bypass in emergencies (e.g. --no-verify semantics): git commit --no-verify
+#
+# ktlint changes style only (indentation, imports, line length...) — never
+# semantics — so formatting in a commit hook is safe. The CI gate
+# (ktlintCheck) stays the final proof.
+#
+# NOTE: a fresh checkout pays a one-time Gradle distribution/plugin download
+# (minutes) on the first .kt commit; ktlintFormat formats the whole kge-core
+# module, so untouched-unstaged Kotlin files may also change on disk.
+set -euo pipefail
+
+# Only act when the commit touches staged Kotlin sources.
+STAGED_KT=$(git diff --cached --name-only --diff-filter=ACM -- '*.kt')
+if [ -z "$STAGED_KT" ]; then
+  exit 0
+fi
+
+echo "pre-commit: ktlintFormat…"
+./gradlew :kge-core:ktlintFormat --quiet
+
+# Re-stage the formatted Kotlin content. Restricted to staged Kotlin paths:
+# a blanket git add here would pull unstaged hunks of partially-staged files
+# into the commit.
+printf '%s\n' "$STAGED_KT" | while IFS= read -r f; do
+  git add -- "$f"
+done
+
+echo "pre-commit: ktlintFormat done."
