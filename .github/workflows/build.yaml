@@ -9,8 +9,8 @@ jobs:
       matrix: { os: [ubuntu-latest, windows-latest, macos-latest] }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with: { distribution: zulu, java-version: "21" }
-      - uses: gradle/actions/setup-gradle@v3
+      - uses: gradle/actions/setup-gradle@v6
       - run: ./gradlew :kge-core:jvmTest :kge-core:jsNodeTest :kge-core:wasmJsNodeTest ktlintCheck --stacktrace
