@@ -29,7 +29,14 @@ kotlin {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)
         }
+        jvmTest.dependencies {
+            implementation(libs.kotest.runner.junit5)
+        }
     }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 ktlint {
