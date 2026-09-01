@@ -130,6 +130,12 @@ internal helper.
   `ActiveContext` contract below. Materialization of principle 1; proof =
   extension-contract test. Decided items in "Facade contract" (2026-08-30);
   activation policy open (see below).
+- **T3 ● Pixel display formats** — the hex/rgba string representation of `Pixel` as an
+  extension capability (service seam per T2; default HEX; override proven by the
+  extension-contract test). C4 ships a fixed `#RRGGBBAA` `toString()` (log #24); this
+  concept — right after C1 — realizes the engine-level choice of representation, where
+  main's mutable `defaultPixelFormat` var is the rejected anti-pattern. Macro only;
+  detail at its touch-point.
 
 ### Representation / storage
 - **S1 ● Native memory** (decision 2026-08-31: the buffer does NOT dissolve — it
@@ -146,10 +152,10 @@ internal helper.
     Starting point: the rulings recorded in the decisions log (little-endian,
     memmove-safe overlap, uniform exceptions, byte-offset units) — candidates,
     re-decided here.
-- **S2 ● Pixel/colours** — `Pixel` RGBA32 value class + ops + pixel modes
-  (Normal/Mask/Alpha/Custom) + `Colors`. Open (C4 touch-point): representation
-  and whether any endianness seam is needed (in `main` it went through a
-  `PixelService`).
+- **S2 ● Pixel/colours** — `Pixel` RGBA32 value class + ops + `Colors` (CSS Color 4
+  named set + transparent) + fixed `#RRGGBBAA` toString. Decided at the C4 touch-point
+  (log #24): value class over packed LE `Int` (memory bytes R,G,B,A); no endianness
+  seam (all targets LE; `main` dropped BE in `61447d6`); pixel modes moved to R1.
 - **S3 ● PixelMap 2D** — read/write surface contract (sample/clear/inv,
   row-major) over native memory. Open (C5 touch-point): name/semantics.
 - **S4 ● Sprite** — surface + sample modes/Flip + ownership (surface owns its
@@ -157,7 +163,9 @@ internal helper.
   platform). Open: details at C5.
 
 ### Render (macro only — detail at each touch-point)
-- **R1 ● Raster ops** — primitives over a surface; fast bulk paths.
+- **R1 ● Raster ops** — primitives over a surface; fast bulk paths; pixel modes
+  (Normal/Mask/Alpha/Custom) + blend resolution math — moved here from S2 at the C4
+  touch-point (log #24): the modes' only consumers are raster.
 - **R2 ● Viewport/clipping** — pure clip math.
 - **R3 ● Decal** — GPU-resident surface; modes/structures; instance batching.
 - **R4 ● Renderer/pipeline** — Renderer service + platform backends; staging
@@ -210,6 +218,8 @@ Int2D/Float2D, BytesSize, FormatUtils, InvokeUtils, PeekingIterator.
 `C4` Pixel (warm-up; zero dependencies; validates the just-in-time flow at the
 lowest risk)
 → `C1` extension mechanism (activation policy decided here)
+→ `T3` pixel display formats (macro: extensible string representation; detail
+at its touch-point)
 → `C2` resource lifecycle
 → `C3` native memory (S1 — Task-5 code fate decided here)
 → `C5` surface → `C6` raster ops → `C7` text → `C8` state → `C9`
@@ -219,7 +229,7 @@ Ordering invariants (fixed): DI foundation before any service; provider +
 lifecycle before the surface creation service; Pixel before raster; surface
 before raster/sprite; pure math unconstrained. Surviving touch-points: C1
 activation policy, C3 S1 contract, C5 surface naming/API, C6 tie rules, C10
-KeyCode/InputAction.
+KeyCode/InputAction; T3 display-format detail at its touch-point (post-C1).
 
 ## Per-concept workflow
 
@@ -234,7 +244,11 @@ KeyCode/InputAction.
 4. **Close**: `./gradlew :kge-core:allTests ktlintCheck --rerun-tasks` green
    (`--rerun-tasks` mandatory — build cache produced a phantom green once, see
    decisions log items 9/11/15), review passed, entry in
-   `docs/decisions/phase-1.md`, commit.
+   `docs/decisions/phase-1.md`, commit. **Review loop**: two-axis review →
+   fixes → verify pass of the fix delta (the delta only, per round); at most 3
+   rounds. Unresolved findings at the cap, or any escalation, mean the concept
+   does **not** close — the owner decides (accept as known / different fix /
+   abandon).
 
 **Definition of done per concept:** its contract + seams (where applicable) +
 tests + decisions-log entry. No concept closes with less.
@@ -287,6 +301,7 @@ engine loop needs them or release time.
 
 ## Current state
 
-Tree state at the time of writing: `kge-core` KMP module (jvm/js/wasmJs) with
-scaffold smoke tests on all targets + the CI workflow; kernel is empty — the
-first concept is C4 (Pixel), per the order above.
+`kge-core` KMP module (jvm/js/wasmJs) + the CI workflow (scaffold described
+above). **C4 (Pixel) closed on 2026-09-01** (log #24): `Pixel` value class + ops +
+`Colors` (CSS Color 4, generated from the spec) + tests on all targets. Next
+concept: C1 (extension mechanism).

@@ -12,8 +12,9 @@ targeting JVM (LWJGL/GLFW/OpenGL) and web (WebGL2 via kotlin-wrappers).
 engine is being rebuilt concept by concept; the old engine lives in the git
 history of `main` (reference/inspiration only: `git show main:<path>`). So far:
 `kge-core` KMP module (jvm/js/wasmJs) with scaffold smoke tests on all targets,
-and the CI workflow; kernel is empty — the first concept is C4 (Pixel). No
-renderer or engine loop yet.
+the CI workflow, and C4 (Pixel) closed — `Pixel` value class + ops + `Colors`
+(CSS Color 4, generated from the spec) — see decisions log #24. Next concept:
+C1 (extension mechanism). No renderer or engine loop yet.
 
 ## Read first
 
@@ -47,7 +48,11 @@ These two are the only active documents; older plans/specs were deleted
 - **Dependencies**: at add-time always use the current release unless a known
   problem exists; record non-obvious findings in the decisions log.
 - **Docs and commit messages in English**; commits end with
-  `Co-Authored-By: Claude Code <noreply@anthropic.com>`.
+  `Co-Authored-By: Claude Code <noreply@anthropic.com>`; committed documents carry
+  no personal quotes — decisions are recorded by rationale, not by who said them.
+  **Commit messages are succinct**: a subject plus the non-obvious core — no gate
+  history, no test counts, no review narratives, nothing deducible from the diff
+  (context lives in the decisions log).
 - **Delivery**: commit-ready work; the owner reviews, pushes, and may implement
   parts personally. Do not push.
 
