@@ -6,6 +6,12 @@ plugins {
 }
 
 kotlin {
+    // Project-wide opt-in: the engine's own code and tests use the sensitive
+    // members without repeating the annotation — external consumers still face
+    // the compile-time opt-in error.
+    compilerOptions {
+        optIn.add("dev.staticsanches.kge.annotations.KGESensitiveAPI")
+    }
     jvm {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
@@ -25,6 +31,9 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.dependencies {
+            implementation(libs.kotlinx.collections.immutable)
+        }
         commonTest.dependencies {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)
@@ -45,4 +54,11 @@ ktlint {
         // build/generated/ and is third-party generated — not ours to lint.
         exclude { element -> element.file.invariantSeparatorsPath.contains("/build/generated/") }
     }
+}
+
+// ktlint-gradle 12.3.0 wires the extension filter above only into the check
+// tasks; the format tasks (the pre-commit `ktlintFormat`) need the same
+// exclusion per task — both task types implement PatternFilterable.
+tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().configureEach {
+    exclude { element -> element.file.invariantSeparatorsPath.contains("/build/generated/") }
 }

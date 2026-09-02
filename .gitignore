@@ -14,3 +14,6 @@ build/
 node_modules/
 # SDD scratch (never commit)
 .superpowers/
+
+# Local review-gate state (marker + verify reports) — machine-local, not tracked
+.claude/kge/

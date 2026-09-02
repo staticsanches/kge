@@ -12,9 +12,10 @@ targeting JVM (LWJGL/GLFW/OpenGL) and web (WebGL2 via kotlin-wrappers).
 engine is being rebuilt concept by concept; the old engine lives in the git
 history of `main` (reference/inspiration only: `git show main:<path>`). So far:
 `kge-core` KMP module (jvm/js/wasmJs) with scaffold smoke tests on all targets,
-the CI workflow, and C4 (Pixel) closed — `Pixel` value class + ops + `Colors`
-(CSS Color 4, generated from the spec) — see decisions log #24. Next concept:
-C1 (extension mechanism). No renderer or engine loop yet.
+the CI workflow, C4 (Pixel) closed (log #24), and C1 (extension mechanism)
+closed then **redesigned** at the T2 touch-point (log #28) — `KGEOverridable`
+supersedes the `KGEContext` contract. Next concept: T3 (pixel display formats),
+the first real T2 consumer. No renderer or engine loop yet.
 
 ## Read first
 

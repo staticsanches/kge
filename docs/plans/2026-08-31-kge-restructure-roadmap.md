@@ -126,10 +126,11 @@ internal helper.
   mechanism — and its testability (hooks/asserts) — is design work in C2, not a
   given from `main`. Def of done: contract + tests of the lifecycle semantics on
   both targets + decisions-log entry.
-- **T2 ● Extensible service mechanism** — the priority-override + facade +
-  `ActiveContext` contract below. Materialization of principle 1; proof =
-  extension-contract test. Decided items in "Facade contract" (2026-08-30);
-  activation policy open (see below).
+- **T2 ● Extensible service mechanism** — materializes principle 1. Redesigned
+  at the 2026-09-02 touch-point (log #28): engine-fixed behaviors with
+  consumer overrides — `KGEOverridable`/`Proxy` shape A, sensitive markers,
+  `resetAll` internal; the C1 `KGEContext` contract is superseded. Proof =
+  extension-contract test with per-platform defaults (expect/actual).
 - **T3 ● Pixel display formats** — the hex/rgba string representation of `Pixel` as an
   extension capability (service seam per T2; default HEX; override proven by the
   extension-contract test). C4 ships a fixed `#RRGGBBAA` `toString()` (log #24); this
@@ -188,36 +189,52 @@ internal helper.
 ### Helpers (not domain concepts)
 Int2D/Float2D, BytesSize, FormatUtils, InvokeUtils, PeekingIterator.
 
-## Facade contract (decided 2026-08-30; implemented in C1)
+## Facade contract (decided 2026-08-30; redesigned 2026-09-02 — log #28)
 
-- **Banned:** any `object`/companion holding a *resolved service instance*
-  (process-sticky). Banned likewise: any process-wide singleton cache outside
-  the Koin container.
-- **Allowed shape:** a **stateless `object`** = pure namespace delegating
-  **per call** to the active context; no user-facing `getInstance()` anywhere.
-  Immutable-data objects (`Colors`, constants) unaffected (principle 3).
-- **`ActiveContext`** — the one permitted quasi-global: `activate(app)`,
-  `deactivate()`, `internal resolve<T>()`. Engine-activated (`onCreate` →
-  `kgeDefaultModule` + `kgePlatformModule`; `onDestroy` → `deactivate()`);
-  tests via a scope helper or koin-test `loadKoinModules`/`unloadKoinModules`.
-  Replaces Koin `GlobalContext`.
-- **Activation policy — OPEN until C1's touch-point.** Recommendation:
-  explicit activation (lifecycle visible; error if already active).
-- **Original binding:** platform module binds the default ALSO under an internal
-  named qualifier; the facade exposes it as `X.original` (resolved per call,
-  stateless). User decorators delegate to it without seeing the qualifier;
-  last-declared-wins keeps the consumer API unchanged. The extension-contract
-  test includes a delegating decorator.
-- **Verify at add-time, recorded in the decisions log when the dependency lands
-  in C1:** `kotlin.concurrent.AtomicReference` in KMP common on KGP 2.4.10;
-  koin-test KMP support on wasmJs; Koin 4.2.2 last-declared-wins without an
-  override flag.
+- **Banned:** any `object`/companion holding a *resolved active service
+  instance* (process-sticky) — the active implementation lives only in the
+  mechanism's swappable registry (`AtomicReference` per service, no staleness
+  by construction), never in a facade; any process-wide singleton cache
+  outside the mechanism's own service registry. The engine-fixed default
+  (`original`) is held by design — it is engine behavior, not the active
+  service.
+- **Allowed shape:** a **stateless facade** — the service's companion object —
+  pure namespace delegating **per call** to the current implementation; no
+  user-facing `getInstance()` anywhere. Immutable-data objects (`Colors`,
+  constants) unaffected (principle 3).
+- **`KGEOverridable` + `KGEOverridable.Proxy<O>`** — the T2 mechanism
+  (replaces the C1 `KGEContext` contract): the facade companion extends the
+  Proxy (`original` — `serviceType` is the private registry key); per-call
+  forwarders to a `protected` `delegate`;
+  `override(impl)` public, last-declared-wins; `resetAll()` internal (engine
+  `onDestroy`; test teardown). The active implementation is a per-service
+  `AtomicReference` (registry for `resetAll`; no hidden Koin container).
+  Defaults register on first facade touch; the mechanism is available without
+  an engine by design; the Proxy constructor is internal — services are
+  engine-declared (consumers override, they do not declare new ones).
+  No qualifiers, no per-service modules, no platform module — platform
+  defaults are `internal expect`/`actual` implementation objects.
+- **Original binding — identity by construction:** the default is a single
+  instance, so `X.original` IS the un-overridden default; decorators delegate
+  to the exact default object. The extension-contract test includes a
+  delegating decorator.
+- **Sensitive API:** `override` and `resetAll` carry `@KGESensitiveAPI`
+  (`@RequiresOptIn(ERROR)`; project-wide opt-in inside `kge-core`) with risk
+  docs — the deliberate "stop and think" callout; sensitive members are
+  internal-ish per main's convention.
+- **Verified (C1 #26, still in force):** the common atomics API
+  (`kotlin.concurrent.atomics.AtomicReference`, `@OptIn(ExperimentalAtomicApi)`
+  required). The Koin facts (4.2.2 semantics, koin-test, wasmJs run) were
+  superseded at the Hunk round (log #28): the mechanism no longer uses Koin.
+  At the design touch-point (log #28): kotlinx-collections-immutable 0.5.2
+  for the service registry.
 
 ## Concept order
 
 `C4` Pixel (warm-up; zero dependencies; validates the just-in-time flow at the
 lowest risk)
-→ `C1` extension mechanism (activation policy decided here)
+→ `C1` extension mechanism (T2 materialization — closed 2026-09-01, then
+redesigned at the 2026-09-02 T2 touch-point: `KGEOverridable` supersedes it)
 → `T3` pixel display formats (macro: extensible string representation; detail
 at its touch-point)
 → `C2` resource lifecycle
@@ -227,9 +244,9 @@ renderer/GL/decals → `C10` engine (KeyCode/InputAction).
 
 Ordering invariants (fixed): DI foundation before any service; provider +
 lifecycle before the surface creation service; Pixel before raster; surface
-before raster/sprite; pure math unconstrained. Surviving touch-points: C1
-activation policy, C3 S1 contract, C5 surface naming/API, C6 tie rules, C10
-KeyCode/InputAction; T3 display-format detail at its touch-point (post-C1).
+before raster/sprite; pure math unconstrained. Surviving touch-points: C3
+S1 contract, C5 surface naming/API, C6 tie rules, C10 KeyCode/InputAction;
+T3 display-format detail at its touch-point (post-C1).
 
 ## Per-concept workflow
 
@@ -303,5 +320,9 @@ engine loop needs them or release time.
 
 `kge-core` KMP module (jvm/js/wasmJs) + the CI workflow (scaffold described
 above). **C4 (Pixel) closed on 2026-09-01** (log #24): `Pixel` value class + ops +
-`Colors` (CSS Color 4, generated from the spec) + tests on all targets. Next
-concept: C1 (extension mechanism).
+`Colors` (CSS Color 4, generated from the spec) + tests on all targets.
+**C1 (extension mechanism) closed on 2026-09-01** (log #26/#27): `KGEContext` +
+modules + extension-contract proof — **superseded on 2026-09-02** by the T2
+redesign (log #28: `KGEOverridable` replaces the `KGEContext` contract, see
+"Facade contract" above). Next concept: T3 (pixel display formats) — the
+first real T2 consumer.
