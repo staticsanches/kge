@@ -1,8 +1,6 @@
 package dev.staticsanches.kge.image
 
 import kotlin.jvm.JvmInline
-import kotlin.text.HexFormat
-import kotlin.text.toHexString
 
 /**
  * A 32-bit RGBA color.
@@ -76,16 +74,14 @@ value class Pixel
         operator fun div(factor: Float): Pixel =
             Pixel(compose((r / factor).toInt(), (g / factor).toInt(), (b / factor).toInt(), a))
 
-        override fun toString(): String = this.rgba.toHexString(hexFormat)
+        /**
+         * Renders the pixel through [PixelFormatService]. The engine default is
+         * the uppercase `#RRGGBBAA` hex form; the display representation is an
+         * engine extension capability and may be replaced for the whole process.
+         */
+        override fun toString(): String = PixelFormatService.format(this)
 
         companion object {
-            private val hexFormat =
-                HexFormat {
-                    upperCase = true
-                    number.minLength = 8
-                    number.prefix = "#"
-                }
-
             private fun compose(
                 r: Int,
                 g: Int,

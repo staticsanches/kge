@@ -59,7 +59,7 @@ class PixelTest : FunSpec({
             a shouldBe 0x78
         }
 
-        test("toString renders fixed uppercase hex") {
+        test("toString renders the default uppercase hex") {
             Pixel.rgba(0x12, 0x34, 0x56, 0x78).toString() shouldBe "#12345678"
             Pixel.rgba(0, 0, 0).toString() shouldBe "#000000FF"
             Pixel.rgba(255, 255, 255).toString() shouldBe "#FFFFFFFF"
