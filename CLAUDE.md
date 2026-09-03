@@ -12,10 +12,12 @@ targeting JVM (LWJGL/GLFW/OpenGL) and web (WebGL2 via kotlin-wrappers).
 engine is being rebuilt concept by concept; the old engine lives in the git
 history of `main` (reference/inspiration only: `git show main:<path>`). So far:
 `kge-core` KMP module (jvm/js/wasmJs) with scaffold smoke tests on all targets,
-the CI workflow, C4 (Pixel) closed (log #24), and C1 (extension mechanism)
-closed then **redesigned** at the T2 touch-point (log #28) — `KGEOverridable`
-supersedes the `KGEContext` contract. Next concept: T3 (pixel display formats),
-the first real T2 consumer. No renderer or engine loop yet.
+the CI workflow, C4 (Pixel) closed (log #24), the extension mechanism closed
+then **redesigned** at the T2 touch-point (log #28) — `KGEOverridable`
+supersedes the `KGEContext` contract — T3 (pixel display formats, log #29,
+the first real T2 consumer) and **C2 (resource lifecycle, T1, log #30)**:
+resource contract + `LeakReporterService` + leak detection. Next concept: C3
+(native memory, S1). No renderer or engine loop yet.
 
 ## Read first
 
@@ -71,4 +73,4 @@ target under KGP 2.4.10, and without that wiring `jvmTest` executes zero tests
 (decisions log item 15; the phantom green that motivates the `--rerun-tasks`
 rule).
 
-A JDK 21 daemon and the Gradle wrapper 9.5.0 are pinned; bytecode target 11.
+A JDK 21 daemon and the Gradle wrapper 9.7.1 are pinned; bytecode target 11.

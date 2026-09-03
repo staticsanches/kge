@@ -32,7 +32,17 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.kotlin.logging)
             implementation(libs.kotlinx.collections.immutable)
+        }
+        webMain.dependencies {
+            implementation(libs.kotlin.js)
+        }
+        jvmMain.dependencies {
+            // kotlin-logging 8.0.4 (jvm variant) dropped the compile-scope
+            // slf4j-api dependency: its JVM logger factory needs it at runtime,
+            // so the engine declares it explicitly.
+            implementation(libs.slf4j.api)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework)
@@ -56,7 +66,7 @@ ktlint {
     }
 }
 
-// ktlint-gradle 12.3.0 wires the extension filter above only into the check
+// ktlint-gradle 14.2.0 wires the extension filter above only into the check
 // tasks; the format tasks (the pre-commit `ktlintFormat`) need the same
 // exclusion per task — both task types implement PatternFilterable.
 tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().configureEach {

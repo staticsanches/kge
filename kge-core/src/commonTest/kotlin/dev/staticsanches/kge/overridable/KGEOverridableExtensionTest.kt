@@ -28,69 +28,70 @@ interface TranslatorService : KGEOverridable {
     }
 }
 
-class KGEOverridableExtensionTest : FunSpec({
-    afterTest {
-        KGEOverridable.Proxy.resetAll()
-    }
-
-    test("the facade resolves the platform default") {
-        TranslatorService.translate("hi") shouldBe translatorExpectedDefault
-    }
-
-    test("override provably changes resolved behavior") {
-        TranslatorService.override(
-            object : TranslatorService {
-                override fun translate(message: String): String = "overridden:$message"
-            },
-        )
-
-        TranslatorService.translate("hi") shouldBe "overridden:hi"
-    }
-
-    test("a decorator delegating to original wraps the engine default") {
-        val original = TranslatorService.original
-        TranslatorService.override(
-            object : TranslatorService {
-                override fun translate(message: String): String = "decorated(${original.translate(message)})"
-            },
-        )
-
-        TranslatorService.translate("hi") shouldBe "decorated($translatorExpectedDefault)"
-    }
-
-    test("a later override supersedes the previous one") {
-        TranslatorService.override(
-            object : TranslatorService {
-                override fun translate(message: String): String = "first:$message"
-            },
-        )
-        TranslatorService.override(
-            object : TranslatorService {
-                override fun translate(message: String): String = "second:$message"
-            },
-        )
-
-        TranslatorService.translate("hi") shouldBe "second:hi"
-    }
-
-    test("a service cannot be registered twice") {
-        shouldThrow<IllegalArgumentException> {
-            object : KGEOverridable.Proxy<TranslatorService>(
-                TranslatorService::class,
-                translatorDefault,
-            ) {}
+class KGEOverridableExtensionTest :
+    FunSpec({
+        afterTest {
+            KGEOverridable.Proxy.resetAll()
         }
-    }
 
-    test("resetAll restores the engine defaults") {
-        TranslatorService.override(
-            object : TranslatorService {
-                override fun translate(message: String): String = "kept:$message"
-            },
-        )
+        test("the facade resolves the platform default") {
+            TranslatorService.translate("hi") shouldBe translatorExpectedDefault
+        }
 
-        KGEOverridable.Proxy.resetAll()
+        test("override provably changes resolved behavior") {
+            TranslatorService.override(
+                object : TranslatorService {
+                    override fun translate(message: String): String = "overridden:$message"
+                },
+            )
 
-        TranslatorService.translate("hi") shouldBe translatorExpectedDefault
-    }
-})
+            TranslatorService.translate("hi") shouldBe "overridden:hi"
+        }
+
+        test("a decorator delegating to original wraps the engine default") {
+            val original = TranslatorService.original
+            TranslatorService.override(
+                object : TranslatorService {
+                    override fun translate(message: String): String = "decorated(${original.translate(message)})"
+                },
+            )
+
+            TranslatorService.translate("hi") shouldBe "decorated($translatorExpectedDefault)"
+        }
+
+        test("a later override supersedes the previous one") {
+            TranslatorService.override(
+                object : TranslatorService {
+                    override fun translate(message: String): String = "first:$message"
+                },
+            )
+            TranslatorService.override(
+                object : TranslatorService {
+                    override fun translate(message: String): String = "second:$message"
+                },
+            )
+
+            TranslatorService.translate("hi") shouldBe "second:hi"
+        }
+
+        test("a service cannot be registered twice") {
+            shouldThrow<IllegalArgumentException> {
+                object : KGEOverridable.Proxy<TranslatorService>(
+                    TranslatorService::class,
+                    translatorDefault,
+                ) {}
+            }
+        }
+
+        test("resetAll restores the engine defaults") {
+            TranslatorService.override(
+                object : TranslatorService {
+                    override fun translate(message: String): String = "kept:$message"
+                },
+            )
+
+            KGEOverridable.Proxy.resetAll()
+
+            TranslatorService.translate("hi") shouldBe translatorExpectedDefault
+        }
+    })

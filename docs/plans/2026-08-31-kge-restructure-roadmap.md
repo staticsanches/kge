@@ -324,5 +324,12 @@ above). **C4 (Pixel) closed on 2026-09-01** (log #24): `Pixel` value class + ops
 **C1 (extension mechanism) closed on 2026-09-01** (log #26/#27): `KGEContext` +
 modules + extension-contract proof — **superseded on 2026-09-02** by the T2
 redesign (log #28: `KGEOverridable` replaces the `KGEContext` contract, see
-"Facade contract" above). Next concept: T3 (pixel display formats) — the
-first real T2 consumer.
+"Facade contract" above). **T3 (pixel display formats) closed on 2026-09-02**
+(log #29): `PixelFormatService` — the first real T2 consumer.
+**C2 (resource lifecycle, T1) closed on 2026-09-03** (log #30): the contract
+(`KGEResource`/`ResourceWrapper`/`KGELeakDetector`/`KGECleanAction` + the
+internal state machine), `LeakReporterService` (the second T2 consumer), the
+thinnest possible expect/actual collection triggers (JVM Cleaner / web
+FinalizationRegistry via `kotlin-js`), deterministic leak-path tests.
+Next concept: C3 (native memory, S1) — the first consumer of the resource
+contract.
