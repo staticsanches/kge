@@ -5,7 +5,9 @@ kotest = "6.2.4"
 ktlint = "14.2.0"
 kotlin-logging = "8.0.4"
 kotlinx-collections-immutable = "0.5.2"
+kotlinx-browser = "0.5.0"
 kotlin-js = "2026.9.0"
+lwjgl = "3.4.3"
 slf4j = "2.0.18"
 
 [libraries]
@@ -14,7 +16,10 @@ kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref =
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotlin-logging = { module = "io.github.oshai:kotlin-logging", version.ref = "kotlin-logging" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
+kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.ref = "kotlinx-browser" }
 kotlin-js = { module = "org.jetbrains.kotlin-wrappers:kotlin-js", version.ref = "kotlin-js" }
+lwjgl-bom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
+lwjgl-core = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 
 [plugins]

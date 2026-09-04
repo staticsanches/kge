@@ -244,9 +244,9 @@ renderer/GL/decals → `C10` engine (KeyCode/InputAction).
 
 Ordering invariants (fixed): DI foundation before any service; provider +
 lifecycle before the surface creation service; Pixel before raster; surface
-before raster/sprite; pure math unconstrained. Surviving touch-points: C3
-S1 contract, C5 surface naming/API, C6 tie rules, C10 KeyCode/InputAction;
-T3 display-format detail at its touch-point (post-C1).
+before raster/sprite; pure math unconstrained. Surviving touch-points: C5
+surface naming/API, C6 tie rules, C10 KeyCode/InputAction; T3 display-format
+detail at its touch-point (post-C1).
 
 ## Per-concept workflow
 
@@ -310,8 +310,17 @@ engine loop needs them or release time.
 ## Risks and notes
 
 - `expect/actual` still flagged Beta in the Kotlin docs (possible future
-  migration); the typealias-actual pattern is long-stable; risk recorded when
-  S1 lands.
+  migration); the typealias-actual pattern is long-stable.
+- **JDK-21 sealing vs the typealias-actual (S1, 2026-09-04).** On the pinned
+  JDK 21 daemon, `java.nio.ByteBuffer` is a `sealed abstract` class: the
+  expect/actual modality check rejects `expect abstract class` +
+  `actual typealias` (abstract vs sealed). Resolution: `-Xjdk-release=11`
+  (paired with `jvmTarget 11`) reads the JDK-11 API surface where the class is
+  a plain abstract class — runtime stays the JDK-21 classes, compile surface
+  is the 11 API. Verified pairs: (11,11) and (17,17) compile; (21,21) fails.
+  A JDK-21+ compile surface is not reachable while the typealias stands; the
+  fallback (wrapper class) was rejected at the C3 touch-point on JVM
+  directness. Recorded for the day a concept needs a newer JDK API.
 - JVM tests need LWJGL natives on the test classpath (OS/arch classifier logic).
 - The branch diff will be large and is expected; mitigation: single merge,
   intact `main`.
@@ -331,5 +340,12 @@ redesign (log #28: `KGEOverridable` replaces the `KGEContext` contract, see
 internal state machine), `LeakReporterService` (the second T2 consumer), the
 thinnest possible expect/actual collection triggers (JVM Cleaner / web
 FinalizationRegistry via `kotlin-js`), deterministic leak-path tests.
-Next concept: C3 (native memory, S1) — the first consumer of the resource
-contract.
+**C3 (native memory, S1) closed on 2026-09-04** (log #31): `ByteBuffer`
+expect/actual — on JVM the engine buffer IS `java.nio.ByteBuffer`
+(typealias-actual, compiled against the JDK-11 API surface for the sealed
+modality issue below) — with a JDK-shaped absolute-access contract, the KGE
+bulk ops as common extensions, and `MemoryAllocatorService` (the first
+platform-defaulted T2 service; LWJGL `memAlloc`/`memFree` on JVM, TypedArray
+emulation on web); initial content is explicitly unspecified (no zeroing
+requirement). Next concept: C5 (surface — S3/S4), the first consumer of the
+native-memory contract.

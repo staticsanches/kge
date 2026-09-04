@@ -15,9 +15,12 @@ history of `main` (reference/inspiration only: `git show main:<path>`). So far:
 the CI workflow, C4 (Pixel) closed (log #24), the extension mechanism closed
 then **redesigned** at the T2 touch-point (log #28) — `KGEOverridable`
 supersedes the `KGEContext` contract — T3 (pixel display formats, log #29,
-the first real T2 consumer) and **C2 (resource lifecycle, T1, log #30)**:
-resource contract + `LeakReporterService` + leak detection. Next concept: C3
-(native memory, S1). No renderer or engine loop yet.
+the first real T2 consumer), **C2 (resource lifecycle, T1, log #30)**:
+resource contract + `LeakReporterService` + leak detection, and **C3 (native
+memory, S1, log #31)**: `ByteBuffer` (JVM = `java.nio.ByteBuffer` via
+typealias-actual; web TypedArray emulation) + `MemoryAllocatorService` — the
+first platform-defaulted T2 service. Next concept: C5 (surface — S3/S4). No
+renderer or engine loop yet.
 
 ## Read first
 

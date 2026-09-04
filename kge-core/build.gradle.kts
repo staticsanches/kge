@@ -15,6 +15,12 @@ kotlin {
     jvm {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+            // java.nio.ByteBuffer is `sealed` since JDK 21; the typealias-actual
+            // modality check (expect abstract vs sealed target) fails against the
+            // running JDK's metadata, so the JVM API surface is taken from the JDK
+            // 11 release where the class is a plain abstract class. Runtime stays
+            // the JDK 21 class.
+            freeCompilerArgs.add("-Xjdk-release=11")
         }
     }
     js(IR) {
@@ -43,6 +49,15 @@ kotlin {
             // slf4j-api dependency: its JVM logger factory needs it at runtime,
             // so the engine declares it explicitly.
             implementation(libs.slf4j.api)
+            // Native memory via LWJGL: the BOM in the `platform()` form supplies
+            // the versionless lwjgl-core.
+            implementation(project.dependencies.platform(libs.lwjgl.bom))
+            implementation(libs.lwjgl.core)
+        }
+        wasmJsMain.dependencies {
+            // The web types (DataView/Uint8Array) used from webMain come from
+            // the stdlib on js but from kotlinx-browser on wasmJs — wasmJsMain only.
+            implementation(libs.kotlinx.browser)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework)
@@ -50,6 +65,54 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(libs.kotest.runner.junit5)
+
+            val osName = System.getProperty("os.name")!!
+            val osArch = System.getProperty("os.arch")!!
+            val lwjglNatives =
+                when {
+                    "FreeBSD" == osName -> {
+                        "natives-freebsd"
+                    }
+
+                    arrayOf("Linux", "SunOS", "Unit").any { osName.startsWith(it) } -> {
+                        if (arrayOf("arm", "aarch64").any { osArch.startsWith(it) }) {
+                            "natives-linux${
+                                if (osArch.contains("64") || osArch.startsWith("armv8")) {
+                                    "-arm64"
+                                } else {
+                                    "-arm32"
+                                }
+                            }"
+                        } else if (osArch.startsWith("ppc")) {
+                            "natives-linux-ppc64le"
+                        } else if (osArch.startsWith("riscv")) {
+                            "natives-linux-riscv64"
+                        } else {
+                            "natives-linux"
+                        }
+                    }
+
+                    arrayOf("Mac OS X", "Darwin").any { osName.startsWith(it) } -> {
+                        "natives-macos${if (osArch.startsWith("aarch64")) "-arm64" else ""}"
+                    }
+
+                    arrayOf("Windows").any { osName.startsWith(it) } -> {
+                        if (osArch.contains("64")) {
+                            "natives-windows${if (osArch.startsWith("aarch64")) "-arm64" else ""}"
+                        } else {
+                            "natives-windows-x86"
+                        }
+                    }
+
+                    else -> {
+                        error("unsupported OS/arch for LWJGL natives: $osName/$osArch")
+                    }
+                }
+            runtimeOnly(libs.lwjgl.core.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
         }
     }
 }
