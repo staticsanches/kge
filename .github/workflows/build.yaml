@@ -13,4 +13,7 @@ jobs:
       - uses: actions/setup-java@v6
         with: { distribution: zulu, java-version: "21" }
       - uses: gradle/actions/setup-gradle@v6
-      - run: ./gradlew :kge-core:jvmTest :kge-core:jsNodeTest :kge-core:wasmJsNodeTest ktlintCheck --stacktrace
+      # `build` = check (all tests, node-only here: no Chrome on the runners)
+      # + assemble — the webMain metadata compilation is exercised only by
+      # `assemble`, so `allTests`-style node-only runs cannot stay the gate.
+      - run: ./gradlew build -x :kge-core:jsBrowserTest -x :kge-core:wasmJsBrowserTest ktlintCheck --stacktrace

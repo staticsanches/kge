@@ -43,6 +43,7 @@ kotlin {
         }
         webMain.dependencies {
             implementation(libs.kotlin.js)
+            implementation(libs.kotlinx.browser)
         }
         jvmMain.dependencies {
             // kotlin-logging 8.0.4 (jvm variant) dropped the compile-scope
@@ -53,11 +54,6 @@ kotlin {
             // the versionless lwjgl-core.
             implementation(project.dependencies.platform(libs.lwjgl.bom))
             implementation(libs.lwjgl.core)
-        }
-        wasmJsMain.dependencies {
-            // The web types (DataView/Uint8Array) used from webMain come from
-            // the stdlib on js but from kotlinx-browser on wasmJs — wasmJsMain only.
-            implementation(libs.kotlinx.browser)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework)

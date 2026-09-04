@@ -155,6 +155,15 @@ webMain uses `org.khronos.webgl.{DataView, Uint8Array}`: on js these resolve fro
 stdlib, on wasmJs from kotlinx-browser, so the dependency is declared on `wasmJsMain`
 only. Add-time release: 0.5.0 (used).
 
+**Correction (post-close):** the `./gradlew build` path (never exercised by the
+gate — `allTests`/`check` do not compile webMain metadata) failed at
+`:kge-core:compileWebMainKotlinMetadata`: webMain metadata compiles against
+webMain's own dependencies only, so neither the js stdlib web types nor the
+wasmJsMain-scope kotlinx-browser were on its classpath
+(`Unresolved reference 'org'`/`Uint8Array`/`DataView`). kotlinx-browser moved
+from `wasmJsMain` to `webMain` (shared by both targets via the hierarchy; the
+js target keeps its stdlib declarations with no conflict).
+
 ### 15. jvmTest was a false green — kotest plugin does not wire the JVM target under KGP 2.4.10
 
 The kotest 6.2.4 Gradle plugin only wires the JVM target when `jvmTest` is an instance

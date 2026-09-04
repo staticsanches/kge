@@ -41,8 +41,15 @@ These two are the only active documents; older plans/specs were deleted
   must break ("no throwaway commits" — restructure at the concept checkpoint).
 - **TDD**: failing test → run (red) → implement → run (green), per feature; the
   micro-plan's test code is the contract.
-- **Gate (every concept close)**: `./gradlew :kge-core:allTests ktlintCheck
-  --rerun-tasks`. **Why `--rerun-tasks` is mandatory:** build cache and
+- **Gate (every concept close)**: `./gradlew build ktlintCheck
+  --rerun-tasks`. **Why `build`, not only `:kge-core:allTests`:** `build` is
+  `check` + `assemble` — the tests of every target plus the `webMain`-class
+  metadata/klib compilation of intermediate source sets, which only
+  `assemble` exercises. `allTests` did not cover it once: the C3
+  `org.khronos.webgl` imports resolved on every platform compilation but
+  never in the webMain metadata compilation — `allTests` stayed green while
+  `build` failed (decisions log item 14, correction). **Why `--rerun-tasks`
+  is mandatory:** build cache and
   configuration cache (both enabled in gradle.properties) can return up-to-date
   results without executing — a "green" can be stale. Historical proof:
   `jvmTest` once reported "1 test" while the kotest engine never ran (decisions
@@ -65,9 +72,10 @@ These two are the only active documents; older plans/specs were deleted
 ## Commands
 
 ```bash
-./gradlew :kge-core:allTests              # all targets (jvm + js-node + wasmJs-node)
-./gradlew ktlintCheck                     # lint (never accept --rerun-less gates)
-./gradlew :kge-core:jvmTest               # JVM only
+./gradlew build ktlintCheck --rerun-tasks  # full gate: all targets' tests + assemble/metadata + lint
+./gradlew :kge-core:allTests               # tests only (jvm + js + wasmJs, node + browser)
+./gradlew ktlintCheck                      # lint (never accept --rerun-less gates)
+./gradlew :kge-core:jvmTest                # JVM only
 ```
 
 `jvmTest` runs through `kotest-runner-junit5` + `useJUnitPlatform()` in
