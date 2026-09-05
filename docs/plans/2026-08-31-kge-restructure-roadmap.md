@@ -39,8 +39,7 @@ be decided in the concepts.
   kept intact and is the reference/inspiration source (`git show main:<path>`).
 - Single merge into `main` at the end (non-fast-forward if main moved).
 - Concepts are brought back one at a time, tested first with new tests; behavior
-  reference is olcPixelGameEngine v2.30
-  (<https://github.com/OneLoneCoder/olcPixelGameEngine>) and exact pixel math.
+  reference engine's semantics and exact pixel math.
   Old tests are not ported.
 - Library API may break freely (solo project). Modules, examples, natives and
   publishing grow on demand — the skeleton contains nothing with no consumer yet.
@@ -73,10 +72,9 @@ These do not go through the decision lenses; no lens may eliminate one.
    platform GC would suffice (parity floor, principle 5).
 3. **Pure, testable kernel.** No I/O and no dependency types in the kernel;
    pixel-exact parity tests. Pure math units have no service, no lifecycle.
-4. **olc semantics as reference.** Where behavior is specified by
-   olcPixelGameEngine v2.30 (<https://github.com/OneLoneCoder/olcPixelGameEngine>),
-   the KGE behavior is what olc does (layout, blend math, draw rules), adapted to
-   Kotlin.
+4. **Reference semantics.** Where behavior is specified by the behavior
+   reference engine (see CLAUDE.md), the KGE behavior follows it (layout, blend
+   math, draw rules), adapted to Kotlin.
 5. **Parity floor.** JVM + web with the **minimum platform-specific code** (only
    the essential). Where one platform is more demanding, the common design adopts
    the full form in **both** — uniform contract, lean platform implementation
@@ -87,7 +85,7 @@ These do not go through the decision lenses; no lens may eliminate one.
    is the storage choice: scalable, zero-copy to the GPU. There is no serious
    alternative (`ByteBuffer.allocateDirect` returns cleanup to the GC/Cleaner —
    nondeterministic quota/timing). LWJGL counts as a reference with the same
-   weight as olc. This is a Kotlin (JVM+web) engine: JVM-native paths are part of
+   weight as the behavior reference. This is a Kotlin (JVM+web) engine: JVM-native paths are part of
    the design, not a C++ re-enactment.
 
 ## Decision path — three lenses
@@ -95,7 +93,7 @@ These do not go through the decision lenses; no lens may eliminate one.
 For every candidate concept, in this order:
 
 1. **Real consumer.** Who uses it, in the concrete cycle engine → draw call → GL
-   upload → user. Primary evidence: olc v2.30 semantics + our own loop. Code in
+   upload → user. Primary evidence: the reference engine's semantics + our own loop. Code in
    `main` answers "did it work?", never "is it needed?".
 2. **Seam lens.** Who allocates · who closes · who substitutes — formulated as
    "where must the design provide a seam **by principle**", not "did anyone
@@ -158,10 +156,23 @@ internal helper.
   (log #24): value class over packed LE `Int` (memory bytes R,G,B,A); no endianness
   seam (all targets LE; `main` dropped BE in `61447d6`); pixel modes moved to R1.
 - **S3 ● PixelMap 2D** — read/write surface contract (sample/clear/inv,
-  row-major) over native memory. Open (C5 touch-point): name/semantics.
-- **S4 ● Sprite** — surface + sample modes/Flip + ownership (surface owns its
-  native memory resource) + creation service (create/duplicate; PNG at
-  platform). Open: details at C5.
+  row-major) over native memory. Decided at the C5 touch-point (2026-09-05):
+  `Pixmap`/`MutablePixmap` (+ `Sprite` as the single concrete surface);
+  the engine's OOB semantics (mode-aware `get`, never throws; `set` returns
+  Boolean); `Sequence<Pixel>` kept; `Viewport.Bounded` deferred to R2;
+  `Flip` deferred to C6. Closed (log #33).
+- **S4 ● Sprite** — surface + sample modes + ownership (surface owns its
+  native memory resource) + creation service (create/duplicate),
+  `SpriteCreationService : KGEOverridable`, default platform-independent via
+  `MemoryAllocatorService`. Decided at the C5 touch-point (2026-09-05). PNG
+  **moved out** to S5 (its own concept), below. Closed (log #33).
+- **S5 ◐ PNG codec** — PNG decode/encode of surfaces and back (load from
+  file/URL/bytes, write/encode), at platform — JVM STBImage, web native
+  decode (pngjs or platform decode). Service seam per principle 1 (observable
+  capability); no consumer before C7 (text font sheet) or C9 (decals user
+  assets). Ordered after C5 (added 2026-09-05, C5 touch-point — the owner's
+  call: a major engine feature, kept explicit in the plan). Detail at its own
+  touch-point.
 
 ### Render (macro only — detail at each touch-point)
 - **R1 ● Raster ops** — primitives over a surface; fast bulk paths; pixel modes
@@ -239,14 +250,18 @@ redesigned at the 2026-09-02 T2 touch-point: `KGEOverridable` supersedes it)
 at its touch-point)
 → `C2` resource lifecycle
 → `C3` native memory (S1 — Task-5 code fate decided here)
-→ `C5` surface → `C6` raster ops → `C7` text → `C8` state → `C9`
-renderer/GL/decals → `C10` engine (KeyCode/InputAction).
+→ `C5` surface → `S5` PNG codec → `C6` raster ops → `C7` text → `C8` state
+→ `C9` renderer/GL/decals → `C10` engine (KeyCode/InputAction).
 
 Ordering invariants (fixed): DI foundation before any service; provider +
 lifecycle before the surface creation service; Pixel before raster; surface
-before raster/sprite; pure math unconstrained. Surviving touch-points: C5
-surface naming/API, C6 tie rules, C10 KeyCode/InputAction; T3 display-format
-detail at its touch-point (post-C1).
+before raster/sprite; pure math unconstrained. Surviving touch-points: C6 tie
+rules, C10 KeyCode/InputAction; T3 display-format detail at its touch-point
+(post-C1); S5 PNG codec detail at its touch-point (post-C5). The C5 surface
+touch-point (2026-09-05) is done: naming (`Pixmap`/`MutablePixmap`/`Sprite`),
+the defined OOB policy, `SampleMode` nested in `Pixmap`, `Flip` to C6,
+ownership via `SpriteCreationService` + the resource contract, no global
+mutable defaults, PNG to S5.
 
 ## Per-concept workflow
 
@@ -258,14 +273,20 @@ detail at its touch-point (post-C1).
    commits per concept at meaningful green milestones; rework inside the concept
    before it closes is fine (the standing-rule granularity: never a provisional
    API a later concept must break).
-4. **Close**: `./gradlew :kge-core:allTests ktlintCheck --rerun-tasks` green
-   (`--rerun-tasks` mandatory — build cache produced a phantom green once, see
-   decisions log items 9/11/15), review passed, entry in
-   `docs/decisions/phase-1.md`, commit. **Review loop**: two-axis review →
-   fixes → verify pass of the fix delta (the delta only, per round); at most 3
-   rounds. Unresolved findings at the cap, or any escalation, mean the concept
-   does **not** close — the owner decides (accept as known / different fix /
-   abandon).
+4. **Close**: `./gradlew build --rerun-tasks` green (ktlint included via
+   `check`; `--rerun-tasks` mandatory — build cache produced a phantom green
+   once, see decisions log items 9/11/15), review passed, entry in
+   `docs/decisions/phase-1.md`, commit. **Review loop**: two-axis review
+   (standards + spec) — including a leak audit of every allocate/close path
+   and construction failure branch (`letClosingIfFailed`, main's pattern) — and no public parameter without an observable effect
+   (the micro-plan's own "detail" resolutions are not the owner's word) —
+   → fixes → verify pass of the fix delta (the delta only, per round); at
+   most 3 rounds — the agent's own loop must close by then; **owner-driven
+   rounds have no cap** (2026-09-05 owner's rule: the review is theirs until
+   satisfied; the review-gate hook no longer caps the rounds count, the
+   `escalated` status still blocks a close). Unresolved findings at the agent
+   cap, or any escalation, mean the concept does **not** close — the owner
+   decides (accept as known / different fix / abandon).
 
 **Definition of done per concept:** its contract + seams (where applicable) +
 tests + decisions-log entry. No concept closes with less.
@@ -292,7 +313,7 @@ declare these plugins with `apply false` (classloader scope clash on Gradle
 
 ## Testing strategy
 
-- Oracle: olc v2.30 semantics + exact pixel-math cases; old tests not ported.
+- Oracle: the reference engine's semantics + exact pixel-math cases; old tests not ported.
 - Same `commonTest` suite on all targets (jvm, js-node, wasmJs-node) — the
   parity net.
 - Kover on JVM as visibility, no percentage gate. Benchmark harness optional.
@@ -301,7 +322,7 @@ declare these plugins with `apply false` (classloader scope clash on Gradle
 
 ## Out of scope (grows by demand)
 
-Full olc parity: rotated/warped decals, line patterns, `FillTexturedTriangle`,
+Full parity with the behavior reference: rotated/warped decals, line patterns, `FillTexturedTriangle`,
 ResourcePack, shaders/HW3D, user-shader API, PGEX/UTIL. Mouse input wiring,
 audio. Android/iOS/Kotlin-Native targets. `kge-natives/*` consolidation,
 example modules and publishing (Central Portal, vanniktech) wait until the

@@ -9,3 +9,20 @@ package dev.staticsanches.kge.resource
  * layer objects.
  */
 interface KGEResource : AutoCloseable
+
+/**
+ * Runs [block] with [this] and closes the receiver when the block failed —
+ * the open resource is transferred to the successful result, so a
+ * construction failure between allocation and ownership never leaks.
+ */
+inline fun <T : AutoCloseable, R> T.letClosingIfFailed(crossinline block: (T) -> R): R =
+    try {
+        block(this)
+    } catch (e: Throwable) {
+        try {
+            close()
+        } catch (closeException: Throwable) {
+            e.addSuppressed(closeException)
+        }
+        throw e
+    }

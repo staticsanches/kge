@@ -19,7 +19,10 @@ the first real T2 consumer), **C2 (resource lifecycle, T1, log #30)**:
 resource contract + `LeakReporterService` + leak detection, and **C3 (native
 memory, S1, log #31)**: `ByteBuffer` (JVM = `java.nio.ByteBuffer` via
 typealias-actual; web TypedArray emulation) + `MemoryAllocatorService` — the
-first platform-defaulted T2 service. Next concept: C5 (surface — S3/S4). No
+first platform-defaulted T2 service. C5 (surface — S3/S4, log #33) closed:
+`Pixmap`/`MutablePixmap` (mode-aware `get`, nearest/bilinear sampling),
+`Sprite` over native memory and the platform-independent
+`SpriteCreationService` (PNG to S5). Next concept: S5 (PNG codec). No
 renderer or engine loop yet.
 
 ## Read first
@@ -41,15 +44,27 @@ These two are the only active documents; older plans/specs were deleted
   must break ("no throwaway commits" — restructure at the concept checkpoint).
 - **TDD**: failing test → run (red) → implement → run (green), per feature; the
   micro-plan's test code is the contract.
-- **Gate (every concept close)**: `./gradlew build ktlintCheck
-  --rerun-tasks`. **Why `build`, not only `:kge-core:allTests`:** `build` is
+- **Resource discipline**: every failure path of engine code that allocated a
+  resource must close it — allocate-then-construct call sites wrap the
+  construction in `letClosingIfFailed` (the `main` engine's guard, ported to
+  the new kernel); the concept review audits every allocate/close path,
+  including construction failure branches.
+- **API discipline**: every public parameter has an observable effect — a
+  parameter with no behavior is a provisional API and a defect; its effect is
+  pinned by a test. The concept review audits parameters too (the micro-plan
+  can record a wrong "detail" — a plan-conformance review does not catch a
+  defect of the plan itself).
+- **Gate (every concept close)**: `./gradlew build --rerun-tasks`. **Why `build`,
+  not only `:kge-core:allTests`:** `build` is
   `check` + `assemble` — the tests of every target plus the `webMain`-class
   metadata/klib compilation of intermediate source sets, which only
   `assemble` exercises. `allTests` did not cover it once: the C3
   `org.khronos.webgl` imports resolved on every platform compilation but
   never in the webMain metadata compilation — `allTests` stayed green while
-  `build` failed (decisions log item 14, correction). **Why `--rerun-tasks`
-  is mandatory:** build cache and
+  `build` failed (decisions log item 14, correction). **Why no explicit
+  `ktlintCheck`: ktlint-gradle 14.2.0 wires the ktlint source-set checks into
+  `check` (decisions log #32); `ktlintFormat` stays a manual step.** **Why
+  `--rerun-tasks` is mandatory:** build cache and
   configuration cache (both enabled in gradle.properties) can return up-to-date
   results without executing — a "green" can be stale. Historical proof:
   `jvmTest` once reported "1 test" while the kotest engine never ran (decisions
@@ -72,10 +87,9 @@ These two are the only active documents; older plans/specs were deleted
 ## Commands
 
 ```bash
-./gradlew build ktlintCheck --rerun-tasks  # full gate: all targets' tests + assemble/metadata + lint
-./gradlew :kge-core:allTests               # tests only (jvm + js + wasmJs, node + browser)
-./gradlew ktlintCheck                      # lint (never accept --rerun-less gates)
-./gradlew :kge-core:jvmTest                # JVM only
+./gradlew build --rerun-tasks  # full gate: ktlint (wired into check) + all targets' tests + assemble/metadata
+./gradlew :kge-core:allTests   # tests only (jvm + js + wasmJs, node + browser)
+./gradlew :kge-core:jvmTest    # JVM only
 ```
 
 `jvmTest` runs through `kotest-runner-junit5` + `useJUnitPlatform()` in

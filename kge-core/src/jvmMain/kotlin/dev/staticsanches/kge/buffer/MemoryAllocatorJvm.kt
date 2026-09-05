@@ -15,10 +15,14 @@ actual typealias ByteBuffer = java.nio.ByteBuffer
 internal actual val memoryAllocatorDefault: MemoryAllocatorService = LwjglMemoryAllocator
 
 private object LwjglMemoryAllocator : MemoryAllocatorService {
-    override fun allocate(sizeInBytes: Int): ResourceWrapper<ByteBuffer> {
+    override fun allocate(
+        sizeInBytes: Int,
+        name: String?,
+    ): ResourceWrapper<ByteBuffer> {
         val memory = MemoryUtil.memAlloc(sizeInBytes).order(ByteOrder.LITTLE_ENDIAN)
+        val label = name?.let { "${formatBytes(sizeInBytes)} ($it)" } ?: formatBytes(sizeInBytes)
         return ResourceWrapper(
-            "byte buffer ($sizeInBytes bytes)",
+            "byte buffer ($label)",
             memory,
             KGECleanAction { MemoryUtil.memFree(memory) },
         )

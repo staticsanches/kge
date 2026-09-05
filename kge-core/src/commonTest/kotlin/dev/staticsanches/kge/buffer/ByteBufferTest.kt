@@ -31,6 +31,14 @@ class ByteBufferTest :
             }
         }
 
+        test("formatBytes renders byte sizes human-readably") {
+            formatBytes(16) shouldBe "16 B"
+            formatBytes(1536) shouldBe "1.5 KB"
+            formatBytes(16384) shouldBe "16 KB"
+            formatBytes(1_048_576) shouldBe "1.0 MB"
+            formatBytes(1_073_741_824) shouldBe "1.0 GB"
+        }
+
         test("allocation of zero bytes is allowed") {
             allocate(0).use { wrapper ->
                 wrapper.resource.capacity() shouldBe 0

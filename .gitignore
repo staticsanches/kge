@@ -17,3 +17,6 @@ node_modules/
 
 # Local review-gate state (marker + verify reports) — machine-local, not tracked
 .claude/kge/
+
+# Local opencode TUI config (project-scoped) — machine-local, not tracked
+tui.json

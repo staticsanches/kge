@@ -111,5 +111,8 @@ value class Pixel
                         (rgba and 0xFFu).toInt(),
                     ),
                 )
+
+            /** Creates a pixel directly from the little-endian `nativeRGBA` packed value. */
+            fun fromNativeRGBA(nativeRGBA: Int): Pixel = Pixel(nativeRGBA)
         }
     }

@@ -1140,3 +1140,127 @@ single-commit decision).
   execute (every forced gate run).
 - **Gate:** fresh `./gradlew build ktlintCheck --rerun-tasks` — BUILD
   SUCCESSFUL, `w:` grep = 0 matches; the two `DEP0169` lines remain, expected.
+
+## 2026-09-05 — Gate tooling: ktlint is part of `build`; gate/CI commands simplified
+
+The C3-era gate spelled out `ktlintCheck` next to `build`, so keeping lint in
+the gate depended on remembering an extra command. Investigation showed the
+extra command was already redundant on the current toolchain.
+
+- **Verified fact (2026-09-05): `./gradlew build` already runs ktlint.**
+  `--dry-run` on `:kge-core:build` schedules all 11 per-source-set check tasks
+  (`ktlint{CommonMain,CommonTest,JsMain,JsTest,JvmMain,JvmTest,KotlinScript,
+  WasmJsMain,WasmJsTest,WebMain,WebTest}SourceSetCheck`) — the ktlint-gradle
+  14.2.0 KMP integration wires them into `check`. The aggregate `ktlintCheck`
+  and all Format tasks are *not* in that graph; only the source-set checks are.
+- **Decision — commands simplified, coverage unchanged.** Gate becomes
+  `./gradlew build --rerun-tasks` (CLAUDE.md + roadmap close step), and the CI
+  command drops the explicit `ktlintCheck` (`.github/workflows/build.yaml`).
+  The aggregate was composed of exactly those source-set tasks, so `build`
+  enforces the same lint as the old two-command gate; the `/build/generated/`
+  exclude filter applies unchanged.
+- **`ktlintFormat` stays manual — deliberately not wired into `build`.** A
+  format pass as a build step rewrites source files during `build`; on CI the
+  auto-correction would make a commit of unformatted-but-fixable code pass
+  silently instead of failing, which is the opposite of enforcement at this
+  stage of the engine. Auto-formatting belongs to a dev-time tool (editor /
+  pre-commit), not the gate — revisit if the owner wants a `check`-time format
+  later.
+
+## 2026-09-05 — C5 (surface — S3/S4): the 2D pixel surface (touch-point + implementation)
+
+The touch-point (2026-09-05, roadmap S3/S4) got its detail per the micro-plan
+(`docs/plans/2026-09-05-c5-surface-microplan.md`): the interface owns the
+algorithms, the implementer supplies the raw accessors. `Pixmap` +
+`MutablePixmap` (default bodies over abstract `unchecked` accessors),
+`Sprite` as the single concrete surface, `SpriteCreationService : KGEOverridable`
+with a platform-independent default — PNG is S5. The `name` parameter
+identifies the surface (owner round 4): `Sprite.name` + `toString`, and the
+wrapper representation (`byte buffer (N bytes) (name)`) — the leak/fail-fast
+messages carry the label. `duplicate` preserves it.
+
+- **Storage formula, verified at byte level**: pixel `(x, y)` at byte offset
+  `(y * width + x) * INT`, value `pixel.nativeRGBA` — both platforms are LE
+  (LWJGL `.order(LITTLE_ENDIAN)`, TypedArray explicit `littleEndian`), so the
+  packed ints go straight through `putInt`/`getInt` (commonTest pins bytes
+  `R,G,B,A` at the base offsets of both rows). Created content is
+  unspecified — the draw path fills it.
+- **OOB semantics per the touch-point**: `get` never throws (`NORMAL` →
+  transparent; `PERIODIC` → flat index `abs(y%h)*w + abs(x%w)`, the formula
+  being equivalent to `uncheckedGet(abs(x%w), abs(y%h))` — Kotlin's truncated
+  `%` keeps both negatives positive and in range); `CLAMP` → coerce to the
+  edges; `set` → Boolean, false outside without a write. `sample` =
+  `get(min(int(u*w), w-1), min(int(v*h), h-1))` (truncation, high-clamp);
+  `sampleBL` = floor of `u*w - 0.5`, four mode-aware `get` reads, RGB weighted
+  and truncated to bytes, alpha forced 255.
+- **Int→Pixel conversion**: `Pixel.fromNativeRGBA(...)` — owner review
+  round 2: the internal `nativePixel` channel re-composition was rejected in
+  favor of a real factory on `Pixel` itself (additive to C4, direct
+  constructor, no channel round-trip).
+- **Fail-fast after close covers the OOB paths (review round 1 catch)**: the
+  NORMAL OOB branch of `get`/`set` never reaches the storage, so a closed
+  `Sprite` would silently return transparent/false there, contradicting the
+  C2 contract ("using the object after close fails fast"). `Sprite` now
+  checks `buffer.cleaned` first on `get`/`set` (every other access goes
+  through the buffer's fail-fast accessor anyway).
+- **Test hygiene rule (review round 1)**: the caller must close a
+  `ResourceWrapper` when the `Sprite` constructor rejects it — the JVM
+  Cleaner delivers such wrappers during `LeakDetectionJvmTest`'s GC polling
+  and reports them into the overridden `LeakReporterService`, breaking the
+  C2 test's exact-count assertion.
+- **Deferred**: the color-fill convenience (`clear` + close-on-failure) stays
+  out — owner's call (2026-09-05): C6 raster is the first consumer, service
+  API stays lean; `Flip` → C6; `Viewport.Bounded` → R2; PNG → S5.
+- **Review**: two-axis round 1 (single lean agent, standards + micro-plan
+  conformance): no blockers/majors; 5 minors fixed in round 1 (the fail-fast
+  gap above, row-1 byte-layout test, set-no-write proof, forward-looking
+  "GPU upload" KDoc claim removed, `spriteCreationDefault` made file-private,
+  per #29); verify pass green; report
+  `.claude/kge/reviews/c5-round1-twoaxis.md`.
+- **Review round 2 (owner, Hunk on the commit)**: 5 comments applied —
+  `Colors.TRANSPARENT` instead of a private transparent constant; the
+  `Pixel.fromNativeRGBA` factory (above); `Sprite : KGEResource by buffer`
+  (interface delegation replaces the manual `close()` override);
+  `letClosingIfFailed` — the `main` engine's own resource guard brought over
+  to the new kernel — wrapping `create`/`duplicate` so a failed construction
+  never leaks the buffer. `applyClosingIfFailed` deliberately not ported: no
+  consumer yet (the deferred color-fill extension at C6 would be its first).
+  **Process lesson recorded:** the round-1 review had no leak audit in its
+  axes and passed this; the owner caught it in their own review. The concept
+  review now audits every allocate/close path and construction failure branch
+  (roadmap close step), resource discipline is a CLAUDE.md working rule, and
+  `Sprite`'s KDoc now states the rejected-constructor ownership rule (caller
+  keeps and closes the wrapper) — a leak audit is part of the review loop
+  from now on.
+- **Review round 4 (owner, Hunk on the amended commit)**: two comments.
+  (1) The `name` parameter did nothing: now `Sprite` carries `name`
+  (`toString` carries it too) and `MemoryAllocatorService.allocate` gained
+  the optional `name` label, so the wrapper's leak/fail-fast messages
+  identify the surface; `duplicate` keeps the source name. (2) The
+  `letClosingIfFailed` port was questioned: it was brought over verbatim —
+  now evaluated: naming/convention stays (the engine keeps `main`'s
+  vocabulary), semantics correct (release on `Throwable` + `addSuppressed`),
+  but the nullable-receiver bound was narrowed to `AutoCloseable` — the new
+  kernel has no nullable resources, the `if (this != null)` branch was dead
+  weight. The create-site guard stays (owner's round-2 choice); the
+  rejected-constructor ownership rule remains explicit in `Sprite`'s KDoc.
+- **Review round 5 (owner, why did the name pass)**: the unused `name` was
+  three stacked misses — the touch-point micro-plan recorded it as
+  "logging-only" (a Claude-written resolution, not the owner's word), the TDD
+  never exercised the parameter, and the review checked structure, not
+  observability (a plan-conformance review cannot catch a defect of the
+  plan). Institutionalized: "API discipline" is a CLAUDE.md working rule
+  (every public parameter has an observable effect, pinned by a test) and the
+  review loop audits it.
+- **Review round 6 (owner, Hunk)**: byte sizes in messages must be
+  human-readable — `formatBytes` utility (1024-based, one decimal below 10,
+  integer at 10+) used by both allocators' representations and the `Sprite`
+  capacity message; offsets stay raw (debug values, not sizes). **Process
+  change (owner's rule, 2026-09-05): owner-driven review rounds have no
+  cap** — the roadmap words it, the review-gate hook dropped its rounds cap
+  (the `escalated` status still blocks), and the marker now counts truthfully
+  (round 6).
+- **Gate**: `./gradlew build --rerun-tasks` green (BUILD SUCCESSFUL; jvm 104 /
+  jsNode+jsBrowser / wasmJsNode+wasmJsBrowser — 0 failures on all targets;
+  ktlint clean via the `check` wiring of #32; `ktlintFormat` remains manual per
+  the owner).

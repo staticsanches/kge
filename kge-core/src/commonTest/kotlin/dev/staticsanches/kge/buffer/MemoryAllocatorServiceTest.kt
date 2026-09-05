@@ -33,9 +33,12 @@ class MemoryAllocatorServiceTest :
             var allocated = 0
             MemoryAllocatorService.override(
                 object : MemoryAllocatorService {
-                    override fun allocate(sizeInBytes: Int): ResourceWrapper<ByteBuffer> {
+                    override fun allocate(
+                        sizeInBytes: Int,
+                        name: String?,
+                    ): ResourceWrapper<ByteBuffer> {
                         allocated += sizeInBytes
-                        return MemoryAllocatorService.original.allocate(sizeInBytes)
+                        return MemoryAllocatorService.original.allocate(sizeInBytes, name)
                     }
                 },
             )
@@ -50,7 +53,10 @@ class MemoryAllocatorServiceTest :
         test("resetAll restores the platform default") {
             MemoryAllocatorService.override(
                 object : MemoryAllocatorService {
-                    override fun allocate(sizeInBytes: Int): ResourceWrapper<ByteBuffer> = error("overridden allocator")
+                    override fun allocate(
+                        sizeInBytes: Int,
+                        name: String?,
+                    ): ResourceWrapper<ByteBuffer> = error("overridden allocator")
                 },
             )
 

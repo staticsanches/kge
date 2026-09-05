@@ -1,5 +1,7 @@
 package dev.staticsanches.kge.buffer
 
+import kotlin.math.roundToInt
+
 /**
  * Byte-addressable storage in native memory — a `java.nio.ByteBuffer` on JVM,
  * a `TypedArray` view on the web targets.
@@ -44,6 +46,28 @@ fun ByteBuffer.putByte(
 ) {
     require(value in 0..255) { "value must be in 0..255: $value" }
     put(byteOffset, value.toByte())
+}
+
+/**
+ * Formats [sizeInBytes] human-readably, 1024-based: `B`, `KB`, `MB` or `GB`,
+ * one decimal while below 10 and an integer at 10 and up.
+ */
+fun formatBytes(sizeInBytes: Int): String {
+    var value = sizeInBytes.toFloat()
+    val units = arrayOf("B", "KB", "MB", "GB")
+    var unit = 0
+    while (value >= 1024f && unit < units.lastIndex) {
+        value /= 1024f
+        unit++
+    }
+    val text =
+        if (value >= 10f) {
+            value.roundToInt().toString()
+        } else {
+            val tenths = (value * 10).roundToInt()
+            "${tenths / 10}.${tenths % 10}"
+        }
+    return "$text ${units[unit]}"
 }
 
 /**

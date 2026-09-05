@@ -11,9 +11,12 @@ import dev.staticsanches.kge.resource.ResourceWrapper
 internal actual val memoryAllocatorDefault: MemoryAllocatorService = WebMemoryAllocator
 
 private object WebMemoryAllocator : MemoryAllocatorService {
-    override fun allocate(sizeInBytes: Int): ResourceWrapper<ByteBuffer> =
+    override fun allocate(
+        sizeInBytes: Int,
+        name: String?,
+    ): ResourceWrapper<ByteBuffer> =
         ResourceWrapper(
-            "byte buffer ($sizeInBytes bytes)",
+            "byte buffer (${name?.let { "${formatBytes(sizeInBytes)} ($it)" } ?: formatBytes(sizeInBytes)})",
             WebByteBuffer(sizeInBytes),
             KGECleanAction { },
         )

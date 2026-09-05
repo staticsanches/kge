@@ -13,7 +13,9 @@ jobs:
       - uses: actions/setup-java@v6
         with: { distribution: zulu, java-version: "21" }
       - uses: gradle/actions/setup-gradle@v6
-      # `build` = check (all tests, node-only here: no Chrome on the runners)
-      # + assemble — the webMain metadata compilation is exercised only by
-      # `assemble`, so `allTests`-style node-only runs cannot stay the gate.
-      - run: ./gradlew build -x :kge-core:jsBrowserTest -x :kge-core:wasmJsBrowserTest ktlintCheck --stacktrace
+      # `build` = check (ktlint + all tests, node-only here: no Chrome on the
+      # runners) + assemble — the webMain metadata compilation is exercised
+      # only by `assemble`, so `allTests`-style node-only runs cannot stay the
+      # gate. ktlint needs no explicit call: its source-set checks are wired
+      # into `check` (decisions log #32).
+      - run: ./gradlew build -x :kge-core:jsBrowserTest -x :kge-core:wasmJsBrowserTest --stacktrace
