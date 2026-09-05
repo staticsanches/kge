@@ -1115,3 +1115,28 @@ format pass (class-signature wrapping) and the `standard:filename` rename of
 the web actual file (`ByteBufferWeb.kt` → `ByteBuffer.kt`; no facade clash —
 no top-level declarations there). One commit for the concept (#24
 single-commit decision).
+
+## 2026-09-04 — Build warning cleanup: the KT-61573 flag
+
+- **Observation:** the post-C3 full gate emitted 8 `w:` lines (the 09-03
+  toolchain gate was zero — C3 introduced them): all of them the KT-61573
+  Beta warning for expect/actual classes, pointing at the `ByteBuffer` expect
+  (`commonMain/ByteBuffer.kt:11`), its `webMain` actual (`ByteBuffer.kt:13`)
+  and the JVM `actual typealias ByteBuffer` (`MemoryAllocatorJvm.kt:9`) — each
+  fires per compilation (metadata, js, wasmJs, web metadata, jvm).
+- **Fix:** `-Xexpect-actual-classes` in the `kge-core` project-wide
+  `compilerOptions` — the compiler's own recommended suppression (KT-61573).
+  Standing, on purpose: `ByteBuffer` is deliberately expect/actual (JVM NIO
+  typealias vs web TypedArray emulation), so this is not a temporary hack.
+- **Node `DEP0169` left as-is — verified third-party:** the two remaining
+  warning lines are `url.parse()` deprecations from the node processes inside
+  `:kotlinNpmInstall` / `:kotlinWasmNpmInstall`. In KGP 2.4.10
+  `KotlinNpmInstallTask` is a `DefaultTask` with no exec/env surface (javap of
+  the plugin jar: not an `Exec`; `NodeJsRootExtension` and
+  `PackageManagerEnvironment` expose no env knob) — no supported hook to pass
+  node CLI flags into that spawn; suppression only via daemon-level
+  `NODE_OPTIONS`, which the gate command will not carry. Yarn classic
+  internals, not engine code; the lines appear only when the install tasks
+  execute (every forced gate run).
+- **Gate:** fresh `./gradlew build ktlintCheck --rerun-tasks` — BUILD
+  SUCCESSFUL, `w:` grep = 0 matches; the two `DEP0169` lines remain, expected.

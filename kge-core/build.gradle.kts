@@ -11,6 +11,10 @@ kotlin {
     // the compile-time opt-in error.
     compilerOptions {
         optIn.add("dev.staticsanches.kge.annotations.KGESensitiveAPI")
+        // ByteBuffer is an expect/actual class (JDK-NIO typealias on JVM, TypedArray
+        // emulation on web). That language feature is still Beta (KT-61573) and the
+        // compiler's own recommendation is to silence it with this flag.
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
     jvm {
         compilerOptions {
