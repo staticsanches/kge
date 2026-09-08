@@ -189,13 +189,67 @@ internal helper.
 ### Engine (macro only)
 - **E1 ● Engine/lifecycle** — addon-based engine + platform engines; the known
   pain from `main` is the blocking/suspend asymmetry — the unified suspend loop
-  is the approved design intent.
+  is the approved design intent, feasibility-validated by a throwaway spike on
+  2026-09-08 (findings below, recorded for the E1 touch-point).
 - **E2 ● Addons (user-facing API surface)** — mixins with defaults over
   facades/state. **E3 ● State** — `WithKGEState`, window composition, pure
   state machines; TimeState platform-coupled through a clock (form decided in
   C8). **E4 ◐ Input mapping** — common key enum + action types + platform
   mapping; open at C10 (KeyCode/InputAction touch-point). **E5 ○ Configuration**
   and **E6 ○ Window** — sub-concepts of E1/E3.
+
+### E1 — unified suspend loop: spike findings (2026-09-08, recorded pre-touch-point)
+
+Feasibility was validated by a throwaway `spike-loop` module (discarded after
+recording; not in the archive) exercising the same shape on jvm + js(browser),
+macOS arm64. These are verified facts and the approved direction; contract
+detail stays open for the E1 touch-point.
+
+- **The unified suspend loop is viable on both targets.** One common loop shape
+  — suspend frame work + a per-target `Driver` seam (`present`/`poll`/
+  `awaitNextFrame`) as the only platform code — compiled from commonMain and
+  ran on JVM (headless + real GLFW) and web (rAF in Chrome headless). User
+  callbacks suspend everywhere; `start()` drives the common `runLoop`.
+- **JVM confinement is the one hard rule.** The loop coroutine must be confined
+  to a single thread that owns the window and GL context — engine-owned
+  `newSingleThreadContext` (or the process main thread, mode-1 below). Frame
+  work must NEVER run on `Dispatchers.Default`/`IO`: the spike observed Default
+  migrating a frame across 3 distinct threads across suspensions. Verified:
+  confined loop never migrates across `withContext(Dispatchers.IO)` + `delay`,
+  so a thread-affine GL context created there stays valid.
+- **Two JVM driver modes both run clean on macOS** (AppKit main-thread rule +
+  GLFW event pumping did not block either): mode-1 = loop confined to the
+  process main thread via `runBlocking` (the idiomatic `fun main {
+  engine.start() }`); mode-2 = loop on a dedicated engine thread. macOS needs
+  the `glfw_async` GLFW library in both (kge-core `main`'s existing route).
+- **S5 suspend loads are compatible by construction.** `PngService.load`
+  (`withContext(IO)` on JVM, fetch on web) hops off the loop thread and resumes
+  back onto it — the confinement holds across the hop.
+- **Engine thread dispatch — instance, not global, not `Dispatchers.Main`.**
+  The engine owns its single-thread context and exposes it (`engine.dispatcher`
+  for `withContext`, plus an engine scope whose context is inherited by engine
+  work). External game code holds the `Engine` instance — no process-global
+  dispatcher. `Dispatchers.Main` is NOT used: on JVM it requires a UI-toolkit
+  artifact (`-swing`/`-javafx`) and maps to the AWT EDT / JavaFX thread — a
+  *different* thread than the GL owner (and throws without such an artifact);
+  only on web does Main coincide with the engine thread. Verified (LegC):
+  `withContext(engine.dispatcher)` from an external coroutine resumes on the
+  engine thread every hop; engine-bound code uses a fail-fast
+  `requireEngineThread()` guard that throws off-thread.
+- **Identity pitfall (verified):** engine-thread identity must be the OS
+  `Thread.id`, not the thread name — `newSingleThreadContext` renames its
+  thread per running coroutine (`legC-engine @coroutine#6` vs `#7`), so names
+  are not stable across coroutines on the same engine thread.
+- **Interleave model:** on web the loop yields the single thread to the event
+  loop between rAF frames (background/input coroutines run there, `main`'s web
+  engine model); on JVM the loop blocks/suspends its dedicated thread between
+  frames — background coroutines on that same thread interleave only at the
+  driver's suspension points (must be short; they share the frame thread).
+- **Open at the E1 touch-point:** `Driver` seam shape and pacing (blocking swap
+  vs suspend; vsync), scope-vs-dispatcher exposure, start/cancel/lifecycle,
+  multi-engine and any "global handle" policy (none needed so far),
+  engine-thread identity element in the coroutine context.
+
 
 ### Helpers (not domain concepts)
 Int2D/Float2D, BytesSize, FormatUtils, InvokeUtils, PeekingIterator.
@@ -370,3 +424,11 @@ platform-defaulted T2 service; LWJGL `memAlloc`/`memFree` on JVM, TypedArray
 emulation on web); initial content is explicitly unspecified (no zeroing
 requirement). Next concept: C5 (surface — S3/S4), the first consumer of the
 native-memory contract.
+
+**2026-09-08 — E1 loop-concurrency spike recorded.** A throwaway `spike-loop`
+module (two Kotlin subprojects forced the KGP version to be pinned centrally;
+reverted after the spike) validated the unified suspend loop on jvm + web and
+informed the E1 section above (confinement, macOS `glfw_async`, engine-owned
+dispatcher vs `Dispatchers.Main`, thread-id identity, S5-load compatibility).
+Spike discarded; the findings live in the E1 block. Next concept: C6 (raster
+ops).
