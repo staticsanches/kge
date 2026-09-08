@@ -13,10 +13,6 @@ import io.kotest.matchers.shouldBe
  */
 class PixelFormatServiceTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         test("the facade resolves the default hex format") {
             PixelFormatService.format(Pixel.rgba(0x12, 0x34, 0x56, 0x78)) shouldBe "#12345678"
             PixelFormatService.format(Pixel.rgba(0, 0, 0)) shouldBe "#000000FF"

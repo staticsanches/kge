@@ -1,6 +1,6 @@
-# CLAUDE.md
+# KGE
 
-Guidance for Claude Code work in this repository.
+Guidance for AI agent work in this repository (opencode / Claude Code).
 
 ## Project
 
@@ -22,8 +22,11 @@ typealias-actual; web TypedArray emulation) + `MemoryAllocatorService` — the
 first platform-defaulted T2 service. C5 (surface — S3/S4, log #33) closed:
 `Pixmap`/`MutablePixmap` (mode-aware `get`, nearest/bilinear sampling),
 `Sprite` over native memory and the platform-independent
-`SpriteCreationService` (PNG to S5). Next concept: S5 (PNG codec). No
-renderer or engine loop yet.
+`SpriteCreationService` (PNG to S5). **S5 (PNG codec, log #34) closed**:
+`PngService` (decode/encode/load seam, JVM STB zero-copy, web pngjs `.sync`),
+the typed `PngSource` load boundary (`base64`/`url`/`fetch` factories), and a
+module-wide kotest `ProjectConfig` that resets service overrides after every
+test. Next concept: C6 (raster ops). No renderer or engine loop yet.
 
 ## Read first
 
@@ -38,6 +41,16 @@ These two are the only active documents; older plans/specs were deleted
 
 ## Working rules
 
+- **Code review**: every code review (concept close / PR review) runs the
+  two-axis review (Standards + Spec conformance) — dispatched through the
+  project `review` subagent when it is configured (`.opencode/agent/`), or
+  inline on the working model when it is not. The review writes its report to
+  `.opencode/reviews/<name>.md` (gitignored local state) and the marker
+  `.opencode/review-passed`; the commit gate is enforced by the opencode
+  plugin `.opencode/plugin/review-gate.ts` (blocks `git commit` touching
+  `docs/decisions/` without a valid marker + `tree:` hash). Marker
+  writes and the commit must be separate bash commands (the gate reads the
+  marker before the command runs).
 - **Concept flow**: touch-point (design confirmation, open items decided) →
   micro-plan (1-2 pages, TDD steps, just-in-time) → implement → gate → log
   entry. Never a slice of a concept; never a provisional API a later concept

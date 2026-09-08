@@ -2,7 +2,6 @@ package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.buffer.MemoryAllocatorService
-import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.resource.ResourceWrapper
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -18,10 +17,6 @@ import io.kotest.matchers.shouldBe
  */
 class SpriteCreationServiceTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         test("the facade creates through the platform-independent default") {
             SpriteCreationService.create(2, 1, Pixmap.SampleMode.PERIODIC, "workspace").use { s ->
                 s.width shouldBe 2

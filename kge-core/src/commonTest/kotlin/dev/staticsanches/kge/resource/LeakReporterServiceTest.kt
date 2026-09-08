@@ -12,10 +12,6 @@ import io.kotest.matchers.shouldBe
  */
 class LeakReporterServiceTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         test("an override receives the leak report") {
             val reports = mutableListOf<String>()
             LeakReporterService.override(

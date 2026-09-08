@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.resource
 
-import dev.staticsanches.kge.overridable.KGEOverridable
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -12,10 +11,6 @@ import io.kotest.matchers.string.shouldContain
  */
 class LeakDetectionJvmTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         test("an unclosed wrapper is reported once collected") {
             val reports = mutableListOf<String>()
             LeakReporterService.override(

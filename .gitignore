@@ -14,9 +14,18 @@ build/
 node_modules/
 # SDD scratch (never commit)
 .superpowers/
+# Agent scratch (never commit)
+.tmp/
 
-# Local review-gate state (marker + verify reports) — machine-local, not tracked
-.claude/kge/
+# Local opencode review-gate state (marker + review reports) — machine-local, not tracked
+.opencode/reviews/
+.opencode/review-passed
 
 # Local opencode TUI config (project-scoped) — machine-local, not tracked
 tui.json
+
+# Legacy Claude Code review-gate local state (superseded by .opencode/) — machine-local, not tracked
+.claude/
+
+# Local opencode agent + plugin configuration — machine-local, not tracked
+.opencode/

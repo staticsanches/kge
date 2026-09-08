@@ -30,10 +30,6 @@ interface TranslatorService : KGEOverridable {
 
 class KGEOverridableExtensionTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         test("the facade resolves the platform default") {
             TranslatorService.translate("hi") shouldBe translatorExpectedDefault
         }
@@ -92,6 +88,20 @@ class KGEOverridableExtensionTest :
 
             KGEOverridable.Proxy.resetAll()
 
+            TranslatorService.translate("hi") shouldBe translatorExpectedDefault
+        }
+
+        test("an override is active within its own test") {
+            TranslatorService.override(
+                object : TranslatorService {
+                    override fun translate(message: String): String = "kept:$message"
+                },
+            )
+
+            TranslatorService.translate("hi") shouldBe "kept:hi"
+        }
+
+        test("the module teardown clears an override before the next test") {
             TranslatorService.translate("hi") shouldBe translatorExpectedDefault
         }
     })

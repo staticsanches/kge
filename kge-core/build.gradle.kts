@@ -44,10 +44,15 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.kotlin.logging)
             implementation(libs.kotlinx.collections.immutable)
+            implementation(libs.kotlinx.coroutines.core)
         }
         webMain.dependencies {
             implementation(libs.kotlin.js)
             implementation(libs.kotlinx.browser)
+            implementation(npm("pngjs", "7.0.0"))
+            // the browser test bundles resolve the codec's Buffer import to
+            // this package; node resolves the same specifier to its builtin.
+            implementation(npm("buffer", "6.0.3"))
         }
         jvmMain.dependencies {
             // kotlin-logging 8.0.4 (jvm variant) dropped the compile-scope
@@ -55,9 +60,10 @@ kotlin {
             // so the engine declares it explicitly.
             implementation(libs.slf4j.api)
             // Native memory via LWJGL: the BOM in the `platform()` form supplies
-            // the versionless lwjgl-core.
+            // the versionless lwjgl-core and lwjgl-stb (PNG via STB).
             implementation(project.dependencies.platform(libs.lwjgl.bom))
             implementation(libs.lwjgl.core)
+            implementation(libs.lwjgl.stb)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework)
@@ -109,6 +115,15 @@ kotlin {
                     }
                 }
             runtimeOnly(libs.lwjgl.core.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
+            // STBImage/STBImageWrite are LWJGL bindings over a shared library
+            // of their own (liblwjgl_stb); the lwjgl-core natives jar does not
+            // carry it, so the STB natives artifact must be on the runtime
+            // classpath too.
+            runtimeOnly(libs.lwjgl.stb.get()) {
                 artifact {
                     classifier = lwjglNatives
                 }

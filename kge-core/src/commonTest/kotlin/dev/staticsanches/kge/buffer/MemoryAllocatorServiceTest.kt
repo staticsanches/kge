@@ -15,10 +15,6 @@ import io.kotest.matchers.shouldBe
  */
 class MemoryAllocatorServiceTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         test("the facade allocates through the platform default") {
             MemoryAllocatorService.allocate(16).use { wrapper ->
                 wrapper.resource.capacity() shouldBe 16

@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.buffer
 
-import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.resource.LeakReporterService
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.onCollectionObserved
@@ -19,10 +18,6 @@ import io.kotest.matchers.types.shouldNotBeSameInstanceAs
  */
 class ByteBufferTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         fun allocate(sizeInBytes: Int): ResourceWrapper<ByteBuffer> = MemoryAllocatorService.allocate(sizeInBytes)
 
         test("allocation returns a buffer of the requested size") {

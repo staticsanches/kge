@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.resource
 
-import dev.staticsanches.kge.overridable.KGEOverridable
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -13,10 +12,6 @@ import io.kotest.matchers.shouldBe
  */
 class KGEResourceCleanableStateTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         fun reporting(reports: MutableList<String>): LeakReporterService =
             object : LeakReporterService {
                 override fun report(representation: String) {

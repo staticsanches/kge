@@ -2,7 +2,6 @@ package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.buffer.MemoryAllocatorService
 import dev.staticsanches.kge.buffer.byteAt
-import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.resource.LeakReporterService
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -18,10 +17,6 @@ import io.kotest.matchers.string.shouldContain
  */
 class SpriteTest :
     FunSpec({
-        afterTest {
-            KGEOverridable.Proxy.resetAll()
-        }
-
         fun sprite(
             width: Int,
             height: Int,
