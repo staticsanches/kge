@@ -163,7 +163,7 @@ internal helper.
   `Flip` deferred to C6. Closed (log #33).
 - **S4 ● Sprite** — surface + sample modes + ownership (surface owns its
   native memory resource) + creation service (create/duplicate),
-  `SpriteCreationService : KGEOverridable`, default platform-independent via
+  `SpriteService : KGEOverridable`, default platform-independent via
   `MemoryAllocatorService`. Decided at the C5 touch-point (2026-09-05). PNG
   **moved out** to S5 (its own concept), below. Closed (log #33).
 - **S5 ◐ PNG codec** — PNG decode/encode of surfaces and back (load from
@@ -327,7 +327,7 @@ rules, C10 KeyCode/InputAction; T3 display-format detail at its touch-point
 (post-C1); S5 PNG codec detail at its touch-point (post-C5). The C5 surface
 touch-point (2026-09-05) is done: naming (`Pixmap`/`MutablePixmap`/`Sprite`),
 the defined OOB policy, `SampleMode` nested in `Pixmap`, `Flip` to C6,
-ownership via `SpriteCreationService` + the resource contract, no global
+ownership via `SpriteService` + the resource contract, no global
 mutable defaults, PNG to S5.
 
 ## Per-concept workflow

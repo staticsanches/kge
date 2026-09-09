@@ -18,7 +18,7 @@ import dev.staticsanches.kge.resource.onCollectionObserved
  * owns the lifetime, so an unclosed creation is reported on collection.
  *
  * The constructor is the resource seam; creation and duplication go through
- * [SpriteCreationService]. A constructor rejection (dimensions, capacity)
+ * [SpriteService]. A constructor rejection (dimensions, capacity)
  * means ownership never transferred: the caller keeps the wrapper and must
  * close it — [letClosingIfFailed] is the guard for allocate-then-construct
  * call sites.

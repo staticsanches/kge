@@ -15,7 +15,7 @@ import io.kotest.matchers.shouldNotBe
  */
 class ModeTest :
     FunSpec({
-        fun onePixel(): Sprite = SpriteCreationService.create(1, 1, Pixmap.SampleMode.NORMAL, null)
+        fun onePixel(): Sprite = SpriteService.create(1, 1, Pixmap.SampleMode.NORMAL, null)
 
         test("Normal writes verbatim, including a fully transparent pixel") {
             onePixel().use { target ->

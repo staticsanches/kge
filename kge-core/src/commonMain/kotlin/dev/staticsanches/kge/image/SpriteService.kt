@@ -13,7 +13,7 @@ import dev.staticsanches.kge.resource.letClosingIfFailed
  * [BufferService], so an allocator override covers surfaces too.
  * PNG loading/encoding is a separate capability, [PngService].
  */
-interface SpriteCreationService : KGEOverridable {
+interface SpriteService : KGEOverridable {
     /**
      * Creates a [width]x[height] surface, its storage allocated through the
      * current [BufferService]; content is unspecified until written.
@@ -36,8 +36,8 @@ interface SpriteCreationService : KGEOverridable {
     fun duplicate(sprite: Sprite): Sprite
 
     companion object :
-        KGEOverridable.Proxy<SpriteCreationService>(SpriteCreationService::class, spriteCreationDefault),
-        SpriteCreationService {
+        KGEOverridable.Proxy<SpriteService>(SpriteService::class, spriteServiceDefault),
+        SpriteService {
         override fun create(
             width: Int,
             height: Int,
@@ -50,8 +50,8 @@ interface SpriteCreationService : KGEOverridable {
 }
 
 /** Platform-independent default — allocation goes through [BufferService]. */
-private val spriteCreationDefault: SpriteCreationService =
-    object : SpriteCreationService {
+private val spriteServiceDefault: SpriteService =
+    object : SpriteService {
         override fun create(
             width: Int,
             height: Int,

@@ -1515,3 +1515,39 @@ machine-local). Decisions recorded at close:
   sub-services as the first consumers to adjust.
 - **Gate:** `./gradlew build --rerun-tasks` green on all five suites (jvm, js
   node + browser, wasmJs node + browser) and ktlint.
+
+## 2026-09-09 — C6 post-close: raster-test blank canvas + resource guards + `SpriteService` rename
+
+CI (ubuntu/windows) failed the C6 commit: the failing `RasterizerTest` cases
+read pixels of a freshly created `Sprite` expecting `TRANSPARENT`, but the
+engine contract is unspecified initial content (this log 2026-09-04 and C5) —
+the JVM/JS allocators zero fresh memory on macOS/web while reused native blocks
+on linux/windows carry garbage, so the failures were allocator-dependent and
+non-deterministic (different case sets per OS).
+
+- **Tests must not assume blank content — fix in the test helper.** The
+  `target()` helper (and the already-correct `grid()`) now clears the surface
+  to `Colors.TRANSPARENT` right after creation, making the blank canvas
+  explicit and platform-independent. Engine code untouched (content stays
+  unspecified by contract).
+- **`applyClosingIfFailed` ported (the C5 deferral reversed).** The C5 close
+  recorded `applyClosingIfFailed` as deliberately not ported, waiting for a
+  consumer ("C6 raster ... would be its first"). Its consumer arrived: the
+  sprite create-and-initialize pattern in the test fixtures (`target()`,
+  `distinctSprite`, the `SpriteService` decorator proof). It mirrors the
+  `main` guard — receiver block, returns the receiver, closes on failure —
+  and is the safe replacement for `create(...).also { init }`, which leaks the
+  fresh surface when the init block throws. Registered next to
+  `letClosingIfFailed` in `resource/KGEResource.kt`; the no-`also` rule for
+  resource initialization follows from it. A future `alsoClosingIfFailed`
+  variant is not excluded but has no consumer yet.
+- **`SpriteCreationService` renamed `SpriteService` (owner).** Generic service
+  name for the surface capability (create/duplicate; later sprite ops land
+  here), matching `main`'s `image/service/SpriteService.kt`. No conflict with
+  the retired C6 name: that `SpriteService` was the raster-aggregate
+  candidate, and the raster seams carry the scope prefix
+  (`DrawService`/`OutlineService`/`FillService`/`DrawSpriteService`). File,
+  KDoc references, tests and the live docs (AGENTS.md current state, roadmap)
+  updated; this entry is the record of the rename, so the historical C5/S5
+  mentions above keep the original name of their era (as done for
+  `MemoryAllocatorService`/`BufferService`).

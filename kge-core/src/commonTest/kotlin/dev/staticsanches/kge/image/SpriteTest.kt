@@ -148,7 +148,7 @@ class SpriteTest :
                 },
             )
 
-            val unclosed = SpriteCreationService.create(2, 2, Pixmap.SampleMode.NORMAL, "leaky")
+            val unclosed = SpriteService.create(2, 2, Pixmap.SampleMode.NORMAL, "leaky")
             unclosed.onCollectionObserved()
 
             reports.single() shouldContain "byte buffer"
@@ -163,7 +163,7 @@ class SpriteTest :
         }
 
         test("toString carries the name when present") {
-            SpriteCreationService.create(2, 2, Pixmap.SampleMode.PERIODIC, "xmas").use { s ->
+            SpriteService.create(2, 2, Pixmap.SampleMode.PERIODIC, "xmas").use { s ->
                 s.toString() shouldBe "Sprite(2x2, PERIODIC, \"xmas\")"
             }
             sprite(1, 1).use { s ->

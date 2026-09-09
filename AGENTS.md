@@ -22,7 +22,7 @@ typealias-actual; web TypedArray emulation) + `MemoryAllocatorService` — the
 first platform-defaulted T2 service. C5 (surface — S3/S4, log #33) closed:
 `Pixmap`/`MutablePixmap` (mode-aware `get`, nearest/bilinear sampling),
 `Sprite` over native memory and the platform-independent
-`SpriteCreationService` (PNG to S5). **S5 (PNG codec, log #34) closed**:
+`SpriteService` (PNG to S5). **S5 (PNG codec, log #34) closed**:
 `PngService` (decode/encode/load seam, JVM STB zero-copy, web pngjs `.sync`),
 the typed `PngSource` load boundary (`base64`/`url`/`fetch` factories), and a
 module-wide kotest `ProjectConfig` that resets service overrides after every
@@ -43,8 +43,10 @@ These two are the only active documents; older plans/specs were deleted
 
 - **Code review**: every code review (concept close / PR review) runs the
   two-axis review (Standards + Spec conformance) — dispatched through the
-  project `review` subagent when it is configured (`.opencode/agent/`), or
-  inline on the working model when it is not. The review writes its report to
+  project `review` subagent when it is configured (`.opencode/agent/`), or —
+  when it is not — through two fresh general sub-agents run in parallel, one
+  per axis (never a self-review by the working model that produced the diff).
+  The review writes its report to
   `.opencode/reviews/<name>.md` (gitignored local state) and the marker
   `.opencode/review-passed`; the commit gate is enforced by the opencode
   plugin `.opencode/plugin/review-gate.ts` (blocks `git commit` touching
@@ -91,9 +93,13 @@ These two are the only active documents; older plans/specs were deleted
 - **Docs and commit messages in English**; commits end with
   `Co-Authored-By: Claude Code <noreply@anthropic.com>`; committed documents carry
   no personal quotes — decisions are recorded by rationale, not by who said them.
-  **Commit messages are succinct**: a subject plus the non-obvious core — no gate
-  history, no test counts, no review narratives, nothing deducible from the diff
-  (context lives in the decisions log).
+- **Commit messages are succinct** (subject + non-obvious core only): a
+  one-line subject, then at most a few body lines covering only what is not
+  deducible from the diff — the "why", recorded decisions, non-obvious
+  consequences. No gate history, no test counts, no review narratives, no
+  change-by-change recap (that is what the diff shows), no doc/location
+  pointers. Long-form context lives in the decisions log and KDocs, never in
+  the commit body.
 - **Delivery**: commit-ready work; the owner reviews, pushes, and may implement
   parts personally. Do not push.
 

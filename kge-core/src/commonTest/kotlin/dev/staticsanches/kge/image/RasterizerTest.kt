@@ -4,6 +4,7 @@ import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.service.DrawService
 import dev.staticsanches.kge.rasterizer.service.FillService
 import dev.staticsanches.kge.rasterizer.service.OutlineService
+import dev.staticsanches.kge.resource.applyClosingIfFailed
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -23,7 +24,10 @@ class RasterizerTest :
             width: Int = 2,
             height: Int = 2,
             mode: Pixmap.SampleMode = Pixmap.SampleMode.NORMAL,
-        ): Sprite = SpriteCreationService.create(width, height, mode, null)
+        ): Sprite =
+            SpriteService
+                .create(width, height, mode, null)
+                .applyClosingIfFailed { clear(Colors.TRANSPARENT) }
 
         test("draw writes in bounds and reports true") {
             target().use { t ->
@@ -220,7 +224,7 @@ class RasterizerTest :
         fun grid(
             width: Int = 8,
             height: Int = 8,
-        ): Sprite = target(width, height).also { t -> t.clear(Colors.TRANSPARENT) }
+        ): Sprite = target(width, height)
 
         fun painted(t: Sprite): Set<Pair<Int, Int>> =
             (0 until t.height)
@@ -741,7 +745,7 @@ class RasterizerTest :
             height: Int,
             cells: Map<Pair<Int, Int>, Pixel>,
         ): Sprite {
-            val sprite = SpriteCreationService.create(width, height, Pixmap.SampleMode.NORMAL, null)
+            val sprite = SpriteService.create(width, height, Pixmap.SampleMode.NORMAL, null)
             for (y in 0 until height) {
                 for (x in 0 until width) {
                     sprite.set(x, y, cells[x to y] ?: Colors.BLACK)

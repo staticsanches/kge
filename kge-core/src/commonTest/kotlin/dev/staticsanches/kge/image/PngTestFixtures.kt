@@ -2,6 +2,7 @@ package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.resource.ResourceWrapper
+import dev.staticsanches.kge.resource.applyClosingIfFailed
 import dev.staticsanches.kge.resource.letClosingIfFailed
 
 /** Reads [this]'s pixels row-major (storage order), for comparison with [tinyPngPixels]. */
@@ -56,11 +57,11 @@ internal fun ByteArray.asEngineBuffer(): ResourceWrapper<dev.staticsanches.kge.b
  * fixture bytes. The caller owns and must close the sprite.
  */
 internal fun distinctSprite(): Sprite =
-    SpriteCreationService
+    SpriteService
         .create(2, 2, Pixmap.SampleMode.NORMAL, null)
-        .also { sprite ->
-            sprite.set(0, 0, Pixel.rgba(255, 0, 0, 255))
-            sprite.set(1, 0, Pixel.rgba(0, 255, 0, 128))
-            sprite.set(0, 1, Pixel.rgba(0, 0, 255, 255))
-            sprite.set(1, 1, Pixel.rgba(255, 255, 0, 128))
+        .applyClosingIfFailed {
+            set(0, 0, Pixel.rgba(255, 0, 0, 255))
+            set(1, 0, Pixel.rgba(0, 255, 0, 128))
+            set(0, 1, Pixel.rgba(0, 0, 255, 255))
+            set(1, 1, Pixel.rgba(255, 255, 0, 128))
         }

@@ -26,3 +26,15 @@ inline fun <T : AutoCloseable, R> T.letClosingIfFailed(crossinline block: (T) ->
         }
         throw e
     }
+
+/**
+ * Runs [block] with [this] as its receiver and returns the receiver itself —
+ * like [apply], but closing the resource when the block failed. The receiver
+ * survives only if the initialization completed; a failure between the
+ * allocation and the successful hand-off never leaks.
+ */
+inline fun <T : AutoCloseable> T.applyClosingIfFailed(crossinline block: T.() -> Any): T =
+    letClosingIfFailed {
+        it.block()
+        it
+    }
