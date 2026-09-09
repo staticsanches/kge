@@ -4,7 +4,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The S5 extension-contract proof: the codec is one replaceable behavior, so a
+ * The extension-contract proof: the codec is one replaceable behavior, so a
  * decorator that overrides ONLY [PngService.decode] must be observable by
  * every caller — including [PngService.load] and encodeToBase64, whose
  * default bodies resolve [PngService.decode]/[PngService.encode]

@@ -10,7 +10,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 
 /**
- * The byte buffer contract: allocation through [MemoryAllocatorService] returns
+ * The byte buffer contract: allocation through [BufferService] returns
  * a [ResourceWrapper] whose resource is a [ByteBuffer] of the requested size,
  * with the resource lifecycle of the engine (close idempotent, use-after-close
  * fail-fast, leak detection on collection). The initial content is unspecified
@@ -18,7 +18,7 @@ import io.kotest.matchers.types.shouldNotBeSameInstanceAs
  */
 class ByteBufferTest :
     FunSpec({
-        fun allocate(sizeInBytes: Int): ResourceWrapper<ByteBuffer> = MemoryAllocatorService.allocate(sizeInBytes)
+        fun allocate(sizeInBytes: Int): ResourceWrapper<ByteBuffer> = BufferService.allocate(sizeInBytes)
 
         test("allocation returns a buffer of the requested size") {
             allocate(1024).use { wrapper ->
@@ -184,6 +184,19 @@ class ByteBufferTest :
             }
         }
 
+        test("fillInts covers a whole region of any length, not only powers of two") {
+            allocate(36).use { wrapper ->
+                val buffer = wrapper.resource
+                val count = 36 / Int.SIZE_BYTES
+
+                buffer.fillInts(0, count, 0x0BADF00D)
+
+                for (i in 0 until count) {
+                    buffer.getInt(i * Int.SIZE_BYTES) shouldBe 0x0BADF00D
+                }
+            }
+        }
+
         test("fillInts outside the buffer throws") {
             allocate(16).use { wrapper ->
                 val buffer = wrapper.resource
@@ -247,6 +260,56 @@ class ByteBufferTest :
                     shouldThrow<IndexOutOfBoundsException> { target.copyInts(0, source, -4, 1) }
                     shouldThrow<IndexOutOfBoundsException> { target.copyInts(0, source, 0, -1) }
                     shouldThrow<IndexOutOfBoundsException> { target.copyInts(0, source, 0, 5) }
+                }
+            }
+        }
+
+        test("fillInts and copyInts route through the active bulk service") {
+            var calls = 0
+            BufferService.override(
+                object : BufferService {
+                    override fun allocate(
+                        sizeInBytes: Int,
+                        name: String?,
+                    ): ResourceWrapper<ByteBuffer> = BufferService.original.allocate(sizeInBytes, name)
+
+                    override fun fillInts(
+                        target: ByteBuffer,
+                        fromByteOffset: Int,
+                        count: Int,
+                        value: Int,
+                    ) {
+                        calls++
+                        BufferService.original.fillInts(target, fromByteOffset, count, value)
+                    }
+
+                    override fun copyInts(
+                        dst: ByteBuffer,
+                        dstFromByteOffset: Int,
+                        source: ByteBuffer,
+                        sourceFromByteOffset: Int,
+                        count: Int,
+                    ) {
+                        calls++
+                        BufferService.original.copyInts(dst, dstFromByteOffset, source, sourceFromByteOffset, count)
+                    }
+                },
+            )
+
+            allocate(16).use { sourceWrapper ->
+                allocate(16).use { targetWrapper ->
+                    val source = sourceWrapper.resource
+                    val target = targetWrapper.resource
+
+                    source.fillInts(0, 4, 0x11223344)
+                    target.copyInts(4, source, 0, 2)
+
+                    for (i in 0 until 4) {
+                        source.getInt(i * Int.SIZE_BYTES) shouldBe 0x11223344
+                    }
+                    target.getInt(4) shouldBe 0x11223344
+                    target.getInt(8) shouldBe 0x11223344
+                    calls shouldBe 2
                 }
             }
         }

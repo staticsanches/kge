@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.buffer
 
 import org.khronos.webgl.DataView
+import org.khronos.webgl.Int32Array
 import org.khronos.webgl.Uint8Array
 
 /**
@@ -15,6 +16,18 @@ actual abstract class ByteBuffer(
 ) {
     private val bytes = Uint8Array(sizeInBytes)
     protected val view = DataView(bytes.buffer)
+
+    /**
+     * The storage viewed as ints, when the byte size allows it. The native
+     * bulk fill/copy routes through this view; platforms are little-endian,
+     * matching the fixed byte order of the engine.
+     */
+    internal val nativeIntView: Int32Array? =
+        if (sizeInBytes % Int.SIZE_BYTES == 0 && sizeInBytes > 0) {
+            Int32Array(bytes.buffer)
+        } else {
+            null
+        }
 
     actual fun capacity(): Int = bytes.length
 

@@ -5,7 +5,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * S5 encode: a sprite round-trips through the codec — the decode oracle is
+ * Encode: a sprite round-trips through the codec — the decode oracle is
  * independent of the offline fixture. The returned wrapper is a caller-owned
  * [ByteBuffer] allocation with the engine lifecycle (close idempotent, use
  * after close fails fast).

@@ -72,23 +72,24 @@ fun formatBytes(sizeInBytes: Int): String {
 
 /**
  * Fills [count] consecutive int slots (4 bytes each) with [value], the first
- * at byte offset [fromByteOffset]. A [count] of zero is a no-op.
+ * at byte offset [fromByteOffset]. A [count] of zero is a no-op. The region
+ * is validated and filled by the [BufferService] (whose default is the
+ * portable loop and whose platform defaults add their native paths).
  */
 fun ByteBuffer.fillInts(
     fromByteOffset: Int,
     count: Int,
     value: Int,
 ) {
-    requireRange(fromByteOffset, count)
-    for (i in 0 until count) {
-        putInt(fromByteOffset + i * Int.SIZE_BYTES, value)
-    }
+    BufferService.fillInts(this, fromByteOffset, count, value)
 }
 
 /**
  * Copies [count] ints from [source] at byte offset [sourceFromByteOffset] into
  * this buffer at byte offset [dstFromByteOffset]. Overlapping copies within
- * one buffer are memmove-safe. A [count] of zero is a no-op.
+ * one buffer are memmove-safe. A [count] of zero is a no-op. The region is
+ * validated and copied by the [BufferService] (whose default is the portable
+ * memmove loop and whose platform defaults add their native paths).
  */
 fun ByteBuffer.copyInts(
     dstFromByteOffset: Int,
@@ -96,36 +97,5 @@ fun ByteBuffer.copyInts(
     sourceFromByteOffset: Int,
     count: Int,
 ) {
-    requireRange(dstFromByteOffset, count)
-    source.requireRange(sourceFromByteOffset, count)
-    // memmove: when the destination starts past the source, iterate backward
-    // so an int is read before a write could overwrite it.
-    if (source === this && dstFromByteOffset > sourceFromByteOffset) {
-        for (i in count - 1 downTo 0) {
-            putInt(
-                dstFromByteOffset + i * Int.SIZE_BYTES,
-                source.getInt(sourceFromByteOffset + i * Int.SIZE_BYTES),
-            )
-        }
-    } else {
-        for (i in 0 until count) {
-            putInt(
-                dstFromByteOffset + i * Int.SIZE_BYTES,
-                source.getInt(sourceFromByteOffset + i * Int.SIZE_BYTES),
-            )
-        }
-    }
-}
-
-/** Throws [IndexOutOfBoundsException] unless [count] ints fit at [fromByteOffset]. */
-private fun ByteBuffer.requireRange(
-    fromByteOffset: Int,
-    count: Int,
-) {
-    val end = fromByteOffset.toLong() + count.toLong() * Int.SIZE_BYTES
-    if (count < 0 || fromByteOffset < 0 || end > capacity()) {
-        throw IndexOutOfBoundsException(
-            "int range at byte offsets [$fromByteOffset, $end) is outside [0, ${capacity()})",
-        )
-    }
+    BufferService.copyInts(this, dstFromByteOffset, source, sourceFromByteOffset, count)
 }

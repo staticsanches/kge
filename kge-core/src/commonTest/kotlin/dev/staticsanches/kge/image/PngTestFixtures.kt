@@ -1,6 +1,6 @@
 package dev.staticsanches.kge.image
 
-import dev.staticsanches.kge.buffer.MemoryAllocatorService
+import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.letClosingIfFailed
 
@@ -9,7 +9,7 @@ internal fun Sprite.rowMajorPixels(): List<Pixel> =
     (0 until height).flatMap { y -> (0 until width).map { x -> uncheckedGet(x, y) } }
 
 /**
- * The S5 shared test fixture: a 2x2 RGBA8 PNG (bit depth 8, color type 6, no
+ * The shared test fixture: a 2x2 RGBA8 PNG (bit depth 8, color type 6, no
  * interlace) whose four pixels are distinct and carry non-trivial alpha —
  * generated offline and byte-verified (PNG signature, per-chunk CRC32 and a
  * zlib round trip). Its bytes are embedded so every test target decodes the
@@ -42,7 +42,7 @@ internal val notAPngBytes: ByteArray =
 
 /** Wraps [bytes] in an engine buffer the caller owns and must close. */
 internal fun ByteArray.asEngineBuffer(): ResourceWrapper<dev.staticsanches.kge.buffer.ByteBuffer> =
-    MemoryAllocatorService.allocate(size).letClosingIfFailed { wrapper ->
+    BufferService.allocate(size).letClosingIfFailed { wrapper ->
         val buffer = wrapper.resource
         for (i in indices) {
             buffer.put(i, this[i])

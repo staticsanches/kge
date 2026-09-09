@@ -1,6 +1,8 @@
 package dev.staticsanches.kge.image
 
 import kotlin.jvm.JvmInline
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A 32-bit RGBA color.
@@ -47,6 +49,45 @@ value class Pixel
         operator fun component3(): Int = b
 
         operator fun component4(): Int = a
+
+        /**
+         * How a raster draw resolves the new pixel against the stored one.
+         * The write policy belongs to the pixel type; the raster draw seam is
+         * its consumer.
+         *
+         * - [Normal] writes the color verbatim, alpha ignored.
+         * - [Mask] writes only when `color.a == 255`.
+         * - [Alpha] blends by `a = (color.a / 255f) * blendFactor` per
+         *   channel `a * color + (1 - a) * old`, truncating; the resolved
+         *   pixel is always opaque. [blendFactor] is clamped to [0, 1] at
+         *   construction.
+         * - [Custom] resolves through [Custom.apply], receiving the
+         *   coordinates, the new color and the stored old pixel.
+         */
+        sealed interface Mode {
+            data object Normal : Mode
+
+            data object Mask : Mode
+
+            @JvmInline
+            value class Alpha private constructor(
+                val blendFactor: Float,
+            ) : Mode {
+                constructor(
+                    blendFactor: Float = 1f,
+                    @Suppress("unused") parameterToAvoidPlatformDeclarationClash: Boolean = true,
+                ) : this(max(0f, min(1f, blendFactor)))
+            }
+
+            interface Custom : Mode {
+                fun apply(
+                    x: Int,
+                    y: Int,
+                    newPixel: Pixel,
+                    oldPixel: Pixel,
+                ): Pixel
+            }
+        }
 
         /** Inverts the RGB channels (255 - channel), keeping the alpha. */
         fun inv(): Pixel = Pixel(compose(255 - r, 255 - g, 255 - b, a))

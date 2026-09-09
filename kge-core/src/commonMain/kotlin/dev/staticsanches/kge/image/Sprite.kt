@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.buffer.fillInts
 import dev.staticsanches.kge.buffer.formatBytes
@@ -80,15 +81,29 @@ class Sprite(
         buffer.resource.fillInts(0, width * height, pixel.nativeRGBA)
     }
 
-    /** The raw storage — the creation-service copy path and layout checks. */
-    internal val byteBuffer: ByteBuffer
+    /**
+     * The raw storage, exposed for the raster fast paths and the future GPU
+     * upload. The caller owns the bytes: writing outside the [Pixmap]
+     * contract (layout, bounds, sample mode) is the caller's responsibility.
+     * The fail-fast after close is preserved — this returns
+     * `buffer.resource`, whose getter throws once released.
+     */
+    @KGESensitiveAPI
+    val byteBuffer: ByteBuffer
         get() = buffer.resource
 
-    /** Deterministic test seam: fires the platform collection trigger (C2). */
+    /** Deterministic test seam: fires the platform collection trigger. */
     internal fun onCollectionObserved() = buffer.onCollectionObserved()
 
     override fun toString(): String {
         val tag = "${width}x$height, $sampleMode"
         return name?.let { "Sprite($tag, \"$it\")" } ?: "Sprite($tag)"
     }
+
+    /**
+     * The sprite-read policy for a blit: which axes of the source are read in
+     * reverse. [NONE] blits top-left to top-left; each flip mirrors the source
+     * inside the same destination footprint.
+     */
+    enum class Flip { NONE, HORIZONTAL, VERTICAL, BOTH }
 }

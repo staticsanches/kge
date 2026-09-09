@@ -10,7 +10,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
 /**
- * S5 load: [PngService.load] composes [PngSource.read] and [PngService.decode],
+ * Load: [PngService.load] composes [PngSource.read] and [PngService.decode],
  * and the read wrapper is always closed — on a decode failure too, with no
  * leak report. The engine-provided common source is the base64 one.
  */

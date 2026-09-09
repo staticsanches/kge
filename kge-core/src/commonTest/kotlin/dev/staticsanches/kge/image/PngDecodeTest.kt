@@ -6,7 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
 /**
- * S5 decode: the codec turns the PNG bytes in an engine buffer into a
+ * Decode: the codec turns the PNG bytes in an engine buffer into a
  * [Sprite]. The byte source is a wrapper the caller owns; decode itself
  * allocates the surface storage (or zero-copy-wraps it on JVM) and never
  * touches the input's lifetime.

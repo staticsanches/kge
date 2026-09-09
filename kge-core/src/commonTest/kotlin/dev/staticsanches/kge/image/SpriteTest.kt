@@ -1,6 +1,6 @@
 package dev.staticsanches.kge.image
 
-import dev.staticsanches.kge.buffer.MemoryAllocatorService
+import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.byteAt
 import dev.staticsanches.kge.resource.LeakReporterService
 import io.kotest.assertions.throwables.shouldThrow
@@ -25,7 +25,7 @@ class SpriteTest :
             Sprite(
                 width,
                 height,
-                MemoryAllocatorService.allocate(width * height * Int.SIZE_BYTES),
+                BufferService.allocate(width * height * Int.SIZE_BYTES),
                 mode,
             )
 
@@ -38,7 +38,7 @@ class SpriteTest :
         }
 
         test("zero dimensions throw") {
-            val wide = MemoryAllocatorService.allocate(8)
+            val wide = BufferService.allocate(8)
             try {
                 shouldThrow<IllegalArgumentException> {
                     Sprite(0, 1, wide, Pixmap.SampleMode.NORMAL)
@@ -46,7 +46,7 @@ class SpriteTest :
             } finally {
                 wide.close()
             }
-            val tall = MemoryAllocatorService.allocate(8)
+            val tall = BufferService.allocate(8)
             try {
                 shouldThrow<IllegalArgumentException> {
                     Sprite(1, 0, tall, Pixmap.SampleMode.NORMAL)
@@ -57,7 +57,7 @@ class SpriteTest :
         }
 
         test("a buffer that cannot hold the surface throws") {
-            val buffer = MemoryAllocatorService.allocate(12)
+            val buffer = BufferService.allocate(12)
             try {
                 shouldThrow<IllegalArgumentException> {
                     Sprite(2, 2, buffer, Pixmap.SampleMode.NORMAL)
@@ -109,6 +109,16 @@ class SpriteTest :
                         s.uncheckedGet(x, y) shouldBe Colors.RED
                     }
                 }
+            }
+        }
+
+        test("byteBuffer is the live raw storage and fails fast after close") {
+            sprite(1, 1).use { s ->
+                s.byteBuffer.putInt(0, Colors.RED.nativeRGBA)
+                s.get(0, 0) shouldBe Colors.RED
+
+                s.close()
+                shouldThrow<IllegalStateException> { s.byteBuffer }
             }
         }
 

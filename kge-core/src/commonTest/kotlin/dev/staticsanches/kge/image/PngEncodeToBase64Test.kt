@@ -6,8 +6,8 @@ import io.kotest.matchers.string.shouldNotBeEmpty
 import kotlin.io.encoding.Base64
 
 /**
- * S5 encodeToBase64 + the S5 base64 add-time proof: the stdlib
- * `kotlin.io.encoding.Base64` (stable since Kotlin 2.2) round-trips bytes on
+ * encodeToBase64 relies on the stdlib `kotlin.io.encoding.Base64` (stable
+ * since Kotlin 2.2): it round-trips bytes on
  * every target, the codec's payload decodes back to the source pixels, and
  * the payload really is a PNG (signature bytes after decoding).
  */

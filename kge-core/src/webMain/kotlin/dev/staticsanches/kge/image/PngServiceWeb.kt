@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.MemoryAllocatorService
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.letClosingIfFailed
 
@@ -41,7 +41,7 @@ private object WebPngService : PngService {
         name: String?,
     ): Sprite {
         val surface = WebPngJs.decodePng(data.readBytes())
-        return MemoryAllocatorService.allocate(surface.rgba.size, name).letClosingIfFailed { wrapper ->
+        return BufferService.allocate(surface.rgba.size, name).letClosingIfFailed { wrapper ->
             val destination = wrapper.resource
             for (i in surface.rgba.indices) {
                 destination.put(i, surface.rgba[i])

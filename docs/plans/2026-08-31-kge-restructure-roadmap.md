@@ -178,7 +178,20 @@ internal helper.
 - **R1 ● Raster ops** — primitives over a surface; fast bulk paths; pixel modes
   (Normal/Mask/Alpha/Custom) + blend resolution math — moved here from S2 at the C4
   touch-point (log #24): the modes' only consumers are raster.
-- **R2 ● Viewport/clipping** — pure clip math.
+- **R2 ● Viewport/clipping** — pure clip math. **Carries a C6 debt (decide at
+  this touch-point):** `drawLine` with an out-of-bounds endpoint currently
+  paints the unclipped walk's subset (the draw seam drops the cells), which can
+  differ from the reference's clip-then-re-walk; R2's clip math must restore
+  exact parity. Same clip seam will cover the eventual `Viewport` (S3's
+  `Viewport.Bounded`, deferred to R2) — `fillRect` partial-off-target draws
+  are already clipped to the exact intersection in C6 and carry no debt.
+- **Vector/point concept — not yet catalogued; recorded here as the next
+  concept to treat (owner, 2026-09-08, C6 close review).** The raster API
+  deliberately uses `Int` coordinates; there is no point type and no planned
+  math/vector concept. When vectors/points are conceived, the first consumers
+  to adjust are the raster sub-services created in C6 (`Rasterizer` +
+  `DrawService`/`OutlineService`/`FillService`/`DrawSpriteService`
+  signatures).
 - **R3 ● Decal** — GPU-resident surface; modes/structures; instance batching.
 - **R4 ● Renderer/pipeline** — Renderer service + platform backends; staging
   buffers platform-internal.

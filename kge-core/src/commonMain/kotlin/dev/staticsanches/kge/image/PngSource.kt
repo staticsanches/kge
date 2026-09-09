@@ -1,13 +1,13 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.MemoryAllocatorService
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.letClosingIfFailed
 import kotlin.io.encoding.Base64
 
 /**
- * A typed source of PNG bytes — the S5 load boundary.
+ * A typed source of PNG bytes for the load entry point ([PngService.load]).
  *
  * [read] materializes the whole payload and hands it over with an owner: the
  * returned [ResourceWrapper] is a live allocation the caller must close on
@@ -41,7 +41,7 @@ interface PngSource {
 
 /** Wraps [bytes] in an engine buffer of the same size; the caller owns and must close it. */
 internal fun ByteArray.toEngineBuffer(name: String? = null): ResourceWrapper<ByteBuffer> =
-    MemoryAllocatorService.allocate(size, name).letClosingIfFailed { wrapper ->
+    BufferService.allocate(size, name).letClosingIfFailed { wrapper ->
         val buffer = wrapper.resource
         for (i in indices) {
             buffer.put(i, this[i])

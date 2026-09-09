@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.MemoryAllocatorService
 import dev.staticsanches.kge.buffer.formatBytes
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.ResourceWrapper
@@ -66,7 +66,7 @@ private object StbPngService : PngService {
             )
         check(written) { "unable to encode $sprite as PNG" }
         val bytes = pngBytes.toByteArray()
-        return MemoryAllocatorService.allocate(bytes.size, "PNG").letClosingIfFailed { wrapper ->
+        return BufferService.allocate(bytes.size, "PNG").letClosingIfFailed { wrapper ->
             wrapper.resource.put(bytes)
             wrapper.resource.rewind()
             wrapper

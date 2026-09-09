@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
-import dev.staticsanches.kge.buffer.MemoryAllocatorService
 import dev.staticsanches.kge.resource.ResourceWrapper
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
@@ -10,7 +10,7 @@ import io.kotest.matchers.shouldBe
 /**
  * The surface-creation service on the extension mechanism: the default is
  * platform-independent (it allocates through the current
- * [MemoryAllocatorService]), contract A proves an overridden allocator is the
+ * [BufferService]), contract A proves an overridden allocator is the
  * one the service uses, contract B proves an overridden service decorator is
  * observable, and duplicate is a detached pixel copy preserving the sample
  * mode.
@@ -28,14 +28,33 @@ class SpriteCreationServiceTest :
 
         test("invalid dimensions fail before any allocation") {
             var allocated = 0
-            MemoryAllocatorService.override(
-                object : MemoryAllocatorService {
+            BufferService.override(
+                object : BufferService {
                     override fun allocate(
                         sizeInBytes: Int,
                         name: String?,
                     ): ResourceWrapper<ByteBuffer> {
                         allocated += sizeInBytes
-                        return MemoryAllocatorService.original.allocate(sizeInBytes, name)
+                        return BufferService.original.allocate(sizeInBytes, name)
+                    }
+
+                    override fun fillInts(
+                        target: ByteBuffer,
+                        fromByteOffset: Int,
+                        count: Int,
+                        value: Int,
+                    ) {
+                        BufferService.original.fillInts(target, fromByteOffset, count, value)
+                    }
+
+                    override fun copyInts(
+                        dst: ByteBuffer,
+                        dstFromByteOffset: Int,
+                        source: ByteBuffer,
+                        sourceFromByteOffset: Int,
+                        count: Int,
+                    ) {
+                        BufferService.original.copyInts(dst, dstFromByteOffset, source, sourceFromByteOffset, count)
                     }
                 },
             )
@@ -52,14 +71,33 @@ class SpriteCreationServiceTest :
 
         test("creation and duplication allocate through the current allocator (contract A)") {
             var allocated = 0
-            MemoryAllocatorService.override(
-                object : MemoryAllocatorService {
+            BufferService.override(
+                object : BufferService {
                     override fun allocate(
                         sizeInBytes: Int,
                         name: String?,
                     ): ResourceWrapper<ByteBuffer> {
                         allocated += sizeInBytes
-                        return MemoryAllocatorService.original.allocate(sizeInBytes, name)
+                        return BufferService.original.allocate(sizeInBytes, name)
+                    }
+
+                    override fun fillInts(
+                        target: ByteBuffer,
+                        fromByteOffset: Int,
+                        count: Int,
+                        value: Int,
+                    ) {
+                        BufferService.original.fillInts(target, fromByteOffset, count, value)
+                    }
+
+                    override fun copyInts(
+                        dst: ByteBuffer,
+                        dstFromByteOffset: Int,
+                        source: ByteBuffer,
+                        sourceFromByteOffset: Int,
+                        count: Int,
+                    ) {
+                        BufferService.original.copyInts(dst, dstFromByteOffset, source, sourceFromByteOffset, count)
                     }
                 },
             )

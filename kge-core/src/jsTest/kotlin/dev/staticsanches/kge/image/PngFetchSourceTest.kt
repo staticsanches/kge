@@ -4,7 +4,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The web source of the S5 load boundary: [PngSource.fetch] over a data: URL
+ * The web source: [PngSource.fetch] over a data: URL
  * built from the fixture bytes loads through the facade. Node's fetch (undici)
  * serves data: URLs, so the js and wasmJs node suites exercise the same path.
  */
