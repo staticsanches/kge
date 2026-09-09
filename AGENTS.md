@@ -26,7 +26,14 @@ first platform-defaulted T2 service. C5 (surface — S3/S4, log #33) closed:
 `PngService` (decode/encode/load seam, JVM STB zero-copy, web pngjs `.sync`),
 the typed `PngSource` load boundary (`base64`/`url`/`fetch` factories), and a
 module-wide kotest `ProjectConfig` that resets service overrides after every
-test. Next concept: C6 (raster ops). No renderer or engine loop yet.
+test. **C6 (raster ops, R1, log #35) closed**: four per-scope raster
+sub-services (`DrawService`/`OutlineService`/`FillService`/`DrawSpriteService`)
+aggregated by `Rasterizer`, pixel-mode blend via the draw seam, native bulk
+buffer ops, and the `SpriteService` rename. **Vector/point concept (closed
+2026-09-09)**: pure `Int2D`/`Float2D` `data class`es (`math/vector`) + typed
+`Int2D` overloads on the raster sub-services (interface defaults + companion
+`Proxy` analog forwarding). Next concept: C7 (text). No renderer or engine
+loop yet.
 
 ## Read first
 

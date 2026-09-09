@@ -4,6 +4,7 @@ import dev.staticsanches.kge.buffer.copyInts
 import dev.staticsanches.kge.image.MutablePixmap
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
@@ -32,6 +33,16 @@ interface DrawSpriteService : KGEOverridable {
         mode: Pixel.Mode,
     )
 
+    /** The [Int2D] form of [drawSprite] — unpacks the position to the raw method. */
+    fun drawSprite(
+        target: MutablePixmap,
+        position: Int2D,
+        sprite: Sprite,
+        scale: Int,
+        flip: Sprite.Flip,
+        mode: Pixel.Mode,
+    ): Unit = drawSprite(target, position.x, position.y, sprite, scale, flip, mode)
+
     companion object :
         KGEOverridable.Proxy<DrawSpriteService>(DrawSpriteService::class, drawSpriteServiceDefault),
         DrawSpriteService {
@@ -44,6 +55,15 @@ interface DrawSpriteService : KGEOverridable {
             flip: Sprite.Flip,
             mode: Pixel.Mode,
         ) = delegate.drawSprite(target, x, y, sprite, scale, flip, mode)
+
+        override fun drawSprite(
+            target: MutablePixmap,
+            position: Int2D,
+            sprite: Sprite,
+            scale: Int,
+            flip: Sprite.Flip,
+            mode: Pixel.Mode,
+        ) = delegate.drawSprite(target, position, sprite, scale, flip, mode)
     }
 }
 

@@ -2,6 +2,7 @@ package dev.staticsanches.kge.rasterizer.service
 
 import dev.staticsanches.kge.image.MutablePixmap
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import kotlin.math.abs
@@ -83,6 +84,43 @@ interface OutlineService : KGEOverridable {
         mode: Pixel.Mode,
     )
 
+    /** The [Int2D] form of [drawLine] — unpacks the points to the raw method. */
+    fun drawLine(
+        target: MutablePixmap,
+        start: Int2D,
+        end: Int2D,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Unit = drawLine(target, start.x, start.y, end.x, end.y, color, mode)
+
+    /** The [Int2D] form of [drawRect] — unpacks the diagonal corners to the raw method. */
+    fun drawRect(
+        target: MutablePixmap,
+        diagonalStart: Int2D,
+        diagonalEnd: Int2D,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Unit = drawRect(target, diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, mode)
+
+    /** The [Int2D] form of [drawCircle] — unpacks the center to the raw method. */
+    fun drawCircle(
+        target: MutablePixmap,
+        center: Int2D,
+        radius: Int,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Unit = drawCircle(target, center.x, center.y, radius, color, mode)
+
+    /** The [Int2D] form of [drawTriangle] — unpacks the vertices to the raw method. */
+    fun drawTriangle(
+        target: MutablePixmap,
+        p0: Int2D,
+        p1: Int2D,
+        p2: Int2D,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Unit = drawTriangle(target, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, color, mode)
+
     companion object :
         KGEOverridable.Proxy<OutlineService>(OutlineService::class, outlineServiceDefault),
         OutlineService {
@@ -126,6 +164,39 @@ interface OutlineService : KGEOverridable {
             color: Pixel,
             mode: Pixel.Mode,
         ) = delegate.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
+
+        override fun drawLine(
+            target: MutablePixmap,
+            start: Int2D,
+            end: Int2D,
+            color: Pixel,
+            mode: Pixel.Mode,
+        ) = delegate.drawLine(target, start, end, color, mode)
+
+        override fun drawRect(
+            target: MutablePixmap,
+            diagonalStart: Int2D,
+            diagonalEnd: Int2D,
+            color: Pixel,
+            mode: Pixel.Mode,
+        ) = delegate.drawRect(target, diagonalStart, diagonalEnd, color, mode)
+
+        override fun drawCircle(
+            target: MutablePixmap,
+            center: Int2D,
+            radius: Int,
+            color: Pixel,
+            mode: Pixel.Mode,
+        ) = delegate.drawCircle(target, center, radius, color, mode)
+
+        override fun drawTriangle(
+            target: MutablePixmap,
+            p0: Int2D,
+            p1: Int2D,
+            p2: Int2D,
+            color: Pixel,
+            mode: Pixel.Mode,
+        ) = delegate.drawTriangle(target, p0, p1, p2, color, mode)
     }
 }
 

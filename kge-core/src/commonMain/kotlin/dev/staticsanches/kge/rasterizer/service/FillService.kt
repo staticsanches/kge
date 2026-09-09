@@ -4,6 +4,7 @@ import dev.staticsanches.kge.buffer.fillInts
 import dev.staticsanches.kge.image.MutablePixmap
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
@@ -66,6 +67,34 @@ interface FillService : KGEOverridable {
         mode: Pixel.Mode,
     )
 
+    /** The [Int2D] form of [fillRect] — unpacks the diagonal corners to the raw method. */
+    fun fillRect(
+        target: MutablePixmap,
+        diagonalStart: Int2D,
+        diagonalEnd: Int2D,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Unit = fillRect(target, diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, mode)
+
+    /** The [Int2D] form of [fillCircle] — unpacks the center to the raw method. */
+    fun fillCircle(
+        target: MutablePixmap,
+        center: Int2D,
+        radius: Int,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Unit = fillCircle(target, center.x, center.y, radius, color, mode)
+
+    /** The [Int2D] form of [fillTriangle] — unpacks the vertices to the raw method. */
+    fun fillTriangle(
+        target: MutablePixmap,
+        p0: Int2D,
+        p1: Int2D,
+        p2: Int2D,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Unit = fillTriangle(target, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, color, mode)
+
     companion object :
         KGEOverridable.Proxy<FillService>(FillService::class, fillServiceDefault),
         FillService {
@@ -99,6 +128,31 @@ interface FillService : KGEOverridable {
             color: Pixel,
             mode: Pixel.Mode,
         ) = delegate.fillTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
+
+        override fun fillRect(
+            target: MutablePixmap,
+            diagonalStart: Int2D,
+            diagonalEnd: Int2D,
+            color: Pixel,
+            mode: Pixel.Mode,
+        ) = delegate.fillRect(target, diagonalStart, diagonalEnd, color, mode)
+
+        override fun fillCircle(
+            target: MutablePixmap,
+            center: Int2D,
+            radius: Int,
+            color: Pixel,
+            mode: Pixel.Mode,
+        ) = delegate.fillCircle(target, center, radius, color, mode)
+
+        override fun fillTriangle(
+            target: MutablePixmap,
+            p0: Int2D,
+            p1: Int2D,
+            p2: Int2D,
+            color: Pixel,
+            mode: Pixel.Mode,
+        ) = delegate.fillTriangle(target, p0, p1, p2, color, mode)
     }
 }
 

@@ -185,13 +185,12 @@ internal helper.
   exact parity. Same clip seam will cover the eventual `Viewport` (S3's
   `Viewport.Bounded`, deferred to R2) — `fillRect` partial-off-target draws
   are already clipped to the exact intersection in C6 and carry no debt.
-- **Vector/point concept — not yet catalogued; recorded here as the next
-  concept to treat (owner, 2026-09-08, C6 close review).** The raster API
-  deliberately uses `Int` coordinates; there is no point type and no planned
-  math/vector concept. When vectors/points are conceived, the first consumers
-  to adjust are the raster sub-services created in C6 (`Rasterizer` +
-  `DrawService`/`OutlineService`/`FillService`/`DrawSpriteService`
-  signatures).
+- **Vector/point concept — closed 2026-09-09** (decisions-log entry): the
+  raster `Int`-coordinate API gained its point types as pure math —
+  `Int2D`/`Float2D` (`data class`, package `math/vector`, mutual conversions,
+  broad olc-derived operator set) — plus typed `Int2D` overloads as interface
+  defaults on the C6 raster sub-services with companion `Proxy` analog
+  forwarding. Per-pixel seams stay raw; surfaces keep raw `width`/`height`.
 - **R3 ● Decal** — GPU-resident surface; modes/structures; instance batching.
 - **R4 ● Renderer/pipeline** — Renderer service + platform backends; staging
   buffers platform-internal.
@@ -265,7 +264,8 @@ detail stays open for the E1 touch-point.
 
 
 ### Helpers (not domain concepts)
-Int2D/Float2D, BytesSize, FormatUtils, InvokeUtils, PeekingIterator.
+BytesSize, FormatUtils, InvokeUtils, PeekingIterator. (`Int2D`/`Float2D` were
+promoted out of this list when the vector/point concept closed on 2026-09-09.)
 
 ## Facade contract (decided 2026-08-30; redesigned 2026-09-02 — log #28)
 
@@ -317,7 +317,8 @@ redesigned at the 2026-09-02 T2 touch-point: `KGEOverridable` supersedes it)
 at its touch-point)
 → `C2` resource lifecycle
 → `C3` native memory (S1 — Task-5 code fate decided here)
-→ `C5` surface → `S5` PNG codec → `C6` raster ops → `C7` text → `C8` state
+→ `C5` surface → `S5` PNG codec → `C6` raster ops → vector/point
+(`Int2D`/`Float2D` — closed 2026-09-09) → `C7` text → `C8` state
 → `C9` renderer/GL/decals → `C10` engine (KeyCode/InputAction).
 
 Ordering invariants (fixed): DI foundation before any service; provider +
@@ -445,3 +446,8 @@ informed the E1 section above (confinement, macOS `glfw_async`, engine-owned
 dispatcher vs `Dispatchers.Main`, thread-id identity, S5-load compatibility).
 Spike discarded; the findings live in the E1 block. Next concept: C6 (raster
 ops).
+
+**2026-09-09 — vector/point concept closed** (decisions-log entry). `Int2D`/
+`Float2D` pure math types + typed `Int2D` overloads on the C6 raster
+sub-services; shape, scope and the uniform-`ArithmeticException`/JS
+divergence facts are in the decisions log. Next concept: C7 (text).
