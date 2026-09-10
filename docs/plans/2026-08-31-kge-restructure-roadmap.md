@@ -4,7 +4,9 @@
 revision backlog of 2026-08-30, the design spec and the toolchain research —
 all deleted; the git history of this branch is the archive. This doc +
 `docs/decisions/phase-1.md` (append-only log of verified facts and per-concept
-decisions) are the only active documents.
+decisions; an index — entries are split by concept era under
+`docs/decisions/phase-1/`, read only the relevant chunk) are the only active
+documents.
 
 ## Purpose and operating model
 
@@ -169,8 +171,8 @@ internal helper.
 - **S5 ◐ PNG codec** — PNG decode/encode of surfaces and back (load from
   file/URL/bytes, write/encode), at platform — JVM STBImage, web native
   decode (pngjs or platform decode). Service seam per principle 1 (observable
-  capability); no consumer before C7 (text font sheet) or C9 (decals user
-  assets). Ordered after C5 (added 2026-09-05, C5 touch-point — the owner's
+  capability); no consumer before C9 (decals user assets) or R6 (text font
+  asset). Ordered after C5 (added 2026-09-05, C5 touch-point — the owner's
   call: a major engine feature, kept explicit in the plan). Detail at its own
   touch-point.
 
@@ -196,7 +198,18 @@ internal helper.
   buffers platform-internal.
 - **R5 ● GL** — facade + GLService (LWJGL GL33 / WebGL2 + multi-draw) + GL
   resource wrappers.
-- **R6 ● Text** — font sheet + metrics + CPU and decal draw variants.
+- **R6 ● Elaborate text** — arbitrary TTF/OTF through four layers: **shaping**
+  (Unicode → glyph ids + advances/offsets, kerning/ligatures), **rasterization**
+  (glyph outline → coverage bitmap), **atlas** (packing glyphs), and **blit**
+  (CPU to a `MutablePixmap`/layer, and the decal/GPU variant). Deliberately at
+  the **end of the migration** (2026-09-10 owner decision): it is not on the
+  critical path of the `main` restructure and has no consumer before the engine
+  presents a layer. Depends on C5+C6+S5 (already closed) for the CPU blit and on
+  R3/R4/R5 for the decal variant. The `main` font is a hardcoded bitmap sheet —
+  **not ported** and not the basis. Bidi/script itemization are out of the
+  initial scope (HarfBuzz shapes an already-ordered run). Library choice and the
+  full findings are recorded in the decisions log (2026-09-10); decided at its
+  touch-point after a feasibility spike, not frozen here.
 
 ### Engine (macro only)
 - **E1 ● Engine/lifecycle** — addon-based engine + platform engines; the known
@@ -318,15 +331,30 @@ at its touch-point)
 → `C2` resource lifecycle
 → `C3` native memory (S1 — Task-5 code fate decided here)
 → `C5` surface → `S5` PNG codec → `C6` raster ops → vector/point
-(`Int2D`/`Float2D` — closed 2026-09-09) → `C7` text → `C8` state
-→ `C9` renderer/GL/decals → `C10` engine (KeyCode/InputAction).
+(`Int2D`/`Float2D` — closed 2026-09-09) → `R2` viewport/clipping
+(clears the C6 partial-OOB `drawLine` debt + S3's `Viewport.Bounded`)
+→ `C8` state (E3) → `C9` renderer/GL/decals (R5 → R4 → R3)
+→ `C10` engine (E1 loop/window + E2 addons + E4 KeyCode/InputAction)
+→ `R6` elaborate text (shaping + rasterization + atlas + blit — the final
+concept; see the catalog; not the `main` bitmap font).
+
+**2026-09-10 ordering revision (owner).** Elaborate text moves from after the
+raster concept (the old `C7`) to the **end** of the migration. Rationale: text
+is not the focus of the `main` restructure and has no real consumer until the
+engine presents a layer; the `main` simple bitmap font is explicitly **not
+ported**. The old `C7` (simple text) is removed as a concept — there is no
+"simple text first" step; text ships once, in its elaborate form (shaping,
+rasterization, atlas, blit), after `C9`+`C10`. This keeps the font backend out
+of the critical path and avoids a provisional text API a later concept must
+break (roadmap "no throwaway commits").
 
 Ordering invariants (fixed): DI foundation before any service; provider +
 lifecycle before the surface creation service; Pixel before raster; surface
 before raster/sprite; pure math unconstrained. Surviving touch-points: C6 tie
 rules, C10 KeyCode/InputAction; T3 display-format detail at its touch-point
-(post-C1); S5 PNG codec detail at its touch-point (post-C5). The C5 surface
-touch-point (2026-09-05) is done: naming (`Pixmap`/`MutablePixmap`/`Sprite`),
+(post-C1); S5 PNG codec detail at its touch-point (post-C5); R6 text detail at
+its touch-point (final concept). The C5 surface touch-point (2026-09-05) is
+done: naming (`Pixmap`/`MutablePixmap`/`Sprite`),
 the defined OOB policy, `SampleMode` nested in `Pixmap`, `Flip` to C6,
 ownership via `SpriteService` + the resource contract, no global
 mutable defaults, PNG to S5.
@@ -343,8 +371,8 @@ mutable defaults, PNG to S5.
    API a later concept must break).
 4. **Close**: `./gradlew build --rerun-tasks` green (ktlint included via
    `check`; `--rerun-tasks` mandatory — build cache produced a phantom green
-   once, see decisions log items 9/11/15), review passed, entry in
-   `docs/decisions/phase-1.md`, commit. **Review loop**: two-axis review
+   once, see decisions log items 9/11/15), review passed, entry in the
+   decisions log (`docs/decisions/phase-1/`), commit. **Review loop**: two-axis review
    (standards + spec) — including a leak audit of every allocate/close path
    and construction failure branch (`letClosingIfFailed`, main's pattern) — and no public parameter without an observable effect
    (the micro-plan's own "detail" resolutions are not the owner's word) —
@@ -450,4 +478,11 @@ ops).
 **2026-09-09 — vector/point concept closed** (decisions-log entry). `Int2D`/
 `Float2D` pure math types + typed `Int2D` overloads on the C6 raster
 sub-services; shape, scope and the uniform-`ArithmeticException`/JS
-divergence facts are in the decisions log. Next concept: C7 (text).
+divergence facts are in the decisions log.
+
+**2026-09-10 — ordering revision: text to the end (owner).** The old `C7`
+(simple text) is dropped; elaborate text (shaping + rasterization + atlas +
+blit) becomes the **final** concept `R6`, after `R2`/`C8`/`C9`/`C10`. The
+`main` bitmap font is not ported. Rationale and the font-library research
+(FreeType/HarfBuzz across JVM + js + wasmJs, candidate stacks, UNVERIFIED
+items to spike) are in the decisions log. Next concept: `R2` (viewport/clip).

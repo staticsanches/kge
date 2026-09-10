@@ -32,8 +32,19 @@ aggregated by `Rasterizer`, pixel-mode blend via the draw seam, native bulk
 buffer ops, and the `SpriteService` rename. **Vector/point concept (closed
 2026-09-09)**: pure `Int2D`/`Float2D` `data class`es (`math/vector`) + typed
 `Int2D` overloads on the raster sub-services (interface defaults + companion
-`Proxy` analog forwarding). Next concept: C7 (text). No renderer or engine
-loop yet.
+`Proxy` analog forwarding). **Ordering revision (2026-09-10, owner):** the old
+`C7` (simple text) is dropped — text becomes **elaborate text** (shaping +
+rasterization + atlas + blit), shipped **last** as `R6`, after `R2`, `C8`,
+`C9`, `C10`; the `main` bitmap font is not ported. Next concept: `R2`
+(viewport/clipping). No renderer or engine loop yet.
+
+**Text (R6) — deferred to the end; research recorded.** Owner decision
+(2026-09-10): do not invest in text during the `main` restructure; text is the
+final concept with shaping + rasterization + atlas + blit. The font-library
+research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate stacks,
+UNVERIFIED items) was done and is in
+`docs/decisions/phase-1/14-text-r6.md` — **do not re-research**; consult that
+chunk before any text work.
 
 ## Read first
 
@@ -41,7 +52,10 @@ loop yet.
   concept list, guiding principles, decision lenses, ordering, per-concept
   workflow. **The plan is the roadmap; detail is not frozen ahead.**
 - `docs/decisions/phase-1.md` — append-only log of verified facts and
-  per-concept decisions. Future sessions use it, do not question without evidence.
+  per-concept decisions. Future sessions use it, do not question without
+  evidence. It is an **index**; entries live in `docs/decisions/phase-1/` split
+  by concept era — read the index, then only the relevant chunk (see "How to
+  read" there). Do not read every chunk.
 
 These two are the only active documents; older plans/specs were deleted
 (history is the archive).
