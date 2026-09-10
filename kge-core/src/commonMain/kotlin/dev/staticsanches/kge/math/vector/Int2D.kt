@@ -65,6 +65,11 @@ data class Int2D(
     fun toFloat(): Float2D = Float2D(x.toFloat(), y.toFloat())
 
     override fun toString(): String = "($x, $y)"
+
+    companion object {
+        /** The origin `(0, 0)`, shared to avoid reallocating it per use. */
+        val ZERO: Int2D = Int2D(0, 0)
+    }
 }
 
 /**

@@ -18,10 +18,12 @@ import kotlin.math.abs
 interface OutlineService : KGEOverridable {
     /**
      * Draws the best-fit integer line from ([x0], [y0]) to ([x1], [y1]),
-     * both endpoints inclusive, resolving [mode] per pixel through the draw
-     * seam. When a pixel is equidistant from the ideal line, the step toward
-     * the diagonal neighbor wins. Cells outside the target are dropped by the
-     * seam (a no-op); nothing is written out of range.
+     * resolving [mode] per pixel through the draw seam. The segment is clipped
+     * to [target] through [ClipService] first — a fully outside line is a
+     * no-op — and the walk then runs over the clipped endpoints, inclusive,
+     * while the error term keeps the original deltas (the reference's
+     * clip-then-walk). When a pixel is equidistant from the ideal line, the
+     * step toward the diagonal neighbor wins.
      */
     fun drawLine(
         target: MutablePixmap,
@@ -215,16 +217,23 @@ private val outlineServiceDefault: OutlineService =
             val dx = x1 - x0
             val dy = y1 - y0
 
+            val (clippedStart, clippedEnd) =
+                ClipService.clipLineTo(target, Int2D(x0, y0), Int2D(x1, y1)) ?: return
+            val cx0 = clippedStart.x
+            val cy0 = clippedStart.y
+            val cx1 = clippedEnd.x
+            val cy1 = clippedEnd.y
+
             if (dx == 0) {
-                for (y in minOf(y0, y1)..maxOf(y0, y1)) {
-                    DrawService.draw(target, x0, y, color, mode)
+                for (y in minOf(cy0, cy1)..maxOf(cy0, cy1)) {
+                    DrawService.draw(target, cx0, y, color, mode)
                 }
                 return
             }
 
             if (dy == 0) {
-                for (x in minOf(x0, x1)..maxOf(x0, x1)) {
-                    DrawService.draw(target, x, y0, color, mode)
+                for (x in minOf(cx0, cx1)..maxOf(cx0, cx1)) {
+                    DrawService.draw(target, x, cy0, color, mode)
                 }
                 return
             }
@@ -239,13 +248,13 @@ private val outlineServiceDefault: OutlineService =
                 var y: Int
                 val xEnd: Int
                 if (dx >= 0) {
-                    x = x0
-                    y = y0
-                    xEnd = x1
+                    x = cx0
+                    y = cy0
+                    xEnd = cx1
                 } else {
-                    x = x1
-                    y = y1
-                    xEnd = x0
+                    x = cx1
+                    y = cy1
+                    xEnd = cx0
                 }
 
                 DrawService.draw(target, x, y, color, mode)
@@ -264,13 +273,13 @@ private val outlineServiceDefault: OutlineService =
                 var y: Int
                 val yEnd: Int
                 if (dy >= 0) {
-                    x = x0
-                    y = y0
-                    yEnd = y1
+                    x = cx0
+                    y = cy0
+                    yEnd = cy1
                 } else {
-                    x = x1
-                    y = y1
-                    yEnd = y0
+                    x = cx1
+                    y = cy1
+                    yEnd = cy0
                 }
 
                 DrawService.draw(target, x, y, color, mode)

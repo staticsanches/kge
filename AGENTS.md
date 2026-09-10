@@ -35,8 +35,13 @@ buffer ops, and the `SpriteService` rename. **Vector/point concept (closed
 `Proxy` analog forwarding). **Ordering revision (2026-09-10, owner):** the old
 `C7` (simple text) is dropped — text becomes **elaborate text** (shaping +
 rasterization + atlas + blit), shipped **last** as `R6`, after `R2`, `C8`,
-`C9`, `C10`; the `main` bitmap font is not ported. Next concept: `R2`
-(viewport/clipping). No renderer or engine loop yet.
+`C9`, `C10`; the `main` bitmap font is not ported. **R2 (viewport/clipping,
+closed 2026-09-10)**: the pure `Viewport` sealed type, the `ClipService` seam
+(fifth raster sub-service, olc `ClipLineToDrawTarget` Cohen–Sutherland),
+`Pixmap : Viewport.Bounded`, and the clip-then-walk `drawLine` that clears the
+C6 partial-OOB debt. Next: the post-R2 raster widening (circle octant masks),
+then the draw-sprite service changes, per the roadmap; no renderer or engine
+loop yet.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the

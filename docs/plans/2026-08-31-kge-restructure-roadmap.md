@@ -162,12 +162,17 @@ internal helper.
   `Pixmap`/`MutablePixmap` (+ `Sprite` as the single concrete surface);
   the engine's OOB semantics (mode-aware `get`, never throws; `set` returns
   Boolean); `Sequence<Pixel>` kept; `Viewport.Bounded` deferred to R2;
-  `Flip` deferred to C6. Closed (log #33).
+  `Flip` deferred to C6. Closed (log #33). R2 added `Viewport.Bounded` with the
+  lower bound fixed at `(0,0)` (full-surface case); the **window/view**
+  generalization of the bounds — the lower bound as the source of truth, not a
+  constant — is a post-R2 session (2026-09-10; see the post-R2 additions).
 - **S4 ● Sprite** — surface + sample modes + ownership (surface owns its
   native memory resource) + creation service (create/duplicate),
   `SpriteService : KGEOverridable`, default platform-independent via
   `MemoryAllocatorService`. Decided at the C5 touch-point (2026-09-05). PNG
   **moved out** to S5 (its own concept), below. Closed (log #33).
+  Partial-sprite blit and `SpritePatch` are deferred to a post-R2 concept;
+  `DecalPatch` is deferred to the `R3` decal concept (2026-09-10).
 - **S5 ◐ PNG codec** — PNG decode/encode of surfaces and back (load from
   file/URL/bytes, write/encode), at platform — JVM STBImage, web native
   decode (pngjs or platform decode). Service seam per principle 1 (observable
@@ -179,14 +184,16 @@ internal helper.
 ### Render (macro only — detail at each touch-point)
 - **R1 ● Raster ops** — primitives over a surface; fast bulk paths; pixel modes
   (Normal/Mask/Alpha/Custom) + blend resolution math — moved here from S2 at the C4
-  touch-point (log #24): the modes' only consumers are raster.
-- **R2 ● Viewport/clipping** — pure clip math. **Carries a C6 debt (decide at
-  this touch-point):** `drawLine` with an out-of-bounds endpoint currently
-  paints the unclipped walk's subset (the draw seam drops the cells), which can
-  differ from the reference's clip-then-re-walk; R2's clip math must restore
-  exact parity. Same clip seam will cover the eventual `Viewport` (S3's
-  `Viewport.Bounded`, deferred to R2) — `fillRect` partial-off-target draws
-  are already clipped to the exact intersection in C6 and carry no debt.
+  touch-point (log #24): the modes' only consumers are raster. Circle octant
+  masks on `drawCircle`/`fillCircle` are deferred to a post-R2 raster widening
+  (2026-09-10).
+- **R2 ● Viewport/clipping** — pure clip math. **Closed 2026-09-10
+  (decisions-log entry).** The pure `Viewport` sealed type (`contains`, full
+  hierarchy) + the `ClipService` seam (fifth raster sub-service, olc
+  `ClipLineToDrawTarget` Cohen–Sutherland) + `Pixmap : Viewport.Bounded` (S3's
+  deferral). The C6 debt is cleared: `drawLine` clips-then-walks, matching the
+  reference (original deltas, clipped span); `fillRect` partial-off-target
+  draws were already clipped in C6 and carried no debt.
 - **Vector/point concept — closed 2026-09-09** (decisions-log entry): the
   raster `Int`-coordinate API gained its point types as pure math —
   `Int2D`/`Float2D` (`data class`, package `math/vector`, mutual conversions,
@@ -194,6 +201,8 @@ internal helper.
   defaults on the C6 raster sub-services with companion `Proxy` analog
   forwarding. Per-pixel seams stay raw; surfaces keep raw `width`/`height`.
 - **R3 ● Decal** — GPU-resident surface; modes/structures; instance batching.
+  `DecalPatch` (v2.30 "Patches") is treated here, with the decal drawing this
+  concept already covers (2026-09-10).
 - **R4 ● Renderer/pipeline** — Renderer service + platform backends; staging
   buffers platform-internal.
 - **R5 ● GL** — facade + GLService (LWJGL GL33 / WebGL2 + multi-draw) + GL
@@ -332,7 +341,8 @@ at its touch-point)
 → `C3` native memory (S1 — Task-5 code fate decided here)
 → `C5` surface → `S5` PNG codec → `C6` raster ops → vector/point
 (`Int2D`/`Float2D` — closed 2026-09-09) → `R2` viewport/clipping
-(clears the C6 partial-OOB `drawLine` debt + S3's `Viewport.Bounded`)
+(closed 2026-09-10; cleared the C6 partial-OOB `drawLine` debt + S3's
+`Viewport.Bounded`)
 → `C8` state (E3) → `C9` renderer/GL/decals (R5 → R4 → R3)
 → `C10` engine (E1 loop/window + E2 addons + E4 KeyCode/InputAction)
 → `R6` elaborate text (shaping + rasterization + atlas + blit — the final
@@ -347,6 +357,23 @@ ported**. The old `C7` (simple text) is removed as a concept — there is no
 rasterization, atlas, blit), after `C9`+`C10`. This keeps the font backend out
 of the critical path and avoids a provisional text API a later concept must
 break (roadmap "no throwaway commits").
+
+**2026-09-10 post-R2 additions (owner).** After `R2`, three sessions, in order:
+(1) **circle octant masks** — on both handlers, `drawCircle` *and* `fillCircle`
+(a C6 raster widening; `main` had `CircleOctantMask` on both, olc only on the
+outline — the owner wants both); (2) **draw-sprite service changes** —
+`DrawPartialSprite` (a source sub-rect blit) and `SpritePatch` (v2.30
+"Patches"); (3) **full `Pixmap` bounds (views/windows)**. R2 added
+`Pixmap : Viewport.Bounded` as the full-surface case only: the lower bound is
+pinned to `(0,0)` and `width`/`height` are the source of truth. That is too
+restrictive — a surface that is a *window* over another needs an arbitrary
+inclusive lower bound and dimensions derived from the bounds, with the whole
+raster stack (the `DrawService` bounds check, the clip, the fill fast paths and
+the blit) reading the bounds instead of assuming an origin at `(0,0)`. This
+session revisits the whole `Pixmap` bounds contract; detail at its own
+touch-point. `DecalPatch` is **not** here: it does not make sense before the
+decal itself, so it is treated together with the decal drawing already covered
+by `R3`.
 
 Ordering invariants (fixed): DI foundation before any service; provider +
 lifecycle before the surface creation service; Pixel before raster; surface
@@ -485,4 +512,5 @@ divergence facts are in the decisions log.
 blit) becomes the **final** concept `R6`, after `R2`/`C8`/`C9`/`C10`. The
 `main` bitmap font is not ported. Rationale and the font-library research
 (FreeType/HarfBuzz across JVM + js + wasmJs, candidate stacks, UNVERIFIED
-items to spike) are in the decisions log. Next concept: `R2` (viewport/clip).
+items to spike) are in the decisions log. Next concept: `R2` (viewport/clip);
+after it — circle masks → partial sprite + sprite patch.

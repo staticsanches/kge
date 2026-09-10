@@ -1,5 +1,7 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.rasterizer.Viewport
 import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.min
@@ -12,7 +14,9 @@ import kotlin.math.min
  * not throw — [get] follows the [sampleMode] policy and [sample]/[sampleBL]
  * dispatch through it, so sampling is mode-aware everywhere.
  */
-interface Pixmap : Sequence<Pixel> {
+interface Pixmap :
+    Sequence<Pixel>,
+    Viewport.Bounded {
     /**
      * The out-of-bounds policy of the surface: NORMAL reads transparent,
      * PERIODIC wraps by `abs(coord % dimension)`, CLAMP snaps to the nearest
@@ -25,6 +29,12 @@ interface Pixmap : Sequence<Pixel> {
     val height: Int
 
     val sampleMode: SampleMode
+
+    override val lowerBoundInclusive: Int2D
+        get() = Int2D.ZERO
+
+    override val upperBoundExclusive: Int2D
+        get() = Int2D(width, height)
 
     /**
      * Reads the pixel at ([x], [y]), never throwing — the out-of-bounds value

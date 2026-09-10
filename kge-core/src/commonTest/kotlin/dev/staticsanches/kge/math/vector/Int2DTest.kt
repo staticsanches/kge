@@ -29,6 +29,10 @@ class Int2DTest :
                 Int2D(1, -2).toString() shouldBe "(1, -2)"
                 Int2D(7, 8).toString() shouldBe "(7, 8)"
             }
+
+            test("ZERO is the origin") {
+                Int2D.ZERO shouldBe Int2D(0, 0)
+            }
         }
 
         context("arithmetic") {

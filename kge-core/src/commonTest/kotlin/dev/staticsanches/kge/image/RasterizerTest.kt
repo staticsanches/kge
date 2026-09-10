@@ -313,14 +313,14 @@ class RasterizerTest :
             }
         }
 
-        test("drawLine crossing the edge paints only the visible cells of the walk") {
+        test("drawLine crossing the edge paints only the visible cells of the clipped walk") {
             grid(width = 3, height = 3).use { t ->
                 Rasterizer.drawLine(t, -2, 0, 1, 0, Colors.RED, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 1 to 0)
             }
             grid(width = 3, height = 3).use { t ->
                 Rasterizer.drawLine(t, 0, -2, 1, 1, Colors.RED, Pixel.Mode.Normal)
-                painted(t) shouldBe setOf(1 to 0, 1 to 1)
+                painted(t) shouldBe setOf(0 to 0, 0 to 1)
             }
         }
 

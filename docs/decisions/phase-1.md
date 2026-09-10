@@ -44,3 +44,4 @@ cross-references).
 | [`12-raster-c6.md`](phase-1/12-raster-c6.md) | 35 | C6 (R1) raster: touch-point, close, post-close fixes | 2026-09-08/09 |
 | [`13-vector-point.md`](phase-1/13-vector-point.md) | — | `Int2D`/`Float2D` + typed raster overloads | 2026-09-09 |
 | [`14-text-r6.md`](phase-1/14-text-r6.md) | — | Ordering revision (elaborate text last, `C7` dropped) + font-library research | 2026-09-10 |
+| [`15-viewport-r2.md`](phase-1/15-viewport-r2.md) | — | R2 viewport/clipping: touch-point + close (pure `Viewport`, `ClipService` seam, `Pixmap : Viewport.Bounded`, drawLine clip-then-walk parity) | 2026-09-10 |
