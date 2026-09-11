@@ -1,11 +1,14 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.rasterizer.CircleOctantMask
 import dev.staticsanches.kge.rasterizer.Rasterizer
+import dev.staticsanches.kge.rasterizer.service.FillService
 import dev.staticsanches.kge.rasterizer.service.OutlineService
 import dev.staticsanches.kge.resource.applyClosingIfFailed
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 
 /**
  * The typed `Int2D` overloads on the raster sub-service interfaces, exposed
@@ -70,9 +73,33 @@ class RasterizerPointOverloadTest :
             test("typed drawCircle paints the same cells as the raw circle") {
                 target().use { typed ->
                     target().use { raw ->
-                        Rasterizer.drawCircle(typed, Int2D(3, 3), 2, Colors.RED, Pixel.Mode.Normal)
-                        Rasterizer.drawCircle(raw, 3, 3, 2, Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer
+                            .drawCircle(typed, Int2D(3, 3), 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer.drawCircle(raw, 3, 3, 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
                         grid(typed) shouldBe grid(raw)
+                    }
+                }
+            }
+
+            test("typed and aggregate drawCircle forward a non-ALL mask to the raw service") {
+                val mask = CircleOctantMask.O1
+                target().use { typed ->
+                    target().use { raw ->
+                        target().use { reference ->
+                            Rasterizer
+                                .drawCircle(typed, Int2D(3, 3), 2, mask, Colors.RED, Pixel.Mode.Normal)
+                            Rasterizer.drawCircle(raw, 3, 3, 2, mask, Colors.RED, Pixel.Mode.Normal)
+                            OutlineService.drawCircle(reference, 3, 3, 2, mask, Colors.RED, Pixel.Mode.Normal)
+                            grid(typed) shouldBe grid(reference)
+                            grid(raw) shouldBe grid(reference)
+                        }
+                    }
+                }
+                target().use { masked ->
+                    target().use { all ->
+                        OutlineService.drawCircle(masked, 3, 3, 2, CircleOctantMask.O1, Colors.RED, Pixel.Mode.Normal)
+                        OutlineService.drawCircle(all, 3, 3, 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
+                        grid(masked) shouldNotBe grid(all)
                     }
                 }
             }
@@ -129,9 +156,34 @@ class RasterizerPointOverloadTest :
             test("typed fillCircle paints the same rows as the raw circle") {
                 target().use { typed ->
                     target().use { raw ->
-                        Rasterizer.fillCircle(typed, Int2D(3, 3), 2, Colors.RED, Pixel.Mode.Normal)
-                        Rasterizer.fillCircle(raw, 3, 3, 2, Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer
+                            .fillCircle(typed, Int2D(3, 3), 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer.fillCircle(raw, 3, 3, 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
                         grid(typed) shouldBe grid(raw)
+                    }
+                }
+            }
+
+            test("typed and aggregate fillCircle forward a non-ALL mask to the raw service") {
+                val mask = CircleOctantMask.O1 or CircleOctantMask.O2
+                target().use { typed ->
+                    target().use { raw ->
+                        target().use { reference ->
+                            Rasterizer
+                                .fillCircle(typed, Int2D(3, 3), 2, mask, Colors.RED, Pixel.Mode.Normal)
+                            Rasterizer.fillCircle(raw, 3, 3, 2, mask, Colors.RED, Pixel.Mode.Normal)
+                            FillService.fillCircle(reference, 3, 3, 2, mask, Colors.RED, Pixel.Mode.Normal)
+                            grid(typed) shouldBe grid(reference)
+                            grid(raw) shouldBe grid(reference)
+                        }
+                    }
+                }
+                target().use { masked ->
+                    target().use { all ->
+                        FillService
+                            .fillCircle(masked, 3, 3, 2, mask, Colors.RED, Pixel.Mode.Normal)
+                        FillService.fillCircle(all, 3, 3, 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
+                        grid(masked) shouldNotBe grid(all)
                     }
                 }
             }
@@ -139,13 +191,18 @@ class RasterizerPointOverloadTest :
             test("typed fillCircle honors Mask like the raw fill") {
                 target().use { typed ->
                     target().use { raw ->
-                        Rasterizer.fillCircle(typed, Int2D(3, 3), 2, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask)
-                        Rasterizer.fillCircle(raw, 3, 3, 2, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask)
+                        Rasterizer.fillCircle(
+                            typed, Int2D(3, 3), 2, CircleOctantMask.ALL, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask,
+                        )
+                        Rasterizer
+                            .fillCircle(raw, 3, 3, 2, CircleOctantMask.ALL, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask)
                         grid(typed) shouldBe grid(raw)
                     }
                 }
                 target().use { t ->
-                    Rasterizer.fillCircle(t, Int2D(3, 3), 2, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask)
+                    Rasterizer.fillCircle(
+                        t, Int2D(3, 3), 2, CircleOctantMask.ALL, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask,
+                    )
                     grid(t) shouldBe List(64) { Colors.TRANSPARENT }
                 }
             }
@@ -275,9 +332,10 @@ class RasterizerPointOverloadTest :
                                 cx: Int,
                                 cy: Int,
                                 radius: Int,
+                                mask: CircleOctantMask,
                                 color: Pixel,
                                 mode: Pixel.Mode,
-                            ) = original.drawCircle(target, cx, cy, radius, color, mode)
+                            ) = original.drawCircle(target, cx, cy, radius, mask, color, mode)
 
                             override fun drawTriangle(
                                 target: Pixmap.Mutable,
@@ -314,8 +372,78 @@ class RasterizerPointOverloadTest :
                         },
                     )
 
-                    Rasterizer.drawCircle(t, Int2D(4, 4), 2, Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawCircle(t, Int2D(4, 4), 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
                     grid(t).count { it == Colors.RED } shouldBe 12
+                }
+            }
+
+            test("a by-wrapped decorator overriding the masked drawCircle is observed, and resetAll restores it") {
+                target().use { t ->
+                    val original = OutlineService.original
+                    var circleCalls = 0
+                    OutlineService.override(
+                        object : OutlineService by original {
+                            override fun drawCircle(
+                                target: Pixmap.Mutable,
+                                cx: Int,
+                                cy: Int,
+                                radius: Int,
+                                mask: CircleOctantMask,
+                                color: Pixel,
+                                mode: Pixel.Mode,
+                            ) {
+                                circleCalls++
+                                original.drawCircle(target, cx, cy, radius, mask, Colors.BLUE, mode)
+                            }
+                        },
+                    )
+
+                    Rasterizer.drawCircle(t, 3, 3, 2, CircleOctantMask.O1, Colors.RED, Pixel.Mode.Normal)
+                    circleCalls shouldBe 1
+                    t.get(3, 1) shouldBe Colors.BLUE
+
+                    dev.staticsanches.kge.overridable.KGEOverridable.Proxy
+                        .resetAll()
+
+                    target().use { restored ->
+                        Rasterizer.drawCircle(restored, 3, 3, 2, CircleOctantMask.O1, Colors.RED, Pixel.Mode.Normal)
+                        restored.get(3, 1) shouldBe Colors.RED
+                    }
+                }
+            }
+
+            test("a by-wrapped decorator overriding the masked fillCircle is observed, and resetAll restores it") {
+                target().use { t ->
+                    val original = FillService.original
+                    var circleCalls = 0
+                    FillService.override(
+                        object : FillService by original {
+                            override fun fillCircle(
+                                target: Pixmap.Mutable,
+                                cx: Int,
+                                cy: Int,
+                                radius: Int,
+                                mask: CircleOctantMask,
+                                color: Pixel,
+                                mode: Pixel.Mode,
+                            ) {
+                                circleCalls++
+                                original.fillCircle(target, cx, cy, radius, mask, Colors.BLUE, mode)
+                            }
+                        },
+                    )
+
+                    Rasterizer.fillCircle(t, 3, 3, 2, CircleOctantMask.O1, Colors.RED, Pixel.Mode.Normal)
+                    circleCalls shouldBe 1
+                    t.get(3, 1) shouldBe Colors.BLUE
+
+                    dev.staticsanches.kge.overridable.KGEOverridable.Proxy
+                        .resetAll()
+
+                    target().use { restored ->
+                        Rasterizer.fillCircle(restored, 3, 3, 2, CircleOctantMask.O1, Colors.RED, Pixel.Mode.Normal)
+                        restored.get(3, 1) shouldBe Colors.RED
+                    }
                 }
             }
 

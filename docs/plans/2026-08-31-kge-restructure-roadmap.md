@@ -184,8 +184,8 @@ internal helper.
 - **R1 ● Raster ops** — primitives over a surface; fast bulk paths; pixel modes
   (Normal/Mask/Alpha/Custom) + blend resolution math — moved here from S2 at the C4
   touch-point (log #24): the modes' only consumers are raster. Circle octant
-  masks on `drawCircle`/`fillCircle` are deferred to a post-R2 raster widening
-  (2026-09-10).
+  masks on `drawCircle`/`fillCircle` — the post-R2 raster widening — **closed
+  2026-09-11** (decisions-log #17).
 - **R2 ● Viewport/clipping** — pure clip math. **Closed 2026-09-10
   (decisions-log entry).** The pure `Viewport` sealed type (`contains`, full
   hierarchy) + the `ClipService` seam (fifth raster sub-service, olc
@@ -359,9 +359,11 @@ break (roadmap "no throwaway commits").
 
 **2026-09-10 post-R2 additions (owner).** After `R2`, three sessions:
 (2)+(3) **window + partial blit + raw-backing optimization — done (2026-09-10,
-decisions log #16)**; (1) **circle octant masks** remains — on both handlers,
-`drawCircle` *and* `fillCircle` (a C6 raster widening; `main` had
-`CircleOctantMask` on both, olc only on the outline — the owner wants both).
+decisions log #16)**; (1) **circle octant masks** — done (2026-09-11, decisions
+log #17), on both handlers `drawCircle` *and* `fillCircle` (a C6 raster
+widening; `main` had `CircleOctantMask` on both, olc only on the outline — the
+owner wanted both; `ALL` stays pixel- and write-count-identical to C6). All
+three post-R2 additions are now closed.
 The window session: a surface that is a *window* over another is a delegating view:
 local `0..size` space and an `origin` offset into the source
 (`Pixmap.window` read-only, `Pixmap.Mutable.window` writable); local bounds keep
@@ -518,5 +520,11 @@ divergence facts are in the decisions log.
 blit) becomes the **final** concept `R6`, after `R2`/`C8`/`C9`/`C10`. The
 `main` bitmap font is not ported. Rationale and the font-library research
 (FreeType/HarfBuzz across JVM + js + wasmJs, candidate stacks, UNVERIFIED
-items to spike) are in the decisions log. Next concept: `R2` (viewport/clip);
-after it — circle masks → partial sprite + sprite patch.
+items to spike) are in the decisions log.
+
+**2026-09-11 — circle octant masks closed** (decisions-log #17): the
+`CircleOctantMask` type and the required `mask` on `drawCircle`/`fillCircle`
+(raw + `Int2D`, forwarded by `Rasterizer`); `ALL` is pixel- and
+write-count-identical to C6 under every mode, the masked fill gates the C6
+row-span, and `main`'s broken mask-aware `fillCircle` is rejected. The
+post-R2 additions are done. Next concept: `C8` (state, E3).

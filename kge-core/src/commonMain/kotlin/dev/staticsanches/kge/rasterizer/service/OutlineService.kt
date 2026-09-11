@@ -4,6 +4,7 @@ import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
+import dev.staticsanches.kge.rasterizer.CircleOctantMask
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import kotlin.math.abs
 
@@ -52,16 +53,20 @@ interface OutlineService : KGEOverridable {
     )
 
     /**
-     * Draws the reference midpoint circle of [radius] around ([cx], [cy]).
-     * The painted cells are the midpoint rasterization, which can reach
-     * beyond the exact `radius` (integer-arc cells); a radius of zero paints
-     * the center only and a negative radius paints nothing.
+     * Draws the selected octants of the reference midpoint circle of
+     * [radius] around ([cx], [cy]) — see [CircleOctantMask] for the octant
+     * orientation (clockwise from the top) and the odd-octant boundary
+     * ownership. The painted cells are the midpoint rasterization, which can
+     * reach beyond the exact `radius` (integer-arc cells). A
+     * [CircleOctantMask.NONE] mask paints nothing; otherwise a radius of
+     * zero paints the center only and a negative radius paints nothing.
      */
     fun drawCircle(
         target: Pixmap.Mutable,
         cx: Int,
         cy: Int,
         radius: Int,
+        mask: CircleOctantMask,
         color: Pixel,
         mode: Pixel.Mode,
     )
@@ -109,9 +114,10 @@ interface OutlineService : KGEOverridable {
         target: Pixmap.Mutable,
         center: Int2D,
         radius: Int,
+        mask: CircleOctantMask,
         color: Pixel,
         mode: Pixel.Mode,
-    ): Unit = drawCircle(target, center.x, center.y, radius, color, mode)
+    ): Unit = drawCircle(target, center.x, center.y, radius, mask, color, mode)
 
     /** The [Int2D] form of [drawTriangle] — unpacks the vertices to the raw method. */
     fun drawTriangle(
@@ -151,9 +157,10 @@ interface OutlineService : KGEOverridable {
             cx: Int,
             cy: Int,
             radius: Int,
+            mask: CircleOctantMask,
             color: Pixel,
             mode: Pixel.Mode,
-        ) = delegate.drawCircle(target, cx, cy, radius, color, mode)
+        ) = delegate.drawCircle(target, cx, cy, radius, mask, color, mode)
 
         override fun drawTriangle(
             target: Pixmap.Mutable,
@@ -187,9 +194,10 @@ interface OutlineService : KGEOverridable {
             target: Pixmap.Mutable,
             center: Int2D,
             radius: Int,
+            mask: CircleOctantMask,
             color: Pixel,
             mode: Pixel.Mode,
-        ) = delegate.drawCircle(target, center, radius, color, mode)
+        ) = delegate.drawCircle(target, center, radius, mask, color, mode)
 
         override fun drawTriangle(
             target: Pixmap.Mutable,
@@ -320,10 +328,11 @@ private val outlineServiceDefault: OutlineService =
             cx: Int,
             cy: Int,
             radius: Int,
+            mask: CircleOctantMask,
             color: Pixel,
             mode: Pixel.Mode,
         ) {
-            if (!circleTouchesTarget(target, cx, cy, radius)) return
+            if (mask == CircleOctantMask.NONE || !circleTouchesTarget(target, cx, cy, radius)) return
 
             if (radius == 0) {
                 DrawService.draw(target, cx, cy, color, mode)
@@ -334,15 +343,15 @@ private val outlineServiceDefault: OutlineService =
             var y = radius
             var d = 3 - 2 * radius
             while (y >= x) {
-                DrawService.draw(target, cx + x, cy - y, color, mode)
-                DrawService.draw(target, cx + y, cy + x, color, mode)
-                DrawService.draw(target, cx - x, cy + y, color, mode)
-                DrawService.draw(target, cx - y, cy - x, color, mode)
+                if (CircleOctantMask.O1 intersects mask) DrawService.draw(target, cx + x, cy - y, color, mode)
+                if (CircleOctantMask.O3 intersects mask) DrawService.draw(target, cx + y, cy + x, color, mode)
+                if (CircleOctantMask.O5 intersects mask) DrawService.draw(target, cx - x, cy + y, color, mode)
+                if (CircleOctantMask.O7 intersects mask) DrawService.draw(target, cx - y, cy - x, color, mode)
                 if (x != 0 && x != y) {
-                    DrawService.draw(target, cx + y, cy - x, color, mode)
-                    DrawService.draw(target, cx + x, cy + y, color, mode)
-                    DrawService.draw(target, cx - y, cy + x, color, mode)
-                    DrawService.draw(target, cx - x, cy - y, color, mode)
+                    if (CircleOctantMask.O2 intersects mask) DrawService.draw(target, cx + y, cy - x, color, mode)
+                    if (CircleOctantMask.O4 intersects mask) DrawService.draw(target, cx + x, cy + y, color, mode)
+                    if (CircleOctantMask.O6 intersects mask) DrawService.draw(target, cx - y, cy + x, color, mode)
+                    if (CircleOctantMask.O8 intersects mask) DrawService.draw(target, cx - x, cy - y, color, mode)
                 }
                 if (d < 0) {
                     d += 4 * x + 6

@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.rasterizer.CircleOctantMask
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.service.DrawService
 import dev.staticsanches.kge.rasterizer.service.FillService
@@ -9,6 +10,9 @@ import dev.staticsanches.kge.resource.applyClosingIfFailed
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
 
 /**
  * The raster aggregate ([Rasterizer]) over its sub-services. Every pixel-mode
@@ -338,6 +342,57 @@ class RasterizerTest :
             cy: Int,
         ): Set<Pair<Int, Int>> = cells.map { (x, y) -> (x + cx) to (y + cy) }.toSet()
 
+        val circleOctants =
+            listOf(
+                CircleOctantMask.O1,
+                CircleOctantMask.O2,
+                CircleOctantMask.O3,
+                CircleOctantMask.O4,
+                CircleOctantMask.O5,
+                CircleOctantMask.O6,
+                CircleOctantMask.O7,
+                CircleOctantMask.O8,
+            )
+
+        // An independent wedge oracle: boundary cells (an axis or a diagonal)
+        // are owned by the odd octant, interior cells are classified by the
+        // float angle, and the center belongs to every non-NONE mask.
+        fun oracleInMask(
+            mask: CircleOctantMask,
+            dx: Int,
+            dy: Int,
+        ): Boolean {
+            if (dx == 0 && dy == 0) return mask != CircleOctantMask.NONE
+            val ax = abs(dx)
+            val ay = abs(dy)
+            val octant =
+                when {
+                    ay == 0 -> if (dx > 0) CircleOctantMask.O3 else CircleOctantMask.O7
+                    ax == 0 -> if (dy < 0) CircleOctantMask.O1 else CircleOctantMask.O5
+                    ax == ay ->
+                        if (dy < 0) {
+                            if (dx > 0) CircleOctantMask.O1 else CircleOctantMask.O7
+                        } else {
+                            if (dx > 0) CircleOctantMask.O3 else CircleOctantMask.O5
+                        }
+                    else -> {
+                        val angle = atan2(dy.toDouble(), dx.toDouble()) * 180.0 / PI
+                        val sector = ((((angle % 360.0) + 360.0) % 360.0) / 45.0).toInt() % 8
+                        when (sector) {
+                            0 -> CircleOctantMask.O3
+                            1 -> CircleOctantMask.O4
+                            2 -> CircleOctantMask.O5
+                            3 -> CircleOctantMask.O6
+                            4 -> CircleOctantMask.O7
+                            5 -> CircleOctantMask.O8
+                            6 -> CircleOctantMask.O1
+                            else -> CircleOctantMask.O2
+                        }
+                    }
+                }
+            return octant.intersects(mask)
+        }
+
         test("drawRect draws the inclusive box perimeter") {
             grid(width = 8, height = 8).use { t ->
                 Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, Pixel.Mode.Normal)
@@ -383,27 +438,82 @@ class RasterizerTest :
             }
         }
 
-        test("drawCircle r=2 paints the reference midpoint ring cells") {
+        test("drawCircle r=2 with ALL paints the reference midpoint ring cells") {
             grid().use { t ->
-                Rasterizer.drawCircle(t, 4, 4, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawCircle(t, 4, 4, 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
                 painted(t) shouldBe shifted(ringR2, 4, 4)
             }
         }
 
-        test("drawCircle radius 0 paints the center, a negative radius paints nothing") {
+        test("drawCircle paints exactly the ring cells of a single selected octant") {
             grid().use { t ->
-                Rasterizer.drawCircle(t, 4, 4, 0, Colors.RED, Pixel.Mode.Normal)
+                val ring = shifted(ringR2, 4, 4)
+                for (octant in circleOctants) {
+                    t.clear(Colors.TRANSPARENT)
+                    Rasterizer.drawCircle(t, 4, 4, 2, octant, Colors.RED, Pixel.Mode.Normal)
+                    val expected = ring.filter { (x, y) -> oracleInMask(octant, x - 4, y - 4) }.toSet()
+                    painted(t) shouldBe expected
+                }
+            }
+        }
+
+        test("drawCircle with the two NE octants paints the NE quadrant of the ring") {
+            grid().use { t ->
+                val ne = CircleOctantMask.O1 or CircleOctantMask.O2
+                Rasterizer.drawCircle(t, 4, 4, 2, ne, Colors.RED, Pixel.Mode.Normal)
+                val expected = shifted(ringR2, 4, 4).filter { (x, y) -> oracleInMask(ne, x - 4, y - 4) }.toSet()
+                painted(t) shouldBe expected
+            }
+        }
+
+        test("drawCircle odd octants own the diagonal boundary at a radius whose arc reaches it") {
+            val cx = 4
+            val cy = 4
+            val radius = 3
+            val pairs =
+                listOf(
+                    Triple(CircleOctantMask.O1, CircleOctantMask.O2, 2 to -2),
+                    Triple(CircleOctantMask.O3, CircleOctantMask.O4, 2 to 2),
+                    Triple(CircleOctantMask.O5, CircleOctantMask.O6, -2 to 2),
+                    Triple(CircleOctantMask.O7, CircleOctantMask.O8, -2 to -2),
+                )
+            for ((odd, even, delta) in pairs) {
+                grid().use { t ->
+                    Rasterizer.drawCircle(t, cx, cy, radius, odd, Colors.RED, Pixel.Mode.Normal)
+                    t.get(cx + delta.first, cy + delta.second) shouldBe Colors.RED
+                }
+                grid().use { t ->
+                    Rasterizer.drawCircle(t, cx, cy, radius, even, Colors.RED, Pixel.Mode.Normal)
+                    t.get(cx + delta.first, cy + delta.second) shouldBe Colors.TRANSPARENT
+                }
+            }
+        }
+
+        test("drawCircle with NONE paints nothing, even at radius 0") {
+            grid().use { t ->
+                Rasterizer.drawCircle(t, 4, 4, 2, CircleOctantMask.NONE, Colors.RED, Pixel.Mode.Normal)
+                painted(t) shouldBe emptySet()
+            }
+            grid().use { t ->
+                Rasterizer.drawCircle(t, 4, 4, 0, CircleOctantMask.NONE, Colors.RED, Pixel.Mode.Normal)
+                painted(t) shouldBe emptySet()
+            }
+        }
+
+        test("drawCircle radius 0 with a selected octant paints the center, a negative radius nothing") {
+            grid().use { t ->
+                Rasterizer.drawCircle(t, 4, 4, 0, CircleOctantMask.O1, Colors.RED, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(4 to 4)
             }
             grid().use { t ->
-                Rasterizer.drawCircle(t, 4, 4, -1, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawCircle(t, 4, 4, -1, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
                 painted(t) shouldBe emptySet()
             }
         }
 
         test("drawCircle honors Mask by dropping a non-opaque color") {
             grid().use { t ->
-                Rasterizer.drawCircle(t, 4, 4, 2, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask)
+                Rasterizer.drawCircle(t, 4, 4, 2, CircleOctantMask.ALL, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask)
                 painted(t) shouldBe emptySet()
             }
         }
@@ -418,27 +528,199 @@ class RasterizerTest :
                 }
             }
 
-        test("fillCircle r=2 paints the reference midpoint rows") {
+        val fillR5 =
+            buildSet {
+                for (dy in -5..5) {
+                    val dxMax =
+                        when (abs(dy)) {
+                            0, 1, 2 -> 5
+                            3 -> 4
+                            4 -> 3
+                            else -> 2
+                        }
+                    for (dx in -dxMax..dxMax) {
+                        add(dx to dy)
+                    }
+                }
+            }
+
+        test("fillCircle r=2 with ALL paints the reference midpoint rows") {
             grid().use { t ->
-                Rasterizer.fillCircle(t, 4, 4, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.fillCircle(t, 4, 4, 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
                 painted(t) shouldBe shifted(fillR2, 4, 4)
             }
         }
 
-        test("fillCircle radius 0 paints the center, a negative radius paints nothing") {
+        test("fillCircle r=5 with ALL paints the independently pinned row-span disc") {
+            grid(width = 14, height = 14).use { t ->
+                Rasterizer.fillCircle(t, 7, 7, 5, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
+                painted(t) shouldBe shifted(fillR5, 7, 7)
+            }
+        }
+
+        test("fillCircle paints exactly the disc cells of a single selected octant") {
+            for (radius in listOf(2, 5, 6)) {
+                val size = 2 * radius + 8
+                val center = radius + 4
+                grid(width = size, height = size).use { t ->
+                    grid(width = size, height = size).use { reference ->
+                        Rasterizer.fillCircle(
+                            reference, center, center, radius, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal,
+                        )
+                        val disc = painted(reference)
+                        for (octant in circleOctants) {
+                            t.clear(Colors.TRANSPARENT)
+                            Rasterizer.fillCircle(t, center, center, radius, octant, Colors.RED, Pixel.Mode.Normal)
+                            val expected =
+                                disc.filter { (x, y) -> oracleInMask(octant, x - center, y - center) }.toSet()
+                            painted(t) shouldBe expected
+                        }
+                    }
+                }
+            }
+        }
+
+        test("fillCircle with a quadrant of octants paints that quadrant of the disc") {
+            grid(width = 16, height = 16).use { t ->
+                grid(width = 16, height = 16).use { reference ->
+                    Rasterizer.fillCircle(reference, 8, 8, 6, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
+                    val disc = painted(reference)
+                    val ne = CircleOctantMask.O1 or CircleOctantMask.O2
+                    Rasterizer.fillCircle(t, 8, 8, 6, ne, Colors.RED, Pixel.Mode.Normal)
+                    val expected = disc.filter { (x, y) -> oracleInMask(ne, x - 8, y - 8) }.toSet()
+                    painted(t) shouldBe expected
+                }
+            }
+        }
+
+        test("fillCircle with NONE paints nothing, even at radius 0") {
             grid().use { t ->
-                Rasterizer.fillCircle(t, 4, 4, 0, Colors.RED, Pixel.Mode.Normal)
-                painted(t) shouldBe setOf(4 to 4)
+                Rasterizer.fillCircle(t, 4, 4, 2, CircleOctantMask.NONE, Colors.RED, Pixel.Mode.Normal)
+                painted(t) shouldBe emptySet()
             }
             grid().use { t ->
-                Rasterizer.fillCircle(t, 4, 4, -1, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.fillCircle(t, 4, 4, 0, CircleOctantMask.NONE, Colors.RED, Pixel.Mode.Normal)
                 painted(t) shouldBe emptySet()
             }
         }
 
-        test("fillCircle crossing the edge paints the visible cells of the reference circle") {
+        test("fillCircle radius 0 with a selected octant paints the center, a negative radius nothing") {
+            grid().use { t ->
+                Rasterizer.fillCircle(t, 4, 4, 0, CircleOctantMask.O5, Colors.RED, Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(4 to 4)
+            }
+            grid().use { t ->
+                Rasterizer.fillCircle(t, 4, 4, -1, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
+                painted(t) shouldBe emptySet()
+            }
+        }
+
+        test("fillCircle ALL under Alpha and Mask matches a single per-cell draw over the independent disc") {
+            val radius = 5
+            val size = 14
+            val center = 7
+            val disc = shifted(fillR5, center, center)
+            for (mode in listOf(Pixel.Mode.Alpha(0.5f), Pixel.Mode.Mask)) {
+                grid(width = size, height = size).use { filled ->
+                    grid(width = size, height = size).use { reference ->
+                        Rasterizer.fillRect(filled, 0, 0, size - 1, size - 1, Colors.WHITE, Pixel.Mode.Normal)
+                        Rasterizer.fillRect(reference, 0, 0, size - 1, size - 1, Colors.WHITE, Pixel.Mode.Normal)
+                        Rasterizer.fillCircle(filled, center, center, radius, CircleOctantMask.ALL, Colors.RED, mode)
+                        for ((x, y) in disc) {
+                            Rasterizer.draw(reference, x, y, Colors.RED, mode)
+                        }
+                        for (y in 0 until size) {
+                            for (x in 0 until size) {
+                                filled.get(x, y) shouldBe reference.get(x, y)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        test("a masked fill crossing the edge paints only the visible subset of the selected octant") {
+            val radius = 3
+            val mask = CircleOctantMask.O3
+            val fullSize = 2 * radius + 3
+            val fullCenter = radius + 1
+            val maskedDisc =
+                grid(width = fullSize, height = fullSize).use { full ->
+                    Rasterizer.fillCircle(
+                        full, fullCenter, fullCenter, radius, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal,
+                    )
+                    painted(full)
+                        .filter { (x, y) -> oracleInMask(mask, x - fullCenter, y - fullCenter) }
+                        .map { (x, y) -> (x - fullCenter) to (y - fullCenter) }
+                        .toSet()
+                }
+            val smallSize = 4
+            val smallCx = 1
+            val outOfBounds =
+                maskedDisc.filter { (dx, dy) ->
+                    val x = smallCx + dx
+                    x < 0 || x >= smallSize || dy < 0 || dy >= smallSize
+                }
+            outOfBounds.isNotEmpty() shouldBe true
+
+            grid(width = smallSize, height = smallSize).use { t ->
+                Rasterizer.fillCircle(t, smallCx, 0, radius, mask, Colors.RED, Pixel.Mode.Normal)
+                val expected =
+                    maskedDisc
+                        .map { (dx, dy) -> (smallCx + dx) to dy }
+                        .filter { (x, y) -> x in 0 until smallSize && y in 0 until smallSize }
+                        .toSet()
+                expected.isNotEmpty() shouldBe true
+                painted(t) shouldBe expected
+            }
+        }
+
+        test("a fillCircle octant fully outside the target paints nothing") {
+            grid(width = 4, height = 4).use { t ->
+                Rasterizer.fillCircle(t, -1, -1, 2, CircleOctantMask.O8, Colors.RED, Pixel.Mode.Normal)
+                painted(t) shouldBe emptySet()
+            }
+        }
+
+        test("a masked outline crossing the edge paints only the visible arc cells") {
+            val radius = 4
+            val mask = CircleOctantMask.O3
+            val fullSize = 2 * radius + 3
+            val fullCenter = radius + 1
+            val maskedRing =
+                grid(width = fullSize, height = fullSize).use { full ->
+                    Rasterizer.drawCircle(
+                        full, fullCenter, fullCenter, radius, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal,
+                    )
+                    painted(full)
+                        .filter { (x, y) -> oracleInMask(mask, x - fullCenter, y - fullCenter) }
+                        .map { (x, y) -> (x - fullCenter) to (y - fullCenter) }
+                        .toSet()
+                }
+            val smallSize = 6
+            val smallCx = 2
+            val outOfBounds =
+                maskedRing.filter { (dx, dy) ->
+                    val x = smallCx + dx
+                    x < 0 || x >= smallSize || dy < 0 || dy >= smallSize
+                }
+            outOfBounds.isNotEmpty() shouldBe true
+
+            grid(width = smallSize, height = smallSize).use { t ->
+                Rasterizer.drawCircle(t, smallCx, 0, radius, mask, Colors.RED, Pixel.Mode.Normal)
+                val expected =
+                    maskedRing
+                        .map { (dx, dy) -> (smallCx + dx) to dy }
+                        .filter { (x, y) -> x in 0 until smallSize && y in 0 until smallSize }
+                        .toSet()
+                expected.isNotEmpty() shouldBe true
+                painted(t) shouldBe expected
+            }
+        }
+
+        test("fillCircle ALL crossing the edge paints the visible cells of the reference circle") {
             grid(width = 5, height = 5).use { t ->
-                Rasterizer.fillCircle(t, 0, 0, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.fillCircle(t, 0, 0, 2, CircleOctantMask.ALL, Colors.RED, Pixel.Mode.Normal)
                 val visible =
                     fillR2.filter { (x, y) -> x in 0..4 && y in 0..4 }.toSet()
                 painted(t) shouldBe visible

@@ -43,9 +43,11 @@ C6 partial-OOB debt. **Window + partial blit (closed 2026-09-10, log #16)**:
 the nested `Pixmap.Mutable`/`Pixmap.RawBacked`, the anonymous `Pixmap.window`
 views, `BlitService`/`blit`/`blitRegion` over a `Pixmap` source (the
 `DrawSpriteService` rename), `Flip` moved to `Pixmap`, and
-`Sprite.byteBuffer` retired for `RawBacked.buffer`. Next: the post-R2 raster
-widening (circle octant masks), per the roadmap; no renderer or engine loop
-yet.
+`Sprite.byteBuffer` retired for `RawBacked.buffer`. **Circle octant masks
+(closed 2026-09-11, log #17)**: the `CircleOctantMask` type and the required
+`mask` on `drawCircle`/`fillCircle` (raw + `Int2D`, forwarded by `Rasterizer`)
+— `ALL` is the untouched C6 behavior. Next: `C8` (state), per the roadmap; no
+renderer or engine loop yet.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the
