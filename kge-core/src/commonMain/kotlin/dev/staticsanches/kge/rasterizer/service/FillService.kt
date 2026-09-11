@@ -1,18 +1,18 @@
 package dev.staticsanches.kge.rasterizer.service
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.buffer.fillInts
-import dev.staticsanches.kge.image.MutablePixmap
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
 /**
  * The fill family: solid rectangles, circles and triangles over a
- * [MutablePixmap]. Every painted cell resolves its [Pixel.Mode] through
+ * [Pixmap.Mutable]. Every painted cell resolves its [Pixel.Mode] through
  * [DrawService.draw] via the [Rasterizer] aggregate; a collinear
- * triangle fills the line through [OutlineService.drawLine]. A [Sprite]
+ * triangle fills the line through [OutlineService.drawLine]. A raw-backed
  * target additionally enables the private raw-row fast paths.
  */
 interface FillService : KGEOverridable {
@@ -23,7 +23,7 @@ interface FillService : KGEOverridable {
      * clipped away; a rectangle with no pixel in common paints nothing.
      */
     fun fillRect(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         x0: Int,
         y0: Int,
         x1: Int,
@@ -38,7 +38,7 @@ interface FillService : KGEOverridable {
      * paints the center only and a negative radius paints nothing.
      */
     fun fillCircle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         cx: Int,
         cy: Int,
         radius: Int,
@@ -56,7 +56,7 @@ interface FillService : KGEOverridable {
      * draw the line between the farthest pair.
      */
     fun fillTriangle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         x0: Int,
         y0: Int,
         x1: Int,
@@ -69,7 +69,7 @@ interface FillService : KGEOverridable {
 
     /** The [Int2D] form of [fillRect] — unpacks the diagonal corners to the raw method. */
     fun fillRect(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         diagonalStart: Int2D,
         diagonalEnd: Int2D,
         color: Pixel,
@@ -78,7 +78,7 @@ interface FillService : KGEOverridable {
 
     /** The [Int2D] form of [fillCircle] — unpacks the center to the raw method. */
     fun fillCircle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         center: Int2D,
         radius: Int,
         color: Pixel,
@@ -87,7 +87,7 @@ interface FillService : KGEOverridable {
 
     /** The [Int2D] form of [fillTriangle] — unpacks the vertices to the raw method. */
     fun fillTriangle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         p0: Int2D,
         p1: Int2D,
         p2: Int2D,
@@ -99,7 +99,7 @@ interface FillService : KGEOverridable {
         KGEOverridable.Proxy<FillService>(FillService::class, fillServiceDefault),
         FillService {
         override fun fillRect(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -109,7 +109,7 @@ interface FillService : KGEOverridable {
         ) = delegate.fillRect(target, x0, y0, x1, y1, color, mode)
 
         override fun fillCircle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             cx: Int,
             cy: Int,
             radius: Int,
@@ -118,7 +118,7 @@ interface FillService : KGEOverridable {
         ) = delegate.fillCircle(target, cx, cy, radius, color, mode)
 
         override fun fillTriangle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -130,7 +130,7 @@ interface FillService : KGEOverridable {
         ) = delegate.fillTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
 
         override fun fillRect(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             diagonalStart: Int2D,
             diagonalEnd: Int2D,
             color: Pixel,
@@ -138,7 +138,7 @@ interface FillService : KGEOverridable {
         ) = delegate.fillRect(target, diagonalStart, diagonalEnd, color, mode)
 
         override fun fillCircle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             center: Int2D,
             radius: Int,
             color: Pixel,
@@ -146,7 +146,7 @@ interface FillService : KGEOverridable {
         ) = delegate.fillCircle(target, center, radius, color, mode)
 
         override fun fillTriangle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             p0: Int2D,
             p1: Int2D,
             p2: Int2D,
@@ -157,10 +157,11 @@ interface FillService : KGEOverridable {
 }
 
 /** The platform-independent default — the algorithms are pure CPU over the surface accessors. */
+@OptIn(KGESensitiveAPI::class)
 private val fillServiceDefault: FillService =
     object : FillService {
         override fun fillRect(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -179,7 +180,7 @@ private val fillServiceDefault: FillService =
             val clipRight = minOf(right, target.width - 1)
             val clipBottom = minOf(bottom, target.height - 1)
 
-            if (target is Sprite && mode == Pixel.Mode.Normal) {
+            if (target is Pixmap.RawBacked && mode == Pixel.Mode.Normal) {
                 // the raw row fast path: NORMAL ignores alpha, so the int
                 // pattern fill matches the draw seam verbatim write
                 fillRectRawRows(target, clipLeft, clipTop, clipRight, clipBottom, color)
@@ -194,7 +195,7 @@ private val fillServiceDefault: FillService =
         }
 
         override fun fillCircle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             cx: Int,
             cy: Int,
             radius: Int,
@@ -231,7 +232,7 @@ private val fillServiceDefault: FillService =
         }
 
         override fun fillTriangle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -316,7 +317,7 @@ private fun edgeContains(
 }
 
 private fun fillRow(
-    target: MutablePixmap,
+    target: Pixmap.Mutable,
     fromX: Int,
     toX: Int,
     y: Int,
@@ -329,16 +330,16 @@ private fun fillRow(
 }
 
 private fun fillRectRawRows(
-    target: Sprite,
+    raw: Pixmap.RawBacked,
     left: Int,
     top: Int,
     right: Int,
     bottom: Int,
     color: Pixel,
 ) {
-    val buffer = target.byteBuffer
+    val buffer = raw.buffer
     val rowLength = right - left + 1
     for (y in top..bottom) {
-        buffer.fillInts((y * target.width + left) * Int.SIZE_BYTES, rowLength, color.nativeRGBA)
+        buffer.fillInts(raw.index(left, y) * Int.SIZE_BYTES, rowLength, color.nativeRGBA)
     }
 }

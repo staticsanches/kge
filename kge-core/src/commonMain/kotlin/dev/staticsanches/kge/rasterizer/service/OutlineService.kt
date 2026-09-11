@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
-import dev.staticsanches.kge.image.MutablePixmap
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Rasterizer
@@ -26,7 +26,7 @@ interface OutlineService : KGEOverridable {
      * step toward the diagonal neighbor wins.
      */
     fun drawLine(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         x0: Int,
         y0: Int,
         x1: Int,
@@ -42,7 +42,7 @@ interface OutlineService : KGEOverridable {
      * corner order paints the same ring and the corners are written twice.
      */
     fun drawRect(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         x0: Int,
         y0: Int,
         x1: Int,
@@ -58,7 +58,7 @@ interface OutlineService : KGEOverridable {
      * the center only and a negative radius paints nothing.
      */
     fun drawCircle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         cx: Int,
         cy: Int,
         radius: Int,
@@ -75,7 +75,7 @@ interface OutlineService : KGEOverridable {
      * with the target paints nothing.
      */
     fun drawTriangle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         x0: Int,
         y0: Int,
         x1: Int,
@@ -88,7 +88,7 @@ interface OutlineService : KGEOverridable {
 
     /** The [Int2D] form of [drawLine] — unpacks the points to the raw method. */
     fun drawLine(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         start: Int2D,
         end: Int2D,
         color: Pixel,
@@ -97,7 +97,7 @@ interface OutlineService : KGEOverridable {
 
     /** The [Int2D] form of [drawRect] — unpacks the diagonal corners to the raw method. */
     fun drawRect(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         diagonalStart: Int2D,
         diagonalEnd: Int2D,
         color: Pixel,
@@ -106,7 +106,7 @@ interface OutlineService : KGEOverridable {
 
     /** The [Int2D] form of [drawCircle] — unpacks the center to the raw method. */
     fun drawCircle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         center: Int2D,
         radius: Int,
         color: Pixel,
@@ -115,7 +115,7 @@ interface OutlineService : KGEOverridable {
 
     /** The [Int2D] form of [drawTriangle] — unpacks the vertices to the raw method. */
     fun drawTriangle(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         p0: Int2D,
         p1: Int2D,
         p2: Int2D,
@@ -127,7 +127,7 @@ interface OutlineService : KGEOverridable {
         KGEOverridable.Proxy<OutlineService>(OutlineService::class, outlineServiceDefault),
         OutlineService {
         override fun drawLine(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -137,7 +137,7 @@ interface OutlineService : KGEOverridable {
         ) = delegate.drawLine(target, x0, y0, x1, y1, color, mode)
 
         override fun drawRect(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -147,7 +147,7 @@ interface OutlineService : KGEOverridable {
         ) = delegate.drawRect(target, x0, y0, x1, y1, color, mode)
 
         override fun drawCircle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             cx: Int,
             cy: Int,
             radius: Int,
@@ -156,7 +156,7 @@ interface OutlineService : KGEOverridable {
         ) = delegate.drawCircle(target, cx, cy, radius, color, mode)
 
         override fun drawTriangle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -168,7 +168,7 @@ interface OutlineService : KGEOverridable {
         ) = delegate.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
 
         override fun drawLine(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             start: Int2D,
             end: Int2D,
             color: Pixel,
@@ -176,7 +176,7 @@ interface OutlineService : KGEOverridable {
         ) = delegate.drawLine(target, start, end, color, mode)
 
         override fun drawRect(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             diagonalStart: Int2D,
             diagonalEnd: Int2D,
             color: Pixel,
@@ -184,7 +184,7 @@ interface OutlineService : KGEOverridable {
         ) = delegate.drawRect(target, diagonalStart, diagonalEnd, color, mode)
 
         override fun drawCircle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             center: Int2D,
             radius: Int,
             color: Pixel,
@@ -192,7 +192,7 @@ interface OutlineService : KGEOverridable {
         ) = delegate.drawCircle(target, center, radius, color, mode)
 
         override fun drawTriangle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             p0: Int2D,
             p1: Int2D,
             p2: Int2D,
@@ -206,7 +206,7 @@ interface OutlineService : KGEOverridable {
 private val outlineServiceDefault: OutlineService =
     object : OutlineService {
         override fun drawLine(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -297,7 +297,7 @@ private val outlineServiceDefault: OutlineService =
         }
 
         override fun drawRect(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -316,7 +316,7 @@ private val outlineServiceDefault: OutlineService =
         }
 
         override fun drawCircle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             cx: Int,
             cy: Int,
             radius: Int,
@@ -355,7 +355,7 @@ private val outlineServiceDefault: OutlineService =
         }
 
         override fun drawTriangle(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x0: Int,
             y0: Int,
             x1: Int,
@@ -381,7 +381,7 @@ private val outlineServiceDefault: OutlineService =
 
 /** Whether the circle around ([cx], [cy]) of [radius] can reach any cell of [target]. */
 internal fun circleTouchesTarget(
-    target: MutablePixmap,
+    target: Pixmap.Mutable,
     cx: Int,
     cy: Int,
     radius: Int,
@@ -394,7 +394,7 @@ internal fun circleTouchesTarget(
 
 /** Collinear vertices: a single [OutlineService.drawLine] between the farthest pair. */
 internal fun drawFarthestPairLine(
-    target: MutablePixmap,
+    target: Pixmap.Mutable,
     x0: Int,
     y0: Int,
     x1: Int,

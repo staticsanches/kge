@@ -85,19 +85,20 @@ class SpriteTest :
 
         test("native storage is RGBA little-endian at (y * width + x) * 4 bytes") {
             sprite(2, 2).use { s ->
+                val buffer = s.buffer
                 s.set(0, 0, Pixel.rgba(1, 2, 3, 4))
-                s.byteBuffer.byteAt(0) shouldBe 1
-                s.byteBuffer.byteAt(1) shouldBe 2
-                s.byteBuffer.byteAt(2) shouldBe 3
-                s.byteBuffer.byteAt(3) shouldBe 4
+                buffer.byteAt(0) shouldBe 1
+                buffer.byteAt(1) shouldBe 2
+                buffer.byteAt(2) shouldBe 3
+                buffer.byteAt(3) shouldBe 4
 
                 s.set(1, 0, Pixel.rgba(5, 6, 7, 8))
-                s.byteBuffer.byteAt(4) shouldBe 5
-                s.byteBuffer.byteAt(7) shouldBe 8
+                buffer.byteAt(4) shouldBe 5
+                buffer.byteAt(7) shouldBe 8
 
                 s.set(0, 1, Pixel.rgba(9, 10, 11, 12))
-                s.byteBuffer.byteAt(8) shouldBe 9
-                s.byteBuffer.byteAt(11) shouldBe 12
+                buffer.byteAt(8) shouldBe 9
+                buffer.byteAt(11) shouldBe 12
             }
         }
 
@@ -112,13 +113,13 @@ class SpriteTest :
             }
         }
 
-        test("byteBuffer is the live raw storage and fails fast after close") {
+        test("the raw buffer is the live storage and fails fast after close") {
             sprite(1, 1).use { s ->
-                s.byteBuffer.putInt(0, Colors.RED.nativeRGBA)
+                s.buffer.putInt(0, Colors.RED.nativeRGBA)
                 s.get(0, 0) shouldBe Colors.RED
 
                 s.close()
-                shouldThrow<IllegalStateException> { s.byteBuffer }
+                shouldThrow<IllegalStateException> { s.buffer }
             }
         }
 

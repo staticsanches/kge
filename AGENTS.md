@@ -39,9 +39,13 @@ rasterization + atlas + blit), shipped **last** as `R6`, after `R2`, `C8`,
 closed 2026-09-10)**: the pure `Viewport` sealed type, the `ClipService` seam
 (fifth raster sub-service, olc `ClipLineToDrawTarget` Cohen–Sutherland),
 `Pixmap : Viewport.Bounded`, and the clip-then-walk `drawLine` that clears the
-C6 partial-OOB debt. Next: the post-R2 raster widening (circle octant masks),
-then the draw-sprite service changes, per the roadmap; no renderer or engine
-loop yet.
+C6 partial-OOB debt. **Window + partial blit (closed 2026-09-10, log #16)**:
+the nested `Pixmap.Mutable`/`Pixmap.RawBacked`, the anonymous `Pixmap.window`
+views, `BlitService`/`blit`/`blitRegion` over a `Pixmap` source (the
+`DrawSpriteService` rename), `Flip` moved to `Pixmap`, and
+`Sprite.byteBuffer` retired for `RawBacked.buffer`. Next: the post-R2 raster
+widening (circle octant masks), per the roadmap; no renderer or engine loop
+yet.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the
@@ -116,9 +120,8 @@ These two are the only active documents; older plans/specs were deleted
   roadmap's three lenses).
 - **Dependencies**: at add-time always use the current release unless a known
   problem exists; record non-obvious findings in the decisions log.
-- **Docs and commit messages in English**; commits end with
-  `Co-Authored-By: Claude Code <noreply@anthropic.com>`; committed documents carry
-  no personal quotes — decisions are recorded by rationale, not by who said them.
+- **Docs and commit messages in English**; committed documents carry no personal
+  quotes — decisions are recorded by rationale, not by who said them.
 - **Commit messages are succinct** (subject + non-obvious core only): a
   one-line subject, then at most a few body lines covering only what is not
   deducible from the diff — the "why", recorded decisions, non-obvious

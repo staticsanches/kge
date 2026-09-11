@@ -23,7 +23,7 @@ class SpriteServiceTest :
                 s.width shouldBe 2
                 s.height shouldBe 1
                 s.sampleMode shouldBe Pixmap.SampleMode.PERIODIC
-                s.byteBuffer.capacity() shouldBe 8
+                s.buffer.capacity() shouldBe 8
             }
         }
 
@@ -104,14 +104,14 @@ class SpriteServiceTest :
             )
 
             SpriteService.create(2, 2, Pixmap.SampleMode.NORMAL, null).use { s ->
-                s.byteBuffer.capacity() shouldBe 16
+                s.buffer.capacity() shouldBe 16
             }
             allocated shouldBe 16
 
             // 16 (create 2x2) + 4 (create 1x1) + 4 (duplicate of 1x1)
             SpriteService.create(1, 1, Pixmap.SampleMode.NORMAL, null).use { src ->
                 SpriteService.duplicate(src).use { dup ->
-                    dup.byteBuffer.capacity() shouldBe 4
+                    dup.buffer.capacity() shouldBe 4
                 }
             }
             allocated shouldBe 24

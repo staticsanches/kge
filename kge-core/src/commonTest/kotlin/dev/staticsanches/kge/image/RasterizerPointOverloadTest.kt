@@ -162,8 +162,8 @@ class RasterizerPointOverloadTest :
             }
         }
 
-        context("DrawSpriteService typed overload") {
-            test("typed drawSprite blits the same pixels as the raw draw") {
+        context("BlitService typed overload") {
+            test("typed blit blits the same pixels as the raw draw") {
                 val cells =
                     mapOf(
                         0 to 0 to Colors.RED,
@@ -174,8 +174,39 @@ class RasterizerPointOverloadTest :
                 spriteOf(2, 2, cells).use { s ->
                     target(width = 6, height = 6).use { typed ->
                         target(width = 6, height = 6).use { raw ->
-                            Rasterizer.drawSprite(typed, Int2D(2, 1), s, 1, Sprite.Flip.NONE, Pixel.Mode.Normal)
-                            Rasterizer.drawSprite(raw, 2, 1, s, 1, Sprite.Flip.NONE, Pixel.Mode.Normal)
+                            Rasterizer.blit(typed, Int2D(2, 1), s, 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
+                            Rasterizer.blit(raw, 2, 1, s, 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
+                            grid(typed) shouldBe grid(raw)
+                        }
+                    }
+                }
+            }
+
+            test("typed blitRegion blits the same pixels as the raw draw") {
+                spriteOf(3, 3, emptyMap()).use { s ->
+                    target(width = 6, height = 6).use { typed ->
+                        target(width = 6, height = 6).use { raw ->
+                            Rasterizer.blitRegion(
+                                typed,
+                                Int2D(2, 1),
+                                s,
+                                Int2D(1, 1),
+                                Int2D(2, 2),
+                                1,
+                                Pixmap.Flip.NONE,
+                                Pixel.Mode.Normal,
+                            )
+                            Rasterizer.blitRegion(
+                                raw,
+                                2,
+                                1,
+                                s,
+                                Int2D(1, 1),
+                                Int2D(2, 2),
+                                1,
+                                Pixmap.Flip.NONE,
+                                Pixel.Mode.Normal,
+                            )
                             grid(typed) shouldBe grid(raw)
                         }
                     }
@@ -183,59 +214,15 @@ class RasterizerPointOverloadTest :
             }
         }
 
-        fun outlineDelegate(original: OutlineService): OutlineService =
-            object : OutlineService {
-                override fun drawLine(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawLine(target, x0, y0, x1, y1, color, mode)
-
-                override fun drawRect(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawRect(target, x0, y0, x1, y1, color, mode)
-
-                override fun drawCircle(
-                    target: MutablePixmap,
-                    cx: Int,
-                    cy: Int,
-                    radius: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawCircle(target, cx, cy, radius, color, mode)
-
-                override fun drawTriangle(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    x2: Int,
-                    y2: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
-            }
-
         context("typed overload extension contract") {
             test("a by-wrapped decorator overriding only the typed drawLine is observed through the typed entry") {
                 target().use { t ->
                     val original = OutlineService.original
                     var typedCalls = 0
                     OutlineService.override(
-                        object : OutlineService by outlineDelegate(original) {
+                        object : OutlineService by original {
                             override fun drawLine(
-                                target: MutablePixmap,
+                                target: Pixmap.Mutable,
                                 start: Int2D,
                                 end: Int2D,
                                 color: Pixel,
@@ -261,7 +248,7 @@ class RasterizerPointOverloadTest :
                     OutlineService.override(
                         object : OutlineService {
                             override fun drawLine(
-                                target: MutablePixmap,
+                                target: Pixmap.Mutable,
                                 x0: Int,
                                 y0: Int,
                                 x1: Int,
@@ -274,7 +261,7 @@ class RasterizerPointOverloadTest :
                             }
 
                             override fun drawRect(
-                                target: MutablePixmap,
+                                target: Pixmap.Mutable,
                                 x0: Int,
                                 y0: Int,
                                 x1: Int,
@@ -284,7 +271,7 @@ class RasterizerPointOverloadTest :
                             ) = original.drawRect(target, x0, y0, x1, y1, color, mode)
 
                             override fun drawCircle(
-                                target: MutablePixmap,
+                                target: Pixmap.Mutable,
                                 cx: Int,
                                 cy: Int,
                                 radius: Int,
@@ -293,7 +280,7 @@ class RasterizerPointOverloadTest :
                             ) = original.drawCircle(target, cx, cy, radius, color, mode)
 
                             override fun drawTriangle(
-                                target: MutablePixmap,
+                                target: Pixmap.Mutable,
                                 x0: Int,
                                 y0: Int,
                                 x1: Int,
@@ -316,9 +303,9 @@ class RasterizerPointOverloadTest :
                 target().use { t ->
                     val original = OutlineService.original
                     OutlineService.override(
-                        object : OutlineService by outlineDelegate(original) {
+                        object : OutlineService by original {
                             override fun drawLine(
-                                target: MutablePixmap,
+                                target: Pixmap.Mutable,
                                 start: Int2D,
                                 end: Int2D,
                                 color: Pixel,
@@ -336,9 +323,9 @@ class RasterizerPointOverloadTest :
                 target().use { t ->
                     val original = OutlineService.original
                     OutlineService.override(
-                        object : OutlineService by outlineDelegate(original) {
+                        object : OutlineService by original {
                             override fun drawLine(
-                                target: MutablePixmap,
+                                target: Pixmap.Mutable,
                                 start: Int2D,
                                 end: Int2D,
                                 color: Pixel,

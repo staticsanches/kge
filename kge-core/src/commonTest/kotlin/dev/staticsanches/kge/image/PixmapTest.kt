@@ -142,12 +142,12 @@ class PixmapTest :
         }
     })
 
-/** Minimal MutablePixmap over an IntArray — only the raw accessors are real. */
-private class PixmapDouble(
+/** Minimal Pixmap.Mutable over an IntArray — only the raw accessors are real. */
+internal class PixmapDouble(
     override val width: Int,
     override val height: Int,
     override var sampleMode: Pixmap.SampleMode = Pixmap.SampleMode.NORMAL,
-) : MutablePixmap {
+) : Pixmap.Mutable {
     private val pixels = IntArray(width * height)
 
     override fun uncheckedGet(

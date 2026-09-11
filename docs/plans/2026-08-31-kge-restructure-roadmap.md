@@ -46,7 +46,6 @@ be decided in the concepts.
 - Library API may break freely (solo project). Modules, examples, natives and
   publishing grow on demand — the skeleton contains nothing with no consumer yet.
 - All written and committed documentation and commit messages are in **English**.
-  Commits end with the co-author line.
 
 ## Guiding principles
 
@@ -162,10 +161,10 @@ internal helper.
   `Pixmap`/`MutablePixmap` (+ `Sprite` as the single concrete surface);
   the engine's OOB semantics (mode-aware `get`, never throws; `set` returns
   Boolean); `Sequence<Pixel>` kept; `Viewport.Bounded` deferred to R2;
-  `Flip` deferred to C6. Closed (log #33). R2 added `Viewport.Bounded` with the
-  lower bound fixed at `(0,0)` (full-surface case); the **window/view**
-  generalization of the bounds — the lower bound as the source of truth, not a
-  constant — is a post-R2 session (2026-09-10; see the post-R2 additions).
+  `Flip` deferred to C6. Closed (log #33). R2 added `Viewport.Bounded` (the
+  full-surface case, lower bound `(0,0)`); the **window/view** — a delegating
+  view with a local `0..size` space and an `origin` offset into the source — is
+  a post-R2 session (2026-09-10; see the post-R2 additions).
 - **S4 ● Sprite** — surface + sample modes + ownership (surface owns its
   native memory resource) + creation service (create/duplicate),
   `SpriteService : KGEOverridable`, default platform-independent via
@@ -358,22 +357,29 @@ rasterization, atlas, blit), after `C9`+`C10`. This keeps the font backend out
 of the critical path and avoids a provisional text API a later concept must
 break (roadmap "no throwaway commits").
 
-**2026-09-10 post-R2 additions (owner).** After `R2`, three sessions, in order:
-(1) **circle octant masks** — on both handlers, `drawCircle` *and* `fillCircle`
-(a C6 raster widening; `main` had `CircleOctantMask` on both, olc only on the
-outline — the owner wants both); (2) **draw-sprite service changes** —
-`DrawPartialSprite` (a source sub-rect blit) and `SpritePatch` (v2.30
-"Patches"); (3) **full `Pixmap` bounds (views/windows)**. R2 added
-`Pixmap : Viewport.Bounded` as the full-surface case only: the lower bound is
-pinned to `(0,0)` and `width`/`height` are the source of truth. That is too
-restrictive — a surface that is a *window* over another needs an arbitrary
-inclusive lower bound and dimensions derived from the bounds, with the whole
-raster stack (the `DrawService` bounds check, the clip, the fill fast paths and
-the blit) reading the bounds instead of assuming an origin at `(0,0)`. This
-session revisits the whole `Pixmap` bounds contract; detail at its own
-touch-point. `DecalPatch` is **not** here: it does not make sense before the
-decal itself, so it is treated together with the decal drawing already covered
-by `R3`.
+**2026-09-10 post-R2 additions (owner).** After `R2`, three sessions:
+(2)+(3) **window + partial blit + raw-backing optimization — done (2026-09-10,
+decisions log #16)**; (1) **circle octant masks** remains — on both handlers,
+`drawCircle` *and* `fillCircle` (a C6 raster widening; `main` had
+`CircleOctantMask` on both, olc only on the outline — the owner wants both).
+The window session: a surface that is a *window* over another is a delegating view:
+local `0..size` space and an `origin` offset into the source
+(`Pixmap.window` read-only, `Pixmap.Mutable.window` writable); local bounds keep
+the raster stack and `ClipService` untouched. The blit source widens from
+`Sprite` to `Pixmap`, so the service/methods are renamed to reflect the type —
+`BlitService`, `blit`, `blitRegion` (the partial) — and `Flip` moves
+`Sprite`→`Pixmap`. `blitRegion` shares the `blit` core (`blitCore`), so the
+window is the natural expression of the partial; that is why the items are
+merged. The `Pixmap` specializations are nested — `Pixmap.Mutable` (the
+writable surface) and a `@KGESensitiveAPI` **`Pixmap.RawBacked`**
+(`buffer`/`stride`/`baseIndex` + `index`) — which replaces the `is Sprite` guard
+on the raw paths: `Sprite` exposes its buffer, a window forwards and composes
+the offset, so a window (or a window of a window) keeps the raw copy/fill, and
+only a non-contiguous source falls to per-pixel. `SpritePatch` is
+**separated**: it is not a sub-rect blit but `FillTexturedPolygon` (a
+textured-polygon fill with UVs, v2.30 "Patches") — its own touch-point later.
+`DecalPatch` remains `R3` (before the decal it makes no sense). Detail at the
+merged touch-point.
 
 Ordering invariants (fixed): DI foundation before any service; provider +
 lifecycle before the surface creation service; Pixel before raster; surface

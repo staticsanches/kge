@@ -70,7 +70,7 @@ private val spriteServiceDefault: SpriteService =
             BufferService
                 .allocate(sprite.width * sprite.height * Int.SIZE_BYTES, sprite.name)
                 .letClosingIfFailed { buffer ->
-                    buffer.resource.copyInts(0, sprite.byteBuffer, 0, sprite.width * sprite.height)
+                    buffer.resource.copyInts(0, sprite.buffer, 0, sprite.width * sprite.height)
                     Sprite(sprite.width, sprite.height, buffer, sprite.sampleMode, sprite.name)
                 }
     }

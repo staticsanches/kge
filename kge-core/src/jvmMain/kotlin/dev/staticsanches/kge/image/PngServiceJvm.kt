@@ -61,7 +61,7 @@ private object StbPngService : PngService {
                 sprite.width,
                 sprite.height,
                 4,
-                sprite.byteBuffer,
+                sprite.buffer,
                 0,
             )
         check(written) { "unable to encode $sprite as PNG" }

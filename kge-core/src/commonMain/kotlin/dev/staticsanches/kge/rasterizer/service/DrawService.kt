@@ -1,7 +1,7 @@
 package dev.staticsanches.kge.rasterizer.service
 
-import dev.staticsanches.kge.image.MutablePixmap
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
@@ -11,7 +11,7 @@ import dev.staticsanches.kge.rasterizer.Rasterizer
  * out-of-bounds draw never throws and never touches the storage; the old
  * pixel for Alpha/Custom is always the stored value, never a sample-mode
  * wrap. The other sub-services ([OutlineService], [FillService],
- * [DrawSpriteService]) resolve their per-pixel work here via the
+ * [BlitService]) resolve their per-pixel work here via the
  * [Rasterizer] aggregate, so an override of this service is observed by
  * every primitive.
  */
@@ -22,7 +22,7 @@ interface DrawService : KGEOverridable {
      * is written and `false` is returned, whatever the mode.
      */
     fun draw(
-        target: MutablePixmap,
+        target: Pixmap.Mutable,
         x: Int,
         y: Int,
         color: Pixel,
@@ -33,7 +33,7 @@ interface DrawService : KGEOverridable {
         KGEOverridable.Proxy<DrawService>(DrawService::class, drawServiceDefault),
         DrawService {
         override fun draw(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x: Int,
             y: Int,
             color: Pixel,
@@ -46,7 +46,7 @@ interface DrawService : KGEOverridable {
 private val drawServiceDefault: DrawService =
     object : DrawService {
         override fun draw(
-            target: MutablePixmap,
+            target: Pixmap.Mutable,
             x: Int,
             y: Int,
             color: Pixel,
@@ -61,7 +61,7 @@ private val drawServiceDefault: DrawService =
     }
 
 private fun blendAlpha(
-    target: MutablePixmap,
+    target: Pixmap.Mutable,
     x: Int,
     y: Int,
     color: Pixel,
@@ -79,7 +79,7 @@ private fun blendAlpha(
 }
 
 private fun applyCustom(
-    target: MutablePixmap,
+    target: Pixmap.Mutable,
     x: Int,
     y: Int,
     color: Pixel,

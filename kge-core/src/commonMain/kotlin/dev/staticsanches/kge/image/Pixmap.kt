@@ -1,5 +1,7 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Viewport
 import kotlin.math.abs
@@ -24,6 +26,13 @@ interface Pixmap :
      */
     enum class SampleMode { NORMAL, PERIODIC, CLAMP }
 
+    /**
+     * The source-read policy for a blit: which axes of the source are read in
+     * reverse. [NONE] blits top-left to top-left; each flip mirrors the source
+     * inside the same destination footprint.
+     */
+    enum class Flip { NONE, HORIZONTAL, VERTICAL, BOTH }
+
     val width: Int
 
     val height: Int
@@ -35,6 +44,49 @@ interface Pixmap :
 
     override val upperBoundExclusive: Int2D
         get() = Int2D(width, height)
+
+    /**
+     * A view over the sub-rectangle at [origin] of [size] pixels, in its own
+     * local `0..size` space. The source must contain the region, else
+     * [IllegalArgumentException]. The view reads through; the [Pixmap.Mutable]
+     * override also writes through. A [Pixmap.RawBacked] source yields a
+     * [Pixmap.RawBacked] view whose backing composes the origin, so a nested
+     * window still reaches the root storage.
+     */
+    @OptIn(KGESensitiveAPI::class)
+    fun window(
+        origin: Int2D,
+        size: Int2D,
+    ): Pixmap {
+        requireValidWindow(this, origin, size)
+        val source = this
+        return if (source is RawBacked) {
+            object : Pixmap, RawBacked {
+                override val width: Int = size.x
+                override val height: Int = size.y
+                override var sampleMode: SampleMode = source.sampleMode
+                override val buffer: ByteBuffer get() = source.buffer
+                override val stride: Int get() = source.stride
+                override val baseIndex: Int = source.baseIndex + origin.y * source.stride + origin.x
+
+                override fun uncheckedGet(
+                    x: Int,
+                    y: Int,
+                ): Pixel = source.uncheckedGet(x + origin.x, y + origin.y)
+            }
+        } else {
+            object : Pixmap {
+                override val width: Int = size.x
+                override val height: Int = size.y
+                override var sampleMode: SampleMode = source.sampleMode
+
+                override fun uncheckedGet(
+                    x: Int,
+                    y: Int,
+                ): Pixel = source.uncheckedGet(x + origin.x, y + origin.y)
+            }
+        }
+    }
 
     /**
      * Reads the pixel at ([x], [y]), never throwing — the out-of-bounds value
@@ -57,7 +109,7 @@ interface Pixmap :
         }
 
     /** Reads `(x, y)` in-bounds only — the hot path. */
-    abstract fun uncheckedGet(
+    fun uncheckedGet(
         x: Int,
         y: Int,
     ): Pixel
@@ -103,55 +155,150 @@ interface Pixmap :
 
     /** Row-major: `y * width + x`, pixels enumerated in storage order. */
     override fun iterator(): Iterator<Pixel> = PixmapRowMajorIterator(this)
+
+    /**
+     * A [Pixmap] with writable pixels.
+     *
+     * The default bodies own [set] (bounds-checked), [clear] and [inv]; the
+     * concrete surface supplies [uncheckedSet] and may override [clear] —
+     * Sprite fills its native buffer directly.
+     */
+    interface Mutable : Pixmap {
+        /** The writable read policy: a [Pixmap.Mutable] view owns its [sampleMode]. */
+        override var sampleMode: SampleMode
+
+        /**
+         * The writable [Pixmap.window]: reads and writes reach the source. A
+         * [Pixmap.RawBacked] source yields a [Pixmap.RawBacked] view whose
+         * backing composes the origin.
+         */
+        @OptIn(KGESensitiveAPI::class)
+        override fun window(
+            origin: Int2D,
+            size: Int2D,
+        ): Mutable {
+            requireValidWindow(this, origin, size)
+            val source = this
+            return if (source is RawBacked) {
+                object : Mutable, RawBacked {
+                    override val width: Int = size.x
+                    override val height: Int = size.y
+                    override var sampleMode: SampleMode = source.sampleMode
+                    override val buffer: ByteBuffer get() = source.buffer
+                    override val stride: Int get() = source.stride
+                    override val baseIndex: Int = source.baseIndex + origin.y * source.stride + origin.x
+
+                    override fun uncheckedGet(
+                        x: Int,
+                        y: Int,
+                    ): Pixel = source.uncheckedGet(x + origin.x, y + origin.y)
+
+                    override fun uncheckedSet(
+                        x: Int,
+                        y: Int,
+                        pixel: Pixel,
+                    ) = source.uncheckedSet(x + origin.x, y + origin.y, pixel)
+                }
+            } else {
+                object : Mutable {
+                    override val width: Int = size.x
+                    override val height: Int = size.y
+                    override var sampleMode: SampleMode = source.sampleMode
+
+                    override fun uncheckedGet(
+                        x: Int,
+                        y: Int,
+                    ): Pixel = source.uncheckedGet(x + origin.x, y + origin.y)
+
+                    override fun uncheckedSet(
+                        x: Int,
+                        y: Int,
+                        pixel: Pixel,
+                    ) = source.uncheckedSet(x + origin.x, y + origin.y, pixel)
+                }
+            }
+        }
+
+        /**
+         * Writes [pixel] at ([x], [y]), returning false without touching the
+         * surface when the coordinates are outside — never throws.
+         */
+        fun set(
+            x: Int,
+            y: Int,
+            pixel: Pixel,
+        ): Boolean {
+            if (x in 0 until width && y in 0 until height) {
+                uncheckedSet(x, y, pixel)
+                return true
+            }
+            return false
+        }
+
+        /** Writes `(x, y)` in-bounds only — the hot path. */
+        fun uncheckedSet(
+            x: Int,
+            y: Int,
+            pixel: Pixel,
+        )
+
+        /** Fills every pixel with [pixel]. */
+        fun clear(pixel: Pixel) {
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    uncheckedSet(x, y, pixel)
+                }
+            }
+        }
+
+        /** Replaces each pixel with its [Pixel.inv], keeping the alpha channel. */
+        fun inv() {
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    uncheckedSet(x, y, uncheckedGet(x, y).inv())
+                }
+            }
+        }
+    }
+
+    /**
+     * A [Pixmap] whose pixels sit in the raw [buffer]: a row [stride] in int
+     * elements and the [baseIndex] of the view's local `(0, 0)`. A surface
+     * that implements it always has contiguous storage; a surface without one
+     * (an algorithmic surface, a view over a non-contiguous source) simply
+     * does not implement this interface. [buffer] resolves the owning resource
+     * on demand, so the release fail-fast after close is preserved, and
+     * [index] maps a local pixel to its int-element offset — multiply by
+     * [Int.SIZE_BYTES] for the byte offset the buffer API expects.
+     */
+    @KGESensitiveAPI
+    interface RawBacked : Pixmap {
+        /** The raw int-element buffer; fails fast once the owning resource is closed. */
+        val buffer: ByteBuffer
+
+        /** The number of int elements per row. */
+        val stride: Int
+
+        /** The int-element index of the view's local `(0, 0)`. */
+        val baseIndex: Int
+
+        /** The int-element offset of ([x], [y]): `baseIndex + y * stride + x`. */
+        fun index(
+            x: Int,
+            y: Int,
+        ): Int = baseIndex + y * stride + x
+    }
 }
 
-/**
- * A [Pixmap] with writable pixels.
- *
- * The default bodies own [set] (bounds-checked), [clear] and [inv]; the
- * concrete surface supplies [uncheckedSet] and may override [clear] — Sprite
- * fills its native buffer directly.
- */
-interface MutablePixmap : Pixmap {
-    /**
-     * Writes [pixel] at ([x], [y]), returning false without touching the
-     * surface when the coordinates are outside — never throws.
-     */
-    fun set(
-        x: Int,
-        y: Int,
-        pixel: Pixel,
-    ): Boolean {
-        if (x in 0 until width && y in 0 until height) {
-            uncheckedSet(x, y, pixel)
-            return true
-        }
-        return false
-    }
-
-    /** Writes `(x, y)` in-bounds only — the hot path. */
-    abstract fun uncheckedSet(
-        x: Int,
-        y: Int,
-        pixel: Pixel,
-    )
-
-    /** Fills every pixel with [pixel]. */
-    fun clear(pixel: Pixel) {
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                uncheckedSet(x, y, pixel)
-            }
-        }
-    }
-
-    /** Replaces each pixel with its [Pixel.inv], keeping the alpha channel. */
-    fun inv() {
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                uncheckedSet(x, y, uncheckedGet(x, y).inv())
-            }
-        }
+private fun requireValidWindow(
+    source: Pixmap,
+    origin: Int2D,
+    size: Int2D,
+) {
+    require(size.x > 0 && size.y > 0) { "window size must be positive: $size" }
+    require(origin.x >= 0 && origin.y >= 0) { "window origin must be non-negative: $origin" }
+    require(origin.x + size.x <= source.width && origin.y + size.y <= source.height) {
+        "window origin $origin size $size is outside ${source.width}x${source.height}"
     }
 }
 

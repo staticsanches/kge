@@ -45,3 +45,4 @@ cross-references).
 | [`13-vector-point.md`](phase-1/13-vector-point.md) | — | `Int2D`/`Float2D` + typed raster overloads | 2026-09-09 |
 | [`14-text-r6.md`](phase-1/14-text-r6.md) | — | Ordering revision (elaborate text last, `C7` dropped) + font-library research | 2026-09-10 |
 | [`15-viewport-r2.md`](phase-1/15-viewport-r2.md) | — | R2 viewport/clipping: touch-point + close (pure `Viewport`, `ClipService` seam, `Pixmap : Viewport.Bounded`, drawLine clip-then-walk parity) | 2026-09-10 |
+| [`16-window-blit.md`](phase-1/16-window-blit.md) | — | Post-R2 window + partial blit: anonymous `Pixmap.window`/`Pixmap.Mutable.window` (local `0..size` + `origin`), `BlitService`/`blit`/`blitRegion` over a `Pixmap` source, `Flip` moved to `Pixmap`, nested `Pixmap.Mutable`/`Pixmap.RawBacked` | 2026-09-10 |

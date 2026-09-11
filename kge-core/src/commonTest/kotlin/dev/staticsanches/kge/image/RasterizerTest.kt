@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.image
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.service.DrawService
 import dev.staticsanches.kge.rasterizer.service.FillService
@@ -759,7 +760,7 @@ class RasterizerTest :
                 .flatMap { x -> (0 until t.height).map { y -> (x to y) to t.get(x, y) } }
                 .toMap()
 
-        test("drawSprite blits the sprite pixels 1:1 at the destination") {
+        test("blit blits the sprite pixels 1:1 at the destination") {
             grid(width = 6, height = 6).use { t ->
                 val cells =
                     mapOf(
@@ -769,7 +770,7 @@ class RasterizerTest :
                         1 to 1 to Colors.WHITE,
                     )
                 spriteOf(2, 2, cells).use { s ->
-                    Rasterizer.drawSprite(t, 2, 1, s, scale = 1, Sprite.Flip.NONE, Pixel.Mode.Normal)
+                    Rasterizer.blit(t, 2, 1, s, scale = 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
                 }
 
                 for ((cell, color) in cells) {
@@ -781,7 +782,7 @@ class RasterizerTest :
             }
         }
 
-        test("drawSprite flips mirror the blit inside the same footprint") {
+        test("blit flips mirror the blit inside the same footprint") {
             val cells =
                 mapOf(
                     0 to 0 to Colors.RED,
@@ -790,19 +791,19 @@ class RasterizerTest :
                     1 to 1 to Colors.WHITE,
                 )
 
-            val expected: Map<Sprite.Flip, Map<Pair<Int, Int>, Pixel>> =
+            val expected: Map<Pixmap.Flip, Map<Pair<Int, Int>, Pixel>> =
                 mapOf(
-                    Sprite.Flip.HORIZONTAL to
+                    Pixmap.Flip.HORIZONTAL to
                         mapOf(
                             0 to 0 to Colors.GREEN, 1 to 0 to Colors.RED, 0 to 1 to Colors.WHITE,
                             1 to 1 to Colors.BLUE,
                         ),
-                    Sprite.Flip.VERTICAL to
+                    Pixmap.Flip.VERTICAL to
                         mapOf(
                             0 to 0 to Colors.BLUE, 1 to 0 to Colors.WHITE, 0 to 1 to Colors.RED,
                             1 to 1 to Colors.GREEN,
                         ),
-                    Sprite.Flip.BOTH to
+                    Pixmap.Flip.BOTH to
                         mapOf(
                             0 to 0 to Colors.WHITE, 1 to 0 to Colors.BLUE, 0 to 1 to Colors.GREEN,
                             1 to 1 to Colors.RED,
@@ -812,7 +813,7 @@ class RasterizerTest :
             for ((flip, flippedCells) in expected) {
                 grid(width = 4, height = 4).use { t ->
                     spriteOf(2, 2, cells).use { s ->
-                        Rasterizer.drawSprite(t, 0, 0, s, scale = 1, flip, Pixel.Mode.Normal)
+                        Rasterizer.blit(t, 0, 0, s, scale = 1, flip, Pixel.Mode.Normal)
                     }
                     for ((cell, color) in flippedCells) {
                         t.get(cell.first, cell.second) shouldBe color
@@ -821,7 +822,7 @@ class RasterizerTest :
             }
         }
 
-        test("drawSprite scale s paints an s x s block per source pixel") {
+        test("blit scale s paints an s x s block per source pixel") {
             grid(width = 6, height = 6).use { t ->
                 val cells =
                     mapOf(
@@ -829,7 +830,7 @@ class RasterizerTest :
                         0 to 1 to Colors.GREEN,
                     )
                 spriteOf(1, 2, cells).use { s ->
-                    Rasterizer.drawSprite(t, 1, 1, s, scale = 2, Sprite.Flip.NONE, Pixel.Mode.Normal)
+                    Rasterizer.blit(t, 1, 1, s, scale = 2, Pixmap.Flip.NONE, Pixel.Mode.Normal)
                 }
 
                 for (x in 1..2) {
@@ -844,7 +845,7 @@ class RasterizerTest :
             }
         }
 
-        test("drawSprite unflipped and vertical flips match the per-pixel draw on random content") {
+        test("blit unflipped and vertical flips match the per-pixel draw on random content") {
             grid(width = 8, height = 8).use { t ->
                 val random = kotlin.random.Random(7)
                 val cells =
@@ -860,14 +861,14 @@ class RasterizerTest :
                             }
                         }.toMap()
 
-                for (flip in listOf(Sprite.Flip.NONE, Sprite.Flip.VERTICAL)) {
+                for (flip in listOf(Pixmap.Flip.NONE, Pixmap.Flip.VERTICAL)) {
                     grid(width = 8, height = 8).use { reference ->
                         spriteOf(4, 3, cells).use { s ->
-                            Rasterizer.drawSprite(t, 2, 2, s, scale = 1, flip, Pixel.Mode.Normal)
+                            Rasterizer.blit(t, 2, 2, s, scale = 1, flip, Pixel.Mode.Normal)
                             for (y in 0 until 3) {
                                 for (x in 0 until 4) {
                                     val sx = x
-                                    val sy = if (flip == Sprite.Flip.VERTICAL) 2 - y else y
+                                    val sy = if (flip == Pixmap.Flip.VERTICAL) 2 - y else y
                                     Rasterizer
                                         .draw(reference, 2 + x, 2 + y, cells[sx to sy]!!, Pixel.Mode.Normal)
                                 }
@@ -879,7 +880,7 @@ class RasterizerTest :
             }
         }
 
-        test("drawSprite clips a partial blit to the visible cells and rejects a fully outside one") {
+        test("blit clips a partial blit to the visible cells and rejects a fully outside one") {
             grid(width = 4, height = 4).use { t ->
                 val cells =
                     mapOf(
@@ -889,7 +890,7 @@ class RasterizerTest :
                         1 to 1 to Colors.WHITE,
                     )
                 spriteOf(2, 2, cells).use { s ->
-                    Rasterizer.drawSprite(t, -1, 1, s, scale = 1, Sprite.Flip.NONE, Pixel.Mode.Normal)
+                    Rasterizer.blit(t, -1, 1, s, scale = 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
                 }
                 val changed = values(t).filterValues { it != Colors.TRANSPARENT }
                 changed shouldBe mapOf(0 to 1 to Colors.GREEN, 0 to 2 to Colors.WHITE)
@@ -897,16 +898,16 @@ class RasterizerTest :
 
             grid(width = 2, height = 2).use { t ->
                 spriteOf(2, 2, emptyMap()).use { s ->
-                    Rasterizer.drawSprite(t, 5, 0, s, scale = 1, Sprite.Flip.NONE, Pixel.Mode.Normal)
+                    Rasterizer.blit(t, 5, 0, s, scale = 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
                 }
                 painted(t) shouldBe emptySet()
             }
         }
 
-        test("drawSprite honors Mask and Alpha on the source pixels") {
+        test("blit honors Mask and Alpha on the source pixels") {
             grid(width = 3, height = 3).use { t ->
                 spriteOf(1, 1, mapOf(0 to 0 to Pixel.rgba(255, 0, 0, 128))).use { s ->
-                    Rasterizer.drawSprite(t, 0, 0, s, scale = 1, Sprite.Flip.NONE, Pixel.Mode.Mask)
+                    Rasterizer.blit(t, 0, 0, s, scale = 1, Pixmap.Flip.NONE, Pixel.Mode.Mask)
                 }
                 t.get(0, 0) shouldBe Colors.TRANSPARENT
             }
@@ -914,118 +915,29 @@ class RasterizerTest :
             grid(width = 3, height = 3).use { t ->
                 Rasterizer.fillRect(t, 0, 0, 2, 2, Colors.WHITE, Pixel.Mode.Normal)
                 spriteOf(1, 1, mapOf(0 to 0 to Colors.RED)).use { s ->
-                    Rasterizer.drawSprite(t, 1, 1, s, scale = 1, Sprite.Flip.NONE, Pixel.Mode.Alpha(0.5f))
+                    Rasterizer.blit(t, 1, 1, s, scale = 1, Pixmap.Flip.NONE, Pixel.Mode.Alpha(0.5f))
                 }
                 t.get(1, 1) shouldBe Pixel.rgba(255, 127, 127, 255)
             }
         }
 
-        test("drawSprite with a non-positive scale paints nothing") {
+        test("blit with a non-positive scale paints nothing") {
             grid().use { t ->
                 spriteOf(2, 2, mapOf(0 to 0 to Colors.RED)).use { s ->
-                    Rasterizer.drawSprite(t, 0, 0, s, scale = 0, Sprite.Flip.NONE, Pixel.Mode.Normal)
+                    Rasterizer.blit(t, 0, 0, s, scale = 0, Pixmap.Flip.NONE, Pixel.Mode.Normal)
                 }
                 painted(t) shouldBe emptySet()
             }
         }
-
-        fun drawDelegate(original: DrawService): DrawService =
-            object : DrawService {
-                override fun draw(
-                    target: MutablePixmap,
-                    x: Int,
-                    y: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.draw(target, x, y, color, mode)
-            }
-
-        fun outlineDelegate(original: OutlineService): OutlineService =
-            object : OutlineService {
-                override fun drawLine(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawLine(target, x0, y0, x1, y1, color, mode)
-
-                override fun drawRect(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawRect(target, x0, y0, x1, y1, color, mode)
-
-                override fun drawCircle(
-                    target: MutablePixmap,
-                    cx: Int,
-                    cy: Int,
-                    radius: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawCircle(target, cx, cy, radius, color, mode)
-
-                override fun drawTriangle(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    x2: Int,
-                    y2: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
-            }
-
-        fun fillDelegate(original: FillService): FillService =
-            object : FillService {
-                override fun fillRect(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.fillRect(target, x0, y0, x1, y1, color, mode)
-
-                override fun fillCircle(
-                    target: MutablePixmap,
-                    cx: Int,
-                    cy: Int,
-                    radius: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.fillCircle(target, cx, cy, radius, color, mode)
-
-                override fun fillTriangle(
-                    target: MutablePixmap,
-                    x0: Int,
-                    y0: Int,
-                    x1: Int,
-                    y1: Int,
-                    x2: Int,
-                    y2: Int,
-                    color: Pixel,
-                    mode: Pixel.Mode,
-                ) = original.fillTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
-            }
 
         test("an active DrawService override is observed by a composite fill") {
             grid(width = 4, height = 4).use { t ->
                 val original = DrawService.original
                 var drawCalls = 0
                 DrawService.override(
-                    object : DrawService by drawDelegate(original) {
+                    object : DrawService by original {
                         override fun draw(
-                            target: MutablePixmap,
+                            target: Pixmap.Mutable,
                             x: Int,
                             y: Int,
                             color: Pixel,
@@ -1046,9 +958,9 @@ class RasterizerTest :
             grid(width = 4, height = 4).use { t ->
                 val original = FillService.original
                 FillService.override(
-                    object : FillService by fillDelegate(original) {
+                    object : FillService by original {
                         override fun fillRect(
-                            target: MutablePixmap,
+                            target: Pixmap.Mutable,
                             x0: Int,
                             y0: Int,
                             x1: Int,
@@ -1076,9 +988,9 @@ class RasterizerTest :
                 val original = OutlineService.original
                 var drawLineCalls = 0
                 OutlineService.override(
-                    object : OutlineService by outlineDelegate(original) {
+                    object : OutlineService by original {
                         override fun drawLine(
-                            target: MutablePixmap,
+                            target: Pixmap.Mutable,
                             x0: Int,
                             y0: Int,
                             x1: Int,
@@ -1101,9 +1013,9 @@ class RasterizerTest :
             grid(width = 4, height = 4).use { t ->
                 val original = FillService.original
                 FillService.override(
-                    object : FillService by fillDelegate(original) {
+                    object : FillService by original {
                         override fun fillRect(
-                            target: MutablePixmap,
+                            target: Pixmap.Mutable,
                             x0: Int,
                             y0: Int,
                             x1: Int,
@@ -1123,4 +1035,78 @@ class RasterizerTest :
                 t.get(0, 0) shouldBe Colors.RED
             }
         }
+
+        test("blit accepts a non-Sprite Pixmap source, painting the same cells") {
+            val cells =
+                mapOf(
+                    0 to 0 to Colors.RED,
+                    1 to 0 to Colors.GREEN,
+                    0 to 1 to Colors.BLUE,
+                    1 to 1 to Colors.WHITE,
+                )
+            grid(width = 6, height = 6).use { viaSprite ->
+                grid(width = 6, height = 6).use { viaDouble ->
+                    spriteOf(2, 2, cells).use { s ->
+                        Rasterizer.blit(viaSprite, 2, 1, s, 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
+                    }
+                    val double = PixmapDouble(2, 2)
+                    for ((cell, color) in cells) {
+                        double.uncheckedSet(cell.first, cell.second, color)
+                    }
+                    Rasterizer.blit(viaDouble, 2, 1, double, 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
+
+                    values(viaSprite) shouldBe values(viaDouble)
+                }
+            }
+        }
+
+        test("blit from a raw-backed source takes the raw path under Normal and the per-pixel path otherwise") {
+            val cells =
+                mapOf(
+                    0 to 0 to Pixel.rgba(10, 20, 30, 40),
+                    1 to 0 to Pixel.rgba(50, 60, 70, 80),
+                    0 to 1 to Pixel.rgba(90, 100, 110, 120),
+                    1 to 1 to Pixel.rgba(130, 140, 150, 160),
+                )
+            spriteOf(2, 2, cells).use { s ->
+                grid(width = 4, height = 4).use { rawTarget ->
+                    val counting = CountingRawPixmap(s)
+                    Rasterizer.blit(rawTarget, 1, 1, counting, 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
+                    counting.reads shouldBe 0
+
+                    val oracle = PixmapDouble(4, 4)
+                    Rasterizer.blit(oracle, 1, 1, counting, 1, Pixmap.Flip.NONE, Pixel.Mode.Normal)
+                    counting.reads shouldBe 4
+
+                    for (y in 0 until 4) {
+                        for (x in 0 until 4) {
+                            rawTarget.get(x, y) shouldBe oracle.get(x, y)
+                        }
+                    }
+                }
+
+                grid(width = 4, height = 4).use { t ->
+                    val counting = CountingRawPixmap(s)
+                    Rasterizer.blit(t, 1, 1, counting, 1, Pixmap.Flip.NONE, Pixel.Mode.Alpha(0.5f))
+                    counting.reads shouldBe 4
+                }
+            }
+        }
     })
+
+/** A [Pixmap.RawBacked] wrapper over a [Sprite] that counts [uncheckedGet] reads. */
+@OptIn(KGESensitiveAPI::class)
+private class CountingRawPixmap(
+    private val delegate: Sprite,
+) : Pixmap.RawBacked by delegate {
+    var reads = 0
+        private set
+
+    override fun uncheckedGet(
+        x: Int,
+        y: Int,
+    ): Pixel {
+        reads++
+        return delegate.uncheckedGet(x, y)
+    }
+}

@@ -52,7 +52,7 @@ private object WebPngService : PngService {
 
     override fun encode(sprite: Sprite): ResourceWrapper<ByteBuffer> {
         val pixelBytes = sprite.width * sprite.height * Int.SIZE_BYTES
-        val rgba = ByteArray(pixelBytes) { sprite.byteBuffer.get(it) }
+        val rgba = ByteArray(pixelBytes) { sprite.buffer.get(it) }
         return WebPngJs.encodePng(sprite.width, sprite.height, rgba).toEngineBuffer("PNG")
     }
 }
