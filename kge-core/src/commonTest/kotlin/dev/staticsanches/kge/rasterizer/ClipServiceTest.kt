@@ -132,18 +132,18 @@ class ClipServiceTest :
                 clipped shouldBe (Int2D(0, 0) to Int2D(3, 2))
 
                 target().use { t ->
-                    Rasterizer.drawLine(t, -3, -1, 3, 2, Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(t, -3, -1, 3, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     painted(t) shouldBe emptySet()
                 }
                 target().use { t ->
-                    Rasterizer.drawLine(t, 0, 0, 3, 2, Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(t, 0, 0, 3, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     painted(t) shouldBe setOf(0 to 0, 1 to 1, 2 to 1, 3 to 2)
                 }
 
                 KGEOverridable.Proxy.resetAll()
 
                 target().use { t ->
-                    Rasterizer.drawLine(t, -3, -1, 3, 2, Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(t, -3, -1, 3, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     painted(t) shouldBe setOf(0 to 0, 1 to 1, 2 to 1, 3 to 2)
                 }
             }

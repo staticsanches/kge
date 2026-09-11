@@ -2,6 +2,7 @@ package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.rasterizer.CircleOctantMask
+import dev.staticsanches.kge.rasterizer.LinePattern
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.service.DrawService
 import dev.staticsanches.kge.rasterizer.service.FillService
@@ -239,25 +240,25 @@ class RasterizerTest :
 
         test("drawLine paints the shallow-octant cells, both ends inclusive") {
             grid().use { t ->
-                Rasterizer.drawLine(t, 0, 0, 3, 1, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 0, 3, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 1 to 0, 2 to 1, 3 to 1)
             }
         }
 
         test("drawLine tie cells step toward the diagonal (equidistant case)") {
             grid().use { t ->
-                Rasterizer.drawLine(t, 0, 0, 4, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 0, 4, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 1 to 1, 2 to 1, 3 to 2, 4 to 2)
             }
         }
 
         test("drawLine paints the same cells regardless of endpoint order") {
             grid().use { t ->
-                Rasterizer.drawLine(t, 0, 0, 4, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 0, 4, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 val forward = painted(t)
 
                 grid().use { back ->
-                    Rasterizer.drawLine(back, 4, 2, 0, 0, Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(back, 4, 2, 0, 0, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     painted(back) shouldBe forward
                 }
             }
@@ -265,33 +266,33 @@ class RasterizerTest :
 
         test("drawLine paints steep-octant cells exactly") {
             grid().use { t ->
-                Rasterizer.drawLine(t, 0, 0, 1, 3, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 0, 1, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 0 to 1, 1 to 2, 1 to 3)
             }
         }
 
         test("drawLine handles vertical, horizontal, diagonal and single-point lines") {
             grid().use { t ->
-                Rasterizer.drawLine(t, 2, 0, 2, 3, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 2, 0, 2, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(2 to 0, 2 to 1, 2 to 2, 2 to 3)
             }
             grid().use { t ->
-                Rasterizer.drawLine(t, 0, 1, 3, 1, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 1, 3, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 1, 1 to 1, 2 to 1, 3 to 1)
             }
             grid().use { t ->
-                Rasterizer.drawLine(t, 0, 0, 2, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 0, 2, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 1 to 1, 2 to 2)
             }
             grid().use { t ->
-                Rasterizer.drawLine(t, 2, 2, 2, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 2, 2, 2, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(2 to 2)
             }
         }
 
         test("drawLine honors Mask by dropping a non-opaque color") {
             grid().use { t ->
-                Rasterizer.drawLine(t, 0, 0, 3, 1, Pixel.rgba(1, 2, 3, 4), Pixel.Mode.Mask)
+                Rasterizer.drawLine(t, 0, 0, 3, 1, Pixel.rgba(1, 2, 3, 4), LinePattern.Filled, Pixel.Mode.Mask)
                 painted(t) shouldBe emptySet()
             }
         }
@@ -299,7 +300,7 @@ class RasterizerTest :
         test("drawLine under Alpha blends every painted cell over the base") {
             grid(width = 4, height = 4).use { t ->
                 Rasterizer.fillRect(t, 0, 0, 3, 3, Colors.WHITE, Pixel.Mode.Normal)
-                Rasterizer.drawLine(t, 0, 0, 3, 1, Colors.RED, Pixel.Mode.Alpha(0.5f))
+                Rasterizer.drawLine(t, 0, 0, 3, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Alpha(0.5f))
 
                 for ((x, y) in listOf(0 to 0, 1 to 0, 2 to 1, 3 to 1)) {
                     t.get(x, y) shouldBe Pixel.rgba(255, 127, 127, 255)
@@ -312,20 +313,131 @@ class RasterizerTest :
 
         test("drawLine fully outside the target paints nothing and never throws") {
             grid(width = 3, height = 3).use { t ->
-                Rasterizer.drawLine(t, 5, 0, 9, 0, Colors.RED, Pixel.Mode.Normal)
-                Rasterizer.drawLine(t, -6, -1, -4, 1, Colors.RED, Pixel.Mode.Alpha(0.5f))
+                Rasterizer.drawLine(t, 5, 0, 9, 0, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, -6, -1, -4, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Alpha(0.5f))
                 painted(t) shouldBe emptySet()
             }
         }
 
         test("drawLine crossing the edge paints only the visible cells of the clipped walk") {
             grid(width = 3, height = 3).use { t ->
-                Rasterizer.drawLine(t, -2, 0, 1, 0, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, -2, 0, 1, 0, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 1 to 0)
             }
             grid(width = 3, height = 3).use { t ->
-                Rasterizer.drawLine(t, 0, -2, 1, 1, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, -2, 1, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 0 to 1)
+            }
+        }
+
+        test("drawLine with Empty paints nothing, whatever the walk shape") {
+            grid().use { t ->
+                Rasterizer.drawLine(t, 0, 0, 4, 2, Colors.RED, LinePattern.Empty, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 2, 0, 2, 3, Colors.RED, LinePattern.Empty, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 1, 3, 1, Colors.RED, LinePattern.Empty, Pixel.Mode.Normal)
+                painted(t) shouldBe emptySet()
+            }
+        }
+
+        test("drawLine with Filled paints the pre-pattern cells under Normal and Alpha") {
+            grid().use { t ->
+                Rasterizer.drawLine(t, 0, 0, 4, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(0 to 0, 1 to 1, 2 to 1, 3 to 2, 4 to 2)
+            }
+            grid(width = 4, height = 4).use { t ->
+                Rasterizer.fillRect(t, 0, 0, 3, 3, Colors.WHITE, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 0, 3, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Alpha(0.5f))
+                for ((x, y) in listOf(0 to 0, 1 to 0, 2 to 1, 3 to 1)) {
+                    t.get(x, y) shouldBe Pixel.rgba(255, 127, 127, 255)
+                }
+            }
+        }
+
+        test("a Dotted line consumes one bit per walked cell in each walk shape") {
+            grid(width = 6, height = 6).use { t ->
+                Rasterizer.drawLine(t, 0, 1, 4, 1, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(0 to 1, 2 to 1, 4 to 1)
+            }
+            grid(width = 6, height = 6).use { t ->
+                Rasterizer.drawLine(t, 1, 0, 1, 4, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(1 to 0, 1 to 2, 1 to 4)
+            }
+            grid(width = 6, height = 6).use { t ->
+                Rasterizer.drawLine(t, 0, 0, 4, 2, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(0 to 0, 2 to 1, 4 to 2)
+            }
+        }
+
+        test("a Dotted decreasing line starts its phase at the walk's first cell, the clipped end") {
+            grid(width = 4, height = 2).use { t ->
+                Rasterizer.drawLine(t, 3, 1, 0, 0, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(0 to 0, 2 to 1)
+            }
+        }
+
+        test("a Dotted steep line consumes one bit per walked cell of the steep sub-branch") {
+            grid(width = 3, height = 8).use { t ->
+                Rasterizer.drawLine(t, 0, 0, 2, 7, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(0 to 0, 1 to 2, 1 to 4, 2 to 6)
+            }
+        }
+
+        test("a clipped Dotted line starts its phase at the clipped start") {
+            grid(width = 4, height = 3).use { t ->
+                Rasterizer.drawLine(t, -3, 1, 2, 1, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(0 to 1, 2 to 1)
+            }
+        }
+
+        test("Dotted skipped cells are not blended under Alpha and Mask still drops non-opaque colors") {
+            grid(width = 5, height = 3).use { t ->
+                Rasterizer.fillRect(t, 0, 0, 4, 2, Colors.WHITE, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 1, 4, 1, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Alpha(0.5f))
+                for (x in intArrayOf(0, 2, 4)) {
+                    t.get(x, 1) shouldBe Pixel.rgba(255, 127, 127, 255)
+                }
+                for (x in intArrayOf(1, 3)) {
+                    t.get(x, 1) shouldBe Colors.WHITE
+                }
+            }
+            grid(width = 5, height = 3).use { t ->
+                Rasterizer.drawLine(t, 0, 1, 4, 1, Pixel.rgba(1, 2, 3, 4), LinePattern.Dotted(), Pixel.Mode.Mask)
+                painted(t) shouldBe emptySet()
+            }
+        }
+
+        test("a Dotted line under Custom invokes the blend only for the drawn cells") {
+            grid(width = 5, height = 3).use { t ->
+                var invocations = 0
+                val custom =
+                    object : Pixel.Mode.Custom {
+                        override fun apply(
+                            x: Int,
+                            y: Int,
+                            newPixel: Pixel,
+                            oldPixel: Pixel,
+                        ): Pixel {
+                            invocations++
+                            return newPixel
+                        }
+                    }
+
+                Rasterizer.drawLine(t, 0, 1, 4, 1, Colors.RED, LinePattern.Dotted(), custom)
+                invocations shouldBe 3
+                painted(t) shouldBe setOf(0 to 1, 2 to 1, 4 to 1)
+            }
+        }
+
+        test("the OutlineService seam and the Rasterizer aggregate forward the pattern") {
+            grid(width = 6, height = 4).use { viaAggregate ->
+                grid(width = 6, height = 4).use { viaService ->
+                    Rasterizer.drawLine(
+                        viaAggregate, 0, 1, 4, 1, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal,
+                    )
+                    OutlineService.drawLine(viaService, 0, 1, 4, 1, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                    painted(viaAggregate) shouldBe setOf(0 to 1, 2 to 1, 4 to 1)
+                    painted(viaService) shouldBe painted(viaAggregate)
+                }
             }
         }
 
@@ -395,7 +507,7 @@ class RasterizerTest :
 
         test("drawRect draws the inclusive box perimeter") {
             grid(width = 8, height = 8).use { t ->
-                Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 val expected =
                     (1..4)
                         .flatMap { x ->
@@ -408,11 +520,11 @@ class RasterizerTest :
 
         test("drawRect paints the same ring whichever diagonal endpoint comes first") {
             grid(width = 8, height = 8).use { t ->
-                Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 val forward = painted(t)
 
                 grid().use { back ->
-                    Rasterizer.drawRect(back, 4, 4, 1, 1, Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawRect(back, 4, 4, 1, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     painted(back) shouldBe forward
                 }
             }
@@ -420,7 +532,7 @@ class RasterizerTest :
 
         test("drawRect on a degenerate box draws a single line") {
             grid().use { t ->
-                Rasterizer.drawRect(t, 3, 1, 3, 5, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawRect(t, 3, 1, 3, 5, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(3 to 1, 3 to 2, 3 to 3, 3 to 4, 3 to 5)
             }
         }
@@ -428,7 +540,7 @@ class RasterizerTest :
         test("drawRect corners are drawn twice, so Alpha blends them twice") {
             grid(width = 6, height = 6).use { t ->
                 Rasterizer.fillRect(t, 0, 0, 5, 5, Colors.WHITE, Pixel.Mode.Normal)
-                Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, Pixel.Mode.Alpha(0.5f))
+                Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, LinePattern.Filled, Pixel.Mode.Alpha(0.5f))
 
                 t.get(1, 1) shouldBe Pixel.rgba(255, 63, 63, 255)
                 t.get(4, 4) shouldBe Pixel.rgba(255, 63, 63, 255)
@@ -926,9 +1038,9 @@ class RasterizerTest :
         test("drawTriangle paints exactly the three edges of a composition") {
             val vertices = listOf(0 to 0, 4 to 0, 0 to 3)
             grid().use { reference ->
-                Rasterizer.drawLine(reference, 0, 0, 4, 0, Colors.RED, Pixel.Mode.Normal)
-                Rasterizer.drawLine(reference, 4, 0, 0, 3, Colors.RED, Pixel.Mode.Normal)
-                Rasterizer.drawLine(reference, 0, 3, 0, 0, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(reference, 0, 0, 4, 0, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                Rasterizer.drawLine(reference, 4, 0, 0, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                Rasterizer.drawLine(reference, 0, 3, 0, 0, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 grid().use { t ->
                     Rasterizer.drawTriangle(
                         t,
@@ -939,6 +1051,7 @@ class RasterizerTest :
                         0,
                         3,
                         Colors.RED,
+                        LinePattern.Filled,
                         Pixel.Mode.Normal,
                     )
                     painted(t) shouldBe painted(reference)
@@ -949,7 +1062,7 @@ class RasterizerTest :
         test("drawTriangle paints the same outline regardless of vertex order") {
             val v = listOf(1 to 1, 5 to 2, 2 to 4)
             grid().use { first ->
-                Rasterizer.drawTriangle(first, 1, 1, 5, 2, 2, 4, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawTriangle(first, 1, 1, 5, 2, 2, 4, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 val expected = painted(first)
                 for (p in listOf(v.reversed(), listOf(v[1], v[2], v[0]))) {
                     grid().use { t ->
@@ -962,6 +1075,7 @@ class RasterizerTest :
                             p[2].first,
                             p[2].second,
                             Colors.RED,
+                            LinePattern.Filled,
                             Pixel.Mode.Normal,
                         )
                         painted(t) shouldBe expected
@@ -973,7 +1087,7 @@ class RasterizerTest :
         test("drawTriangle vertices are edge endpoints, so Alpha blends corners twice") {
             grid(width = 6, height = 6).use { t ->
                 Rasterizer.fillRect(t, 0, 0, 5, 5, Colors.WHITE, Pixel.Mode.Normal)
-                Rasterizer.drawTriangle(t, 0, 0, 4, 0, 0, 3, Colors.RED, Pixel.Mode.Alpha(0.5f))
+                Rasterizer.drawTriangle(t, 0, 0, 4, 0, 0, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Alpha(0.5f))
 
                 val cells =
                     (0 until 6)
@@ -998,7 +1112,7 @@ class RasterizerTest :
         test("collinear drawTriangle draws a single line that blends each cell once") {
             grid().use { t ->
                 Rasterizer.fillRect(t, 0, 0, 5, 5, Colors.WHITE, Pixel.Mode.Normal)
-                Rasterizer.drawTriangle(t, 0, 0, 5, 0, 2, 0, Colors.RED, Pixel.Mode.Alpha(0.5f))
+                Rasterizer.drawTriangle(t, 0, 0, 5, 0, 2, 0, Colors.RED, LinePattern.Filled, Pixel.Mode.Alpha(0.5f))
 
                 val blended =
                     (0 until 6)
@@ -1011,14 +1125,53 @@ class RasterizerTest :
 
         test("degenerate drawTriangle with two equal vertices draws the remaining line") {
             grid().use { t ->
-                Rasterizer.drawTriangle(t, 0, 0, 3, 1, 0, 0, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawTriangle(t, 0, 0, 3, 1, 0, 0, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 1 to 0, 2 to 1, 3 to 1)
             }
         }
 
         test("drawTriangle fully outside the target paints nothing") {
             grid(width = 3, height = 3).use { t ->
-                Rasterizer.drawTriangle(t, 5, 0, 8, 0, 6, 3, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawTriangle(t, 5, 0, 8, 0, 6, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                painted(t) shouldBe emptySet()
+            }
+        }
+
+        test("a Dotted drawRect continues its phase across all four edges") {
+            grid(width = 3, height = 3).use { t ->
+                Rasterizer.drawRect(t, 0, 0, 2, 2, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe
+                    setOf(0 to 0, 2 to 0, 0 to 1, 2 to 1, 0 to 2, 2 to 2)
+            }
+        }
+
+        test("a Dotted drawRect with a collapsed edge keeps consuming bits across the overlapping edges") {
+            grid(width = 4, height = 5).use { t ->
+                Rasterizer.drawRect(t, 2, 0, 2, 3, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(2 to 0, 2 to 1, 2 to 2, 2 to 3)
+            }
+        }
+
+        test("a Dotted drawTriangle continues its phase across its three edges") {
+            grid(width = 5, height = 4).use { t ->
+                Rasterizer.drawTriangle(t, 0, 0, 4, 0, 0, 3, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe
+                    setOf(0 to 0, 2 to 0, 4 to 0, 3 to 1, 1 to 2, 0 to 2)
+            }
+        }
+
+        test("a collinear drawTriangle applies the pattern to its single line") {
+            grid(width = 6, height = 3).use { t ->
+                Rasterizer.drawTriangle(t, 0, 0, 5, 0, 2, 0, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                painted(t) shouldBe setOf(0 to 0, 2 to 0, 4 to 0)
+            }
+        }
+
+        test("drawRect and drawTriangle with Empty paint nothing") {
+            grid(width = 6, height = 6).use { t ->
+                Rasterizer.drawRect(t, 1, 1, 4, 4, Colors.RED, LinePattern.Empty, Pixel.Mode.Normal)
+                Rasterizer.drawTriangle(t, 0, 0, 5, 0, 0, 5, Colors.RED, LinePattern.Empty, Pixel.Mode.Normal)
+                Rasterizer.drawTriangle(t, 0, 0, 5, 0, 2, 0, Colors.RED, LinePattern.Empty, Pixel.Mode.Normal)
                 painted(t) shouldBe emptySet()
             }
         }
@@ -1258,7 +1411,7 @@ class RasterizerTest :
                 Rasterizer.fillRect(t, 0, 0, 2, 2, Colors.RED, Pixel.Mode.Normal)
                 t.get(0, 0) shouldBe Colors.BLUE
 
-                Rasterizer.drawLine(t, 0, 3, 3, 3, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 0, 3, 3, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 for (x in 0..3) {
                     t.get(x, 3) shouldBe Colors.RED
                 }
@@ -1278,15 +1431,16 @@ class RasterizerTest :
                             x1: Int,
                             y1: Int,
                             color: Pixel,
+                            pattern: LinePattern,
                             mode: Pixel.Mode,
                         ) {
                             drawLineCalls++
-                            original.drawLine(target, x0, y0, x1, y1, color, mode)
+                            original.drawLine(target, x0, y0, x1, y1, color, pattern, mode)
                         }
                     },
                 )
 
-                Rasterizer.drawTriangle(t, 0, 0, 3, 0, 0, 3, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawTriangle(t, 0, 0, 3, 0, 0, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 drawLineCalls shouldBe 3
             }
         }

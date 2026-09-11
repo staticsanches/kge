@@ -2,6 +2,7 @@ package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.CircleOctantMask
+import dev.staticsanches.kge.rasterizer.LinePattern
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.rasterizer.service.FillService
 import dev.staticsanches.kge.rasterizer.service.OutlineService
@@ -46,8 +47,23 @@ class RasterizerPointOverloadTest :
             test("typed drawLine paints the same cells as the raw line") {
                 target().use { typed ->
                     target().use { raw ->
-                        Rasterizer.drawLine(typed, Int2D(0, 0), Int2D(6, 2), Colors.RED, Pixel.Mode.Normal)
-                        Rasterizer.drawLine(raw, 0, 0, 6, 2, Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer
+                            .drawLine(
+                                typed, Int2D(0, 0), Int2D(6, 2), Colors.RED, LinePattern.Filled, Pixel.Mode.Normal,
+                            )
+                        Rasterizer.drawLine(raw, 0, 0, 6, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                        grid(typed) shouldBe grid(raw)
+                    }
+                }
+            }
+
+            test("typed drawLine forwards the pattern to the raw line") {
+                target().use { typed ->
+                    target().use { raw ->
+                        Rasterizer.drawLine(
+                            typed, Int2D(0, 1), Int2D(4, 1), Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal,
+                        )
+                        Rasterizer.drawLine(raw, 0, 1, 4, 1, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
                         grid(typed) shouldBe grid(raw)
                     }
                 }
@@ -56,16 +72,36 @@ class RasterizerPointOverloadTest :
             test("typed drawRect paints the same ring as raw, both endpoint orders") {
                 target().use { typed ->
                     target().use { raw ->
-                        Rasterizer.drawRect(typed, Int2D(1, 1), Int2D(6, 4), Colors.RED, Pixel.Mode.Normal)
-                        Rasterizer.drawRect(raw, 1, 1, 6, 4, Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer
+                            .drawRect(
+                                typed, Int2D(1, 1), Int2D(6, 4), Colors.RED, LinePattern.Filled, Pixel.Mode.Normal,
+                            )
+                        Rasterizer.drawRect(raw, 1, 1, 6, 4, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                         grid(typed) shouldBe grid(raw)
                     }
                 }
                 target().use { typedReversed ->
                     target().use { raw ->
-                        Rasterizer.drawRect(typedReversed, Int2D(6, 4), Int2D(1, 1), Colors.RED, Pixel.Mode.Normal)
-                        Rasterizer.drawRect(raw, 1, 1, 6, 4, Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer
+                            .drawRect(
+                                typedReversed, Int2D(6, 4), Int2D(1, 1), Colors.RED, LinePattern.Filled,
+                                Pixel.Mode.Normal,
+                            )
+                        Rasterizer.drawRect(raw, 1, 1, 6, 4, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                         grid(typedReversed) shouldBe grid(raw)
+                    }
+                }
+            }
+
+            test("typed drawRect forwards the pattern to the raw edges") {
+                target().use { typed ->
+                    target().use { raw ->
+                        Rasterizer
+                            .drawRect(
+                                typed, Int2D(0, 0), Int2D(2, 2), Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal,
+                            )
+                        Rasterizer.drawRect(raw, 0, 0, 2, 2, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
+                        grid(typed) shouldBe grid(raw)
                     }
                 }
             }
@@ -108,8 +144,26 @@ class RasterizerPointOverloadTest :
                 target().use { typed ->
                     target().use { raw ->
                         Rasterizer
-                            .drawTriangle(typed, Int2D(0, 0), Int2D(6, 0), Int2D(0, 5), Colors.RED, Pixel.Mode.Normal)
-                        Rasterizer.drawTriangle(raw, 0, 0, 6, 0, 0, 5, Colors.RED, Pixel.Mode.Normal)
+                            .drawTriangle(
+                                typed, Int2D(0, 0), Int2D(6, 0), Int2D(0, 5), Colors.RED, LinePattern.Filled,
+                                Pixel.Mode.Normal,
+                            )
+                        Rasterizer
+                            .drawTriangle(raw, 0, 0, 6, 0, 0, 5, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                        grid(typed) shouldBe grid(raw)
+                    }
+                }
+            }
+
+            test("typed drawTriangle forwards the pattern to the raw edges") {
+                target().use { typed ->
+                    target().use { raw ->
+                        Rasterizer.drawTriangle(
+                            typed, Int2D(0, 0), Int2D(4, 0), Int2D(0, 3), Colors.RED, LinePattern.Dotted(),
+                            Pixel.Mode.Normal,
+                        )
+                        Rasterizer
+                            .drawTriangle(raw, 0, 0, 4, 0, 0, 3, Colors.RED, LinePattern.Dotted(), Pixel.Mode.Normal)
                         grid(typed) shouldBe grid(raw)
                     }
                 }
@@ -117,7 +171,7 @@ class RasterizerPointOverloadTest :
 
             test("typed drawLine fully outside the target paints nothing") {
                 target(width = 3, height = 3).use { t ->
-                    Rasterizer.drawLine(t, Int2D(5, 0), Int2D(9, 0), Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(t, Int2D(5, 0), Int2D(9, 0), Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     grid(t) shouldBe List(9) { Colors.TRANSPARENT }
                 }
             }
@@ -127,8 +181,13 @@ class RasterizerPointOverloadTest :
                     target().use { raw ->
                         Rasterizer.fillRect(typed, 0, 0, 7, 7, Colors.WHITE, Pixel.Mode.Normal)
                         Rasterizer.fillRect(raw, 0, 0, 7, 7, Colors.WHITE, Pixel.Mode.Normal)
-                        Rasterizer.drawLine(typed, Int2D(0, 0), Int2D(7, 3), Colors.RED, Pixel.Mode.Alpha(0.5f))
-                        Rasterizer.drawLine(raw, 0, 0, 7, 3, Colors.RED, Pixel.Mode.Alpha(0.5f))
+                        Rasterizer
+                            .drawLine(
+                                typed, Int2D(0, 0), Int2D(7, 3), Colors.RED, LinePattern.Filled,
+                                Pixel.Mode
+                                    .Alpha(0.5f),
+                            )
+                        Rasterizer.drawLine(raw, 0, 0, 7, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Alpha(0.5f))
                         grid(typed) shouldBe grid(raw)
                     }
                 }
@@ -283,15 +342,16 @@ class RasterizerPointOverloadTest :
                                 start: Int2D,
                                 end: Int2D,
                                 color: Pixel,
+                                pattern: LinePattern,
                                 mode: Pixel.Mode,
                             ) {
                                 typedCalls++
-                                original.drawLine(target, start, end, color, mode)
+                                original.drawLine(target, start, end, color, pattern, mode)
                             }
                         },
                     )
 
-                    Rasterizer.drawLine(t, Int2D(0, 0), Int2D(3, 1), Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(t, Int2D(0, 0), Int2D(3, 1), Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     typedCalls shouldBe 1
                     t.get(0, 0) shouldBe Colors.RED
                     t.get(3, 1) shouldBe Colors.RED
@@ -311,10 +371,11 @@ class RasterizerPointOverloadTest :
                                 x1: Int,
                                 y1: Int,
                                 color: Pixel,
+                                pattern: LinePattern,
                                 mode: Pixel.Mode,
                             ) {
                                 rawCalls++
-                                original.drawLine(target, x0, y0, x1, y1, Colors.BLUE, mode)
+                                original.drawLine(target, x0, y0, x1, y1, Colors.BLUE, pattern, mode)
                             }
 
                             override fun drawRect(
@@ -324,8 +385,9 @@ class RasterizerPointOverloadTest :
                                 x1: Int,
                                 y1: Int,
                                 color: Pixel,
+                                pattern: LinePattern,
                                 mode: Pixel.Mode,
-                            ) = original.drawRect(target, x0, y0, x1, y1, color, mode)
+                            ) = original.drawRect(target, x0, y0, x1, y1, color, pattern, mode)
 
                             override fun drawCircle(
                                 target: Pixmap.Mutable,
@@ -346,12 +408,13 @@ class RasterizerPointOverloadTest :
                                 x2: Int,
                                 y2: Int,
                                 color: Pixel,
+                                pattern: LinePattern,
                                 mode: Pixel.Mode,
-                            ) = original.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
+                            ) = original.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, pattern, mode)
                         },
                     )
 
-                    Rasterizer.drawLine(t, Int2D(0, 0), Int2D(3, 1), Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(t, Int2D(0, 0), Int2D(3, 1), Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     rawCalls shouldBe 1
                     t.get(0, 0) shouldBe Colors.BLUE
                 }
@@ -367,8 +430,9 @@ class RasterizerPointOverloadTest :
                                 start: Int2D,
                                 end: Int2D,
                                 color: Pixel,
+                                pattern: LinePattern,
                                 mode: Pixel.Mode,
-                            ) = original.drawLine(target, start, end, Colors.BLUE, mode)
+                            ) = original.drawLine(target, start, end, Colors.BLUE, pattern, mode)
                         },
                     )
 
@@ -457,19 +521,23 @@ class RasterizerPointOverloadTest :
                                 start: Int2D,
                                 end: Int2D,
                                 color: Pixel,
+                                pattern: LinePattern,
                                 mode: Pixel.Mode,
-                            ) = original.drawLine(target, start, end, Colors.BLUE, mode)
+                            ) = original.drawLine(target, start, end, Colors.BLUE, pattern, mode)
                         },
                     )
 
-                    Rasterizer.drawLine(t, Int2D(0, 0), Int2D(3, 1), Colors.RED, Pixel.Mode.Normal)
+                    Rasterizer.drawLine(t, Int2D(0, 0), Int2D(3, 1), Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                     t.get(0, 0) shouldBe Colors.BLUE
 
                     dev.staticsanches.kge.overridable.KGEOverridable.Proxy
                         .resetAll()
 
                     target().use { restored ->
-                        Rasterizer.drawLine(restored, Int2D(0, 0), Int2D(3, 1), Colors.RED, Pixel.Mode.Normal)
+                        Rasterizer
+                            .drawLine(
+                                restored, Int2D(0, 0), Int2D(3, 1), Colors.RED, LinePattern.Filled, Pixel.Mode.Normal,
+                            )
                         restored.get(0, 0) shouldBe Colors.RED
                     }
                 }

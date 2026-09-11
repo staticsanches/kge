@@ -183,9 +183,10 @@ internal helper.
 ### Render (macro only — detail at each touch-point)
 - **R1 ● Raster ops** — primitives over a surface; fast bulk paths; pixel modes
   (Normal/Mask/Alpha/Custom) + blend resolution math — moved here from S2 at the C4
-  touch-point (log #24): the modes' only consumers are raster. Circle octant
-  masks on `drawCircle`/`fillCircle` — the post-R2 raster widening — **closed
-  2026-09-11** (decisions-log #17).
+  touch-point (log #24): the modes' only consumers are raster. Two further R1
+  widenings are **closed 2026-09-11**: circle octant masks on
+  `drawCircle`/`fillCircle` (decisions-log #17) and line patterns (olc
+  `DrawLine(..., pattern)`, `main`'s `LinePattern`; decisions-log #18).
 - **R2 ● Viewport/clipping** — pure clip math. **Closed 2026-09-10
   (decisions-log entry).** The pure `Viewport` sealed type (`contains`, full
   hierarchy) + the `ClipService` seam (fifth raster sub-service, olc
@@ -342,6 +343,7 @@ at its touch-point)
 (`Int2D`/`Float2D` — closed 2026-09-09) → `R2` viewport/clipping
 (closed 2026-09-10; cleared the C6 partial-OOB `drawLine` debt + S3's
 `Viewport.Bounded`)
+→ line patterns (R1 widening — closed 2026-09-11)
 → `C8` state (E3) → `C9` renderer/GL/decals (R5 → R4 → R3)
 → `C10` engine (E1 loop/window + E2 addons + E4 KeyCode/InputAction)
 → `R6` elaborate text (shaping + rasterization + atlas + blit — the final
@@ -453,7 +455,7 @@ declare these plugins with `apply false` (classloader scope clash on Gradle
 
 ## Out of scope (grows by demand)
 
-Full parity with the behavior reference: rotated/warped decals, line patterns, `FillTexturedTriangle`,
+Full parity with the behavior reference: rotated/warped decals, `FillTexturedTriangle`,
 ResourcePack, shaders/HW3D, user-shader API, PGEX/UTIL. Mouse input wiring,
 audio. Android/iOS/Kotlin-Native targets. `kge-natives/*` consolidation,
 example modules and publishing (Central Portal, vanniktech) wait until the
@@ -527,4 +529,13 @@ items to spike) are in the decisions log.
 (raw + `Int2D`, forwarded by `Rasterizer`); `ALL` is pixel- and
 write-count-identical to C6 under every mode, the masked fill gates the C6
 row-span, and `main`'s broken mask-aware `fillCircle` is rejected. The
-post-R2 additions are done. Next concept: `C8` (state, E3).
+post-R2 additions are done.
+
+**2026-09-11 — line patterns closed** (decisions-log #18). The `LinePattern`
+sealed type (`Empty`/`Filled`/stateful `Dotted`/`Custom`, ported from `main`)
+and the required `pattern` on `drawLine`/`drawRect`/`drawTriangle` (raw +
+`Int2D`, forwarded by `Rasterizer`). One `shouldDrawPixel()` per walked cell
+from the first cell of the clipped walk (olc's phase); `Filled` is pixel- and
+write-count-identical to the pre-change behavior; `drawTriangle` collinear uses
+the caller's pattern and `fillTriangle` collinear uses `Filled`. Two-axis review
+clean after one fix round. Next concept: `C8` (state, E3).

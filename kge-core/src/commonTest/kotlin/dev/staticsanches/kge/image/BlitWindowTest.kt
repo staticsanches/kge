@@ -3,6 +3,7 @@ package dev.staticsanches.kge.image
 import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.rasterizer.LinePattern
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.applyClosingIfFailed
@@ -285,7 +286,7 @@ class BlitWindowTest :
             pattern(8, 8).use { s ->
                 val w = s.window(Int2D(2, 2), Int2D(4, 4))
 
-                Rasterizer.drawLine(w, 0, 0, 3, 3, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(w, 0, 0, 3, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 for (i in 0..3) {
                     s.get(2 + i, 2 + i) shouldBe Colors.RED
                 }

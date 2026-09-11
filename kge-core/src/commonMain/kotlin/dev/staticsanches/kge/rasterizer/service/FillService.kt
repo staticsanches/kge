@@ -7,6 +7,7 @@ import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.CircleOctantMask
+import dev.staticsanches.kge.rasterizer.LinePattern
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import kotlin.math.abs
 
@@ -257,7 +258,7 @@ private val fillServiceDefault: FillService =
                 (x1 - x0).toLong() * (y2 - y0) -
                     (y1 - y0).toLong() * (x2 - x0)
             if (area == 0L) {
-                drawFarthestPairLine(target, x0, y0, x1, y1, x2, y2, color, mode)
+                drawFarthestPairLine(target, x0, y0, x1, y1, x2, y2, color, LinePattern.Filled, mode)
                 return
             }
 

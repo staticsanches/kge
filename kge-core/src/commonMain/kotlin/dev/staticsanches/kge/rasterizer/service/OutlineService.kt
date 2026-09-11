@@ -5,6 +5,7 @@ import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.CircleOctantMask
+import dev.staticsanches.kge.rasterizer.LinePattern
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import kotlin.math.abs
 
@@ -25,6 +26,15 @@ interface OutlineService : KGEOverridable {
      * while the error term keeps the original deltas (the reference's
      * clip-then-walk). When a pixel is equidistant from the ideal line, the
      * step toward the diagonal neighbor wins.
+     *
+     * [pattern] masks the walked cells: it is consulted once per cell, in walk
+     * order, starting at the first cell of the clipped walk — the clipped
+     * start when the walk runs in increasing order, the clipped end when it
+     * runs in decreasing order (the geometric minimum for the axis walks) —
+     * and only the cells it accepts reach the seam. [LinePattern.Empty] paints
+     * nothing and [LinePattern.Filled] runs the untouched walk; a stateful
+     * pattern ([LinePattern.Dotted], [LinePattern.Custom]) is single-use and
+     * owned by the caller.
      */
     fun drawLine(
         target: Pixmap.Mutable,
@@ -33,6 +43,7 @@ interface OutlineService : KGEOverridable {
         x1: Int,
         y1: Int,
         color: Pixel,
+        pattern: LinePattern,
         mode: Pixel.Mode,
     )
 
@@ -41,6 +52,8 @@ interface OutlineService : KGEOverridable {
      * are ([x0], [y0]) and ([x1], [y1]) — the ring of the same box
      * [FillService.fillRect] fills, drawn as four [drawLine] calls, so either
      * corner order paints the same ring and the corners are written twice.
+     * The same [pattern] instance reaches every edge, so a stateful pattern
+     * continues its phase around the ring.
      */
     fun drawRect(
         target: Pixmap.Mutable,
@@ -49,6 +62,7 @@ interface OutlineService : KGEOverridable {
         x1: Int,
         y1: Int,
         color: Pixel,
+        pattern: LinePattern,
         mode: Pixel.Mode,
     )
 
@@ -77,7 +91,8 @@ interface OutlineService : KGEOverridable {
      * is the shared endpoint of two edges and is written twice (idempotent
      * under Normal, double-blended under Alpha). Collinear vertices draw the
      * line between the farthest pair once, and a triangle sharing no pixel
-     * with the target paints nothing.
+     * with the target paints nothing. The same [pattern] instance reaches
+     * every edge, so a stateful pattern continues its phase.
      */
     fun drawTriangle(
         target: Pixmap.Mutable,
@@ -88,6 +103,7 @@ interface OutlineService : KGEOverridable {
         x2: Int,
         y2: Int,
         color: Pixel,
+        pattern: LinePattern,
         mode: Pixel.Mode,
     )
 
@@ -97,8 +113,9 @@ interface OutlineService : KGEOverridable {
         start: Int2D,
         end: Int2D,
         color: Pixel,
+        pattern: LinePattern,
         mode: Pixel.Mode,
-    ): Unit = drawLine(target, start.x, start.y, end.x, end.y, color, mode)
+    ): Unit = drawLine(target, start.x, start.y, end.x, end.y, color, pattern, mode)
 
     /** The [Int2D] form of [drawRect] — unpacks the diagonal corners to the raw method. */
     fun drawRect(
@@ -106,8 +123,9 @@ interface OutlineService : KGEOverridable {
         diagonalStart: Int2D,
         diagonalEnd: Int2D,
         color: Pixel,
+        pattern: LinePattern,
         mode: Pixel.Mode,
-    ): Unit = drawRect(target, diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, mode)
+    ): Unit = drawRect(target, diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, pattern, mode)
 
     /** The [Int2D] form of [drawCircle] — unpacks the center to the raw method. */
     fun drawCircle(
@@ -126,8 +144,9 @@ interface OutlineService : KGEOverridable {
         p1: Int2D,
         p2: Int2D,
         color: Pixel,
+        pattern: LinePattern,
         mode: Pixel.Mode,
-    ): Unit = drawTriangle(target, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, color, mode)
+    ): Unit = drawTriangle(target, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, color, pattern, mode)
 
     companion object :
         KGEOverridable.Proxy<OutlineService>(OutlineService::class, outlineServiceDefault),
@@ -139,8 +158,9 @@ interface OutlineService : KGEOverridable {
             x1: Int,
             y1: Int,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
-        ) = delegate.drawLine(target, x0, y0, x1, y1, color, mode)
+        ) = delegate.drawLine(target, x0, y0, x1, y1, color, pattern, mode)
 
         override fun drawRect(
             target: Pixmap.Mutable,
@@ -149,8 +169,9 @@ interface OutlineService : KGEOverridable {
             x1: Int,
             y1: Int,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
-        ) = delegate.drawRect(target, x0, y0, x1, y1, color, mode)
+        ) = delegate.drawRect(target, x0, y0, x1, y1, color, pattern, mode)
 
         override fun drawCircle(
             target: Pixmap.Mutable,
@@ -171,24 +192,27 @@ interface OutlineService : KGEOverridable {
             x2: Int,
             y2: Int,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
-        ) = delegate.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, mode)
+        ) = delegate.drawTriangle(target, x0, y0, x1, y1, x2, y2, color, pattern, mode)
 
         override fun drawLine(
             target: Pixmap.Mutable,
             start: Int2D,
             end: Int2D,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
-        ) = delegate.drawLine(target, start, end, color, mode)
+        ) = delegate.drawLine(target, start, end, color, pattern, mode)
 
         override fun drawRect(
             target: Pixmap.Mutable,
             diagonalStart: Int2D,
             diagonalEnd: Int2D,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
-        ) = delegate.drawRect(target, diagonalStart, diagonalEnd, color, mode)
+        ) = delegate.drawRect(target, diagonalStart, diagonalEnd, color, pattern, mode)
 
         override fun drawCircle(
             target: Pixmap.Mutable,
@@ -205,8 +229,9 @@ interface OutlineService : KGEOverridable {
             p1: Int2D,
             p2: Int2D,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
-        ) = delegate.drawTriangle(target, p0, p1, p2, color, mode)
+        ) = delegate.drawTriangle(target, p0, p1, p2, color, pattern, mode)
     }
 }
 
@@ -220,8 +245,11 @@ private val outlineServiceDefault: OutlineService =
             x1: Int,
             y1: Int,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
         ) {
+            if (pattern == LinePattern.Empty) return
+
             val dx = x1 - x0
             val dy = y1 - y0
 
@@ -231,17 +259,18 @@ private val outlineServiceDefault: OutlineService =
             val cy0 = clippedStart.y
             val cx1 = clippedEnd.x
             val cy1 = clippedEnd.y
+            val filled = pattern == LinePattern.Filled
 
             if (dx == 0) {
                 for (y in minOf(cy0, cy1)..maxOf(cy0, cy1)) {
-                    DrawService.draw(target, cx0, y, color, mode)
+                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, cx0, y, color, mode)
                 }
                 return
             }
 
             if (dy == 0) {
                 for (x in minOf(cx0, cx1)..maxOf(cx0, cx1)) {
-                    DrawService.draw(target, x, cy0, color, mode)
+                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, cy0, color, mode)
                 }
                 return
             }
@@ -265,7 +294,7 @@ private val outlineServiceDefault: OutlineService =
                     xEnd = cx0
                 }
 
-                DrawService.draw(target, x, y, color, mode)
+                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
                 while (x < xEnd) {
                     x++
                     if (px < 0) {
@@ -274,7 +303,7 @@ private val outlineServiceDefault: OutlineService =
                         y = if (dx > 0 == dy > 0) y + 1 else y - 1
                         px += 2 * (dyAbs - dxAbs)
                     }
-                    DrawService.draw(target, x, y, color, mode)
+                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
                 }
             } else {
                 var x: Int
@@ -290,7 +319,7 @@ private val outlineServiceDefault: OutlineService =
                     yEnd = cy0
                 }
 
-                DrawService.draw(target, x, y, color, mode)
+                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
                 while (y < yEnd) {
                     y++
                     if (py <= 0) {
@@ -299,7 +328,7 @@ private val outlineServiceDefault: OutlineService =
                         x = if (dx > 0 == dy > 0) x + 1 else x - 1
                         py += 2 * (dxAbs - dyAbs)
                     }
-                    DrawService.draw(target, x, y, color, mode)
+                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
                 }
             }
         }
@@ -311,16 +340,17 @@ private val outlineServiceDefault: OutlineService =
             x1: Int,
             y1: Int,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
         ) {
             val left = minOf(x0, x1)
             val top = minOf(y0, y1)
             val right = maxOf(x0, x1)
             val bottom = maxOf(y0, y1)
-            OutlineService.drawLine(target, left, top, right, top, color, mode)
-            OutlineService.drawLine(target, right, top, right, bottom, color, mode)
-            OutlineService.drawLine(target, right, bottom, left, bottom, color, mode)
-            OutlineService.drawLine(target, left, bottom, left, top, color, mode)
+            OutlineService.drawLine(target, left, top, right, top, color, pattern, mode)
+            OutlineService.drawLine(target, right, top, right, bottom, color, pattern, mode)
+            OutlineService.drawLine(target, right, bottom, left, bottom, color, pattern, mode)
+            OutlineService.drawLine(target, left, bottom, left, top, color, pattern, mode)
         }
 
         override fun drawCircle(
@@ -372,19 +402,20 @@ private val outlineServiceDefault: OutlineService =
             x2: Int,
             y2: Int,
             color: Pixel,
+            pattern: LinePattern,
             mode: Pixel.Mode,
         ) {
             val area =
                 (x1 - x0).toLong() * (y2 - y0) -
                     (y1 - y0).toLong() * (x2 - x0)
             if (area == 0L) {
-                drawFarthestPairLine(target, x0, y0, x1, y1, x2, y2, color, mode)
+                drawFarthestPairLine(target, x0, y0, x1, y1, x2, y2, color, pattern, mode)
                 return
             }
 
-            OutlineService.drawLine(target, x0, y0, x1, y1, color, mode)
-            OutlineService.drawLine(target, x1, y1, x2, y2, color, mode)
-            OutlineService.drawLine(target, x2, y2, x0, y0, color, mode)
+            OutlineService.drawLine(target, x0, y0, x1, y1, color, pattern, mode)
+            OutlineService.drawLine(target, x1, y1, x2, y2, color, pattern, mode)
+            OutlineService.drawLine(target, x2, y2, x0, y0, color, pattern, mode)
         }
     }
 
@@ -411,6 +442,7 @@ internal fun drawFarthestPairLine(
     x2: Int,
     y2: Int,
     color: Pixel,
+    pattern: LinePattern,
     mode: Pixel.Mode,
 ) {
     val pairs =
@@ -421,5 +453,5 @@ internal fun drawFarthestPairLine(
         )
     val (start, end) =
         pairs.maxBy { (a, b) -> maxOf(abs(b.first - a.first), abs(b.second - a.second)) }
-    OutlineService.drawLine(target, start.first, start.second, end.first, end.second, color, mode)
+    OutlineService.drawLine(target, start.first, start.second, end.first, end.second, color, pattern, mode)
 }

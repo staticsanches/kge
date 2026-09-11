@@ -46,8 +46,11 @@ views, `BlitService`/`blit`/`blitRegion` over a `Pixmap` source (the
 `Sprite.byteBuffer` retired for `RawBacked.buffer`. **Circle octant masks
 (closed 2026-09-11, log #17)**: the `CircleOctantMask` type and the required
 `mask` on `drawCircle`/`fillCircle` (raw + `Int2D`, forwarded by `Rasterizer`)
-— `ALL` is the untouched C6 behavior. Next: `C8` (state), per the roadmap; no
-renderer or engine loop yet.
+— `ALL` is the untouched C6 behavior. **Line patterns (closed 2026-09-11, log
+#18)**: the `LinePattern` sealed type and the required `pattern` on
+`drawLine`/`drawRect`/`drawTriangle`, consumed per walked cell from the first
+cell of the clipped walk — `Filled` is the untouched pre-change behavior. Next:
+`C8` (state), per the roadmap; no renderer or engine loop yet.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the

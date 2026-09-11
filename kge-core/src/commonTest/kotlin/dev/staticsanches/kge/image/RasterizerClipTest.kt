@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.image
 
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.rasterizer.LinePattern
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.resource.applyClosingIfFailed
 import io.kotest.core.spec.style.FunSpec
@@ -39,36 +40,36 @@ class RasterizerClipTest :
 
         test("drawLine clips before walking, so an OOB endpoint re-walks the visible span") {
             target(width = 4, height = 4).use { t ->
-                Rasterizer.drawLine(t, -3, -1, 3, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, -3, -1, 3, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 0, 1 to 1, 2 to 1, 3 to 2)
             }
         }
 
         test("a trivially rejected drawLine paints nothing and never throws") {
             target(width = 4, height = 4).use { t ->
-                Rasterizer.drawLine(t, 5, 5, 6, 6, Colors.RED, Pixel.Mode.Normal)
-                Rasterizer.drawLine(t, -5, -5, -1, -1, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 5, 5, 6, 6, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, -5, -5, -1, -1, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe emptySet()
             }
         }
 
         test("a steep line whose walk starts at an OOB endpoint re-walks the clipped span") {
             target(width = 4, height = 4).use { t ->
-                Rasterizer.drawLine(t, 1, -2, 2, 3, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 1, -2, 2, 3, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(1 to 0, 1 to 1, 1 to 2, 2 to 3)
             }
         }
 
         test("a partial-OOB vertical line paints the visible range") {
             target(width = 4, height = 4).use { t ->
-                Rasterizer.drawLine(t, 1, -2, 1, 2, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, 1, -2, 1, 2, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(1 to 0, 1 to 1, 1 to 2)
             }
         }
 
         test("a partial-OOB horizontal line paints the visible range") {
             target(width = 4, height = 4).use { t ->
-                Rasterizer.drawLine(t, -2, 1, 2, 1, Colors.RED, Pixel.Mode.Normal)
+                Rasterizer.drawLine(t, -2, 1, 2, 1, Colors.RED, LinePattern.Filled, Pixel.Mode.Normal)
                 painted(t) shouldBe setOf(0 to 1, 1 to 1, 2 to 1)
             }
         }
