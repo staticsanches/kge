@@ -17,6 +17,9 @@ actual abstract class ByteBuffer(
     private val bytes = Uint8Array(sizeInBytes)
     protected val view = DataView(bytes.buffer)
 
+    /** The storage bytes, for platform consumers that need an `ArrayBufferView` (the GL backend). */
+    internal val nativeBytes: Uint8Array get() = bytes
+
     /**
      * The storage viewed as ints, when the byte size allows it. The native
      * bulk fill/copy routes through this view; platforms are little-endian,

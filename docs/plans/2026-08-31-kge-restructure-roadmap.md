@@ -583,3 +583,22 @@ counts FPS in the loop; `DimensionState` is window/GL; "pure state machines" has
 no source. No part has a consumer before the loop/window, so the owner dropped
 the standalone concept and folded E3 into `C10`. Next concept: `C9`
 (renderer/GL/decals, R5 → R4 → R3).
+
+**2026-09-12 — C9 (renderer/GL/decals) closed (decisions-log #22).** The three
+concepts were touch-pointed in reverse order (decal → renderer → GL layer) and
+implemented in forward order (GL layer → renderer → decal). The GL layer ships
+the raw, overridable `GLService` (LWJGL GL33 / WebGL2) with `object GL` constants,
+`expect class` handles and the public T1 `Texture`; the renderer ships the common
+`Renderer` over that seam plus the public `GpuDevice` context/present seam, a
+built-in quad program and an internal staging buffer; the decal ships the `Decal`
+texture resource, the non-null `DecalInstance`, the closed `Mode`/`Structure`/
+`Filter`/`Wrap` enums and the stateless draw services (+ `DecalPatch`). The
+primary oracle is a recording `GLService`, with real-GL smoke tests on JVM/web;
+macOS skips the JVM GL path. Two-axis review + fixes closed the concepts
+(details, carry-forward and the extension-API ruling in log #22). **Correction
+(2026-09-12).** The close had shipped the default renderer as a stateful global
+service; it now ships stateless over an engine-owned `ResourceScope` with a
+nested `Key` marker (T1): `createResources(device, scope)` builds the quad in it,
+the draws take the scope, and `BuiltInQuad` makes the context current before
+release (log #22, Correction). Next concept: `C10` (engine: E1 loop/window + E2
+addons + E3 state + E4 KeyCode/InputAction).

@@ -114,3 +114,44 @@ GLFW path on a real software GL driver (Mesa llvmpipe):
 `lwjgl-egl` was removed. This is still software rendering, not the user's GPU:
 it exercises the API and driver, not pixel parity. The C9 primary oracle
 remains a recording GL backend (all OSes, no GPU); real GL is a smoke test.
+
+### 2026-09-12 — macOS: no software-GL path into GLFW's Cocoa backend (research)
+
+Follow-up to skipping OSX real-GL: is there a Mesa analog for macOS? The macOS
+runner ships only Apple's Software Renderer, which reports **OpenGL 2.1**.
+GLFW's `nsgl_context.m` unconditionally adds `NSOpenGLPFAAccelerated` and
+requests a 3.2/4.1 core profile, so pixel-format selection fails and
+`glfwCreateWindow` returns 0. The blocker is renderer capability, not a missing
+display: Metal windows render on `macos-14`.
+
+Dead ends (do not re-research):
+
+- `brew install mesa` — the macOS build is X11/GLX (XQuartz): `llvmpipe` +
+  Zink, no EGL/OSMesa target; a Cocoa/NSOpenGL app cannot consume it.
+- SwiftShader — CPU Vulkan 1.3 ICD (`VK_ICD_FILENAMES`); builds on macOS but
+  exposes no desktop GL.
+- ANGLE — GLES 2/3.x only; prebuilts (e.g. Godot's) are static GLES-over-Metal
+  build artifacts; stock GLFW's Cocoa backend maps only OPENGL/METAL, not the
+  ANGLE Vulkan/SwiftShader device.
+- No macOS software-GL GitHub Action exists; the only Mesa action is
+  Windows-only (`ssciwr/setup-mesa-dist-win`).
+
+Working but non-production options, if macOS real-GL ever becomes required:
+patched GLFW (drop `NSOpenGLPFAAccelerated` or retry with
+`NSOpenGLPFARendererID = kCGLRendererGenericFloatID` → Apple Software Renderer
+at 4.1 core; upstream PR closed/unreleased, `GLFW_CONTEXT_RENDERER` is not in
+3.5.1; LWJGL can load a patched dylib via `org.lwjgl.glfw.libname`); SDL2
+(reaches the Apple Software Renderer where stock GLFW fails); OSMesa built from
+source (removed from Mesa ≥ 25.1, offscreen-only; GLFW's
+`GLFW_OSMESA_CONTEXT_API` is Null-platform-only, so not with a Cocoa window);
+SwANGLE (ANGLE Vulkan + SwiftShader ICD, GLES 3.1, EGL/GLES route).
+
+Consequence for CI: the JVM production path (GLFW + GL 3.3) is CI-testable on
+ubuntu (Mesa llvmpipe + Xvfb) and windows (Mesa dist) pending verification, but
+**not on macOS**. The E1 loop has no GL dependency (recording backend on all
+OSes) and the web path (rAF + WebGL2/SwiftShader) runs on all three runners,
+macOS included — consistent with the C9 oracle decision.
+
+Sources: GLFW `src/nsgl_context.m`; `actions/runner-images#9712`; `glfw#2080`
+and `glfw#2571`; Mesa macOS notes (`docs.mesa3d.org/macos.html`); Homebrew
+`mesa` formula; F3D's macOS OSMesa CI workflow.

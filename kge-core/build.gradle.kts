@@ -50,6 +50,51 @@ kotlin {
         }
     }
 
+    val lwjglNatives =
+        run {
+            val osName = System.getProperty("os.name")!!
+            val osArch = System.getProperty("os.arch")!!
+            when {
+                "FreeBSD" == osName -> {
+                    "natives-freebsd"
+                }
+
+                arrayOf("Linux", "SunOS", "Unit").any { osName.startsWith(it) } -> {
+                    if (arrayOf("arm", "aarch64").any { osArch.startsWith(it) }) {
+                        "natives-linux${
+                            if (osArch.contains("64") || osArch.startsWith("armv8")) {
+                                "-arm64"
+                            } else {
+                                "-arm32"
+                            }
+                        }"
+                    } else if (osArch.startsWith("ppc")) {
+                        "natives-linux-ppc64le"
+                    } else if (osArch.startsWith("riscv")) {
+                        "natives-linux-riscv64"
+                    } else {
+                        "natives-linux"
+                    }
+                }
+
+                arrayOf("Mac OS X", "Darwin").any { osName.startsWith(it) } -> {
+                    "natives-macos${if (osArch.startsWith("aarch64")) "-arm64" else ""}"
+                }
+
+                arrayOf("Windows").any { osName.startsWith(it) } -> {
+                    if (osArch.contains("64")) {
+                        "natives-windows${if (osArch.startsWith("aarch64")) "-arm64" else ""}"
+                    } else {
+                        "natives-windows-x86"
+                    }
+                }
+
+                else -> {
+                    error("unsupported OS/arch for LWJGL natives: $osName/$osArch")
+                }
+            }
+        }
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlin.logging)
@@ -59,6 +104,9 @@ kotlin {
         webMain.dependencies {
             implementation(libs.kotlin.js)
             implementation(libs.kotlinx.browser)
+            // The GL handles and the WebGL2 backend (later step) are the
+            // kotlin-wrappers `web.gl` DOM types, not the kotlinx browser ones.
+            implementation(libs.kotlin.browser)
         }
         jvmMain.dependencies {
             // kotlin-logging 8.0.4 (jvm variant) dropped the compile-scope
@@ -70,6 +118,35 @@ kotlin {
             implementation(project.dependencies.platform(libs.lwjgl.bom))
             implementation(libs.lwjgl.core)
             implementation(libs.lwjgl.stb)
+            // The GL backend is the production LWJGL GL33 default.
+            implementation(libs.lwjgl.opengl)
+            // The device seam's JVM implementation drives a GLFW window's
+            // context; the window itself is created by the owner (the window
+            // concept, later).
+            implementation(libs.lwjgl.glfw)
+            // Production natives: a downstream JVM consumer must be able to
+            // load LWJGL at runtime, so the host's natives are declared on the
+            // production runtime classpath (the test source set inherits them).
+            runtimeOnly(libs.lwjgl.core.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
+            runtimeOnly(libs.lwjgl.stb.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
+            runtimeOnly(libs.lwjgl.opengl.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
+            runtimeOnly(libs.lwjgl.glfw.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework)
@@ -82,78 +159,6 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(libs.kotest.runner.junit5)
-
-            val osName = System.getProperty("os.name")!!
-            val osArch = System.getProperty("os.arch")!!
-            val lwjglNatives =
-                when {
-                    "FreeBSD" == osName -> {
-                        "natives-freebsd"
-                    }
-
-                    arrayOf("Linux", "SunOS", "Unit").any { osName.startsWith(it) } -> {
-                        if (arrayOf("arm", "aarch64").any { osArch.startsWith(it) }) {
-                            "natives-linux${
-                                if (osArch.contains("64") || osArch.startsWith("armv8")) {
-                                    "-arm64"
-                                } else {
-                                    "-arm32"
-                                }
-                            }"
-                        } else if (osArch.startsWith("ppc")) {
-                            "natives-linux-ppc64le"
-                        } else if (osArch.startsWith("riscv")) {
-                            "natives-linux-riscv64"
-                        } else {
-                            "natives-linux"
-                        }
-                    }
-
-                    arrayOf("Mac OS X", "Darwin").any { osName.startsWith(it) } -> {
-                        "natives-macos${if (osArch.startsWith("aarch64")) "-arm64" else ""}"
-                    }
-
-                    arrayOf("Windows").any { osName.startsWith(it) } -> {
-                        if (osArch.contains("64")) {
-                            "natives-windows${if (osArch.startsWith("aarch64")) "-arm64" else ""}"
-                        } else {
-                            "natives-windows-x86"
-                        }
-                    }
-
-                    else -> {
-                        error("unsupported OS/arch for LWJGL natives: $osName/$osArch")
-                    }
-                }
-            runtimeOnly(libs.lwjgl.core.get()) {
-                artifact {
-                    classifier = lwjglNatives
-                }
-            }
-            // STBImage/STBImageWrite are LWJGL bindings over a shared library
-            // of their own (liblwjgl_stb); the lwjgl-core natives jar does not
-            // carry it, so the STB natives artifact must be on the runtime
-            // classpath too.
-            runtimeOnly(libs.lwjgl.stb.get()) {
-                artifact {
-                    classifier = lwjglNatives
-                }
-            }
-            // GL smoke-test probe (spike): a hidden GLFW window + OpenGL 3.3
-            // context + FBO readback. Only the test needs GL today; the
-            // renderer (C9) will move GLFW/OpenGL to jvmMain.
-            implementation(libs.lwjgl.glfw)
-            implementation(libs.lwjgl.opengl)
-            runtimeOnly(libs.lwjgl.glfw.get()) {
-                artifact {
-                    classifier = lwjglNatives
-                }
-            }
-            runtimeOnly(libs.lwjgl.opengl.get()) {
-                artifact {
-                    classifier = lwjglNatives
-                }
-            }
         }
     }
 }
