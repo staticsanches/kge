@@ -33,7 +33,7 @@ cross-references).
 | [`01-project-setup.md`](phase-1/01-project-setup.md) | 1–11 | `kge-core` skeleton + scaffold verification (KSP, ktlint, hierarchy, jvmTest false green) | 2026-08-30 |
 | [`02-buffer-attempt-roadmap.md`](phase-1/02-buffer-attempt-roadmap.md) | 12–23 | LWJGL/kotlinx-browser/endianness facts; macro roadmap landed; C4 material; buffer attempt disposition | 2026-08-30/31 |
 | [`03-pixel-c4.md`](phase-1/03-pixel-c4.md) | 24 | C4 (Pixel) touch-point + close: value class, `Colors` (CSS Color 4) | 2026-09-01 |
-| [`04-ci-windows.md`](phase-1/04-ci-windows.md) | 25 | Windows `kotlinWasmStoreYarnLock` flake, diagnosed + fixed | 2026-09-01 |
+| [`04-ci-windows.md`](phase-1/04-ci-windows.md) | 25, 36 | Windows root yarn tasks: `kotlinWasmStoreYarnLock` lock flake + `wasmJsBrowserTest` missing `kotlin-web-helpers`, diagnosed + fixed | 2026-09-01/12 |
 | [`05-extension-c1.md`](phase-1/05-extension-c1.md) | 26–27 | C1 extension mechanism (`KGEContext`, identity-semantics amendment) | 2026-09-01 |
 | [`06-overridable-t2.md`](phase-1/06-overridable-t2.md) | 28 | **T2 redesign**: `KGEOverridable` supersedes `KGEContext` | 2026-09-02 |
 | [`07-pixel-format-t3.md`](phase-1/07-pixel-format-t3.md) | 29 | T3 `PixelFormatService` (first real T2 consumer) | 2026-09-02 |
