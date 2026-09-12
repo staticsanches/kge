@@ -172,13 +172,22 @@ internal helper.
   **moved out** to S5 (its own concept), below. Closed (log #33).
   Partial-sprite blit and `SpritePatch` are deferred to a post-R2 concept;
   `DecalPatch` is deferred to the `R3` decal concept (2026-09-10).
-- **S5 ◐ PNG codec** — PNG decode/encode of surfaces and back (load from
-  file/URL/bytes, write/encode), at platform — JVM STBImage, web native
-  decode (pngjs or platform decode). Service seam per principle 1 (observable
-  capability); no consumer before C9 (decals user assets) or R6 (text font
-  asset). Ordered after C5 (added 2026-09-05, C5 touch-point — the owner's
-  call: a major engine feature, kept explicit in the plan). Detail at its own
-  touch-point.
+- **S5 ◐ PNG codec — superseded by `S6` (2026-09-11, log #19).** PNG
+  decode/encode of surfaces and back (load from file/URL/bytes, write/encode),
+  at platform — JVM STBImage, web native decode (pngjs or platform decode).
+  Service seam per principle 1 (observable capability); no consumer before C9
+  (decals user assets) or R6 (text font asset). Closed (log #34); generalized by
+  `S6` below — kept in the catalog as the era record.
+- **S6 ● Image service** — **touch-point 2026-09-11 (log #19); supersedes `S5`.**
+  A platform-generic image codec: `ImageService : KGEOverridable` with nested
+  generic `Decoder<T>` (encoded payload → RGBA, transient callback buffer) and
+  `Encoder<T>` (`Sprite` → encoded payload); `load`/`save` are suspend. Pure
+  generic surface (the call site passes the codec); no `ImageFormat` and no
+  explicit sniff (the platform backend auto-detects); `Sprite` stays RGBA-only.
+  Default codecs live in extension files: bytes/base64/url sources;
+  `PNG`+`JPEG` encoders (the uniform encode set). Decode divergence — JVM STB ×
+  web `createImageBitmap` — is **documented**, not a parity requirement. Driver:
+  user assets in varied formats. Detail at its touch-point; micro-plan next.
 
 ### Render (macro only — detail at each touch-point)
 - **R1 ● Raster ops** — primitives over a surface; fast bulk paths; pixel modes
@@ -344,6 +353,7 @@ at its touch-point)
 (closed 2026-09-10; cleared the C6 partial-OOB `drawLine` debt + S3's
 `Viewport.Bounded`)
 → line patterns (R1 widening — closed 2026-09-11)
+→ `S6` image service (generalizes `S5` — touch-point 2026-09-11)
 → `C8` state (E3) → `C9` renderer/GL/decals (R5 → R4 → R3)
 → `C10` engine (E1 loop/window + E2 addons + E4 KeyCode/InputAction)
 → `R6` elaborate text (shaping + rasterization + atlas + blit — the final
@@ -447,11 +457,13 @@ declare these plugins with `apply false` (classloader scope clash on Gradle
 ## Testing strategy
 
 - Oracle: the reference engine's semantics + exact pixel-math cases; old tests not ported.
-- Same `commonTest` suite on all targets (jvm, js-node, wasmJs-node) — the
-  parity net.
+- Same `commonTest` suite on all targets (jvm, js browser, wasmJs browser) —
+  the parity net. The web targets are browser-only (node dropped at S6, log
+  #19).
 - Kover on JVM as visibility, no percentage gate. Benchmark harness optional.
-- CI gates node tests + lint (browser runs locally; actions currently
-  disabled — workflow file lands when CI is discussed).
+- CI gates all tests + lint; the browser suites run on the runners where
+  Chrome/Chromium is preinstalled (ubuntu/windows) and the macOS job runs the
+  JVM suite only (log #19).
 
 ## Out of scope (grows by demand)
 
@@ -539,3 +551,21 @@ from the first cell of the clipped walk (olc's phase); `Filled` is pixel- and
 write-count-identical to the pre-change behavior; `drawTriangle` collinear uses
 the caller's pattern and `fillTriangle` collinear uses `Filled`. Two-axis review
 clean after one fix round. Next concept: `C8` (state, E3).
+
+**2026-09-11 — image service `S6` scheduled (owner).** `S5` (the PNG codec) is
+superseded by a new concept `S6`: a platform-generic image codec —
+`ImageService` with generic `Decoder<T>`/`Encoder<T>`, suspend `load`/`save`,
+`Sprite` RGBA-only, `PNG`/`JPEG` uniform encode, and documented per-platform
+decode divergence (JVM STB × web `createImageBitmap`). Touch-point decisions in
+decisions-log #19. Next concept: `S6` (image service), then `C8` (state, E3).
+
+**2026-09-11 — image service `S6` closed (decisions-log #19).** `ImageService`
+(generic `Decoder<T>`/`Encoder<T>`, suspend `load`/`save`) supersedes `S5`; the
+extension codecs (`BytesDecoder`/`Base64Decoder`/`UrlDecoder`/`FetchDecoder`,
+`PngEncoder`/`JpegEncoder`/`Base64PngEncoder`) and the JVM STB × web-native
+(`createImageBitmap`/canvas) backends replace `PngService`/`PngSource` and the
+pngjs/buffer interop. The web targets are now **browser-only** (node dropped;
+`jsBrowserTest`/`wasmJsBrowserTest` are the web suites) and CI runs them on the
+Chrome-bearing runners (ubuntu/windows; macOS JVM-only). PNG/JPEG encode is
+uniform; decode breadth and JPEG quality diverge and are documented. Two-axis
+review clean after one fix round. Next concept: `C8` (state, E3).

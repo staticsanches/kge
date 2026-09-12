@@ -149,7 +149,7 @@ interface OutlineService : KGEOverridable {
     ): Unit = drawTriangle(target, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, color, pattern, mode)
 
     companion object :
-        KGEOverridable.Proxy<OutlineService>(OutlineService::class, outlineServiceDefault),
+        KGEOverridable.Proxy<OutlineService>(OutlineService::class, OutlineServiceDefault),
         OutlineService {
         override fun drawLine(
             target: Pixmap.Mutable,
@@ -236,188 +236,187 @@ interface OutlineService : KGEOverridable {
 }
 
 /** The platform-independent default — the algorithms are pure CPU over the surface accessors. */
-private val outlineServiceDefault: OutlineService =
-    object : OutlineService {
-        override fun drawLine(
-            target: Pixmap.Mutable,
-            x0: Int,
-            y0: Int,
-            x1: Int,
-            y1: Int,
-            color: Pixel,
-            pattern: LinePattern,
-            mode: Pixel.Mode,
-        ) {
-            if (pattern == LinePattern.Empty) return
+private object OutlineServiceDefault : OutlineService {
+    override fun drawLine(
+        target: Pixmap.Mutable,
+        x0: Int,
+        y0: Int,
+        x1: Int,
+        y1: Int,
+        color: Pixel,
+        pattern: LinePattern,
+        mode: Pixel.Mode,
+    ) {
+        if (pattern == LinePattern.Empty) return
 
-            val dx = x1 - x0
-            val dy = y1 - y0
+        val dx = x1 - x0
+        val dy = y1 - y0
 
-            val (clippedStart, clippedEnd) =
-                ClipService.clipLineTo(target, Int2D(x0, y0), Int2D(x1, y1)) ?: return
-            val cx0 = clippedStart.x
-            val cy0 = clippedStart.y
-            val cx1 = clippedEnd.x
-            val cy1 = clippedEnd.y
-            val filled = pattern == LinePattern.Filled
+        val (clippedStart, clippedEnd) =
+            ClipService.clipLineTo(target, Int2D(x0, y0), Int2D(x1, y1)) ?: return
+        val cx0 = clippedStart.x
+        val cy0 = clippedStart.y
+        val cx1 = clippedEnd.x
+        val cy1 = clippedEnd.y
+        val filled = pattern == LinePattern.Filled
 
-            if (dx == 0) {
-                for (y in minOf(cy0, cy1)..maxOf(cy0, cy1)) {
-                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, cx0, y, color, mode)
-                }
-                return
+        if (dx == 0) {
+            for (y in minOf(cy0, cy1)..maxOf(cy0, cy1)) {
+                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, cx0, y, color, mode)
             }
+            return
+        }
 
-            if (dy == 0) {
-                for (x in minOf(cx0, cx1)..maxOf(cx0, cx1)) {
-                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, cy0, color, mode)
-                }
-                return
+        if (dy == 0) {
+            for (x in minOf(cx0, cx1)..maxOf(cx0, cx1)) {
+                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, cy0, color, mode)
             }
+            return
+        }
 
-            val dxAbs = abs(dx)
-            val dyAbs = abs(dy)
-            var px = 2 * dyAbs - dxAbs
-            var py = 2 * dxAbs - dyAbs
+        val dxAbs = abs(dx)
+        val dyAbs = abs(dy)
+        var px = 2 * dyAbs - dxAbs
+        var py = 2 * dxAbs - dyAbs
 
-            if (dyAbs <= dxAbs) {
-                var x: Int
-                var y: Int
-                val xEnd: Int
-                if (dx >= 0) {
-                    x = cx0
-                    y = cy0
-                    xEnd = cx1
-                } else {
-                    x = cx1
-                    y = cy1
-                    xEnd = cx0
-                }
-
-                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
-                while (x < xEnd) {
-                    x++
-                    if (px < 0) {
-                        px += 2 * dyAbs
-                    } else {
-                        y = if (dx > 0 == dy > 0) y + 1 else y - 1
-                        px += 2 * (dyAbs - dxAbs)
-                    }
-                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
-                }
+        if (dyAbs <= dxAbs) {
+            var x: Int
+            var y: Int
+            val xEnd: Int
+            if (dx >= 0) {
+                x = cx0
+                y = cy0
+                xEnd = cx1
             } else {
-                var x: Int
-                var y: Int
-                val yEnd: Int
-                if (dy >= 0) {
-                    x = cx0
-                    y = cy0
-                    yEnd = cy1
-                } else {
-                    x = cx1
-                    y = cy1
-                    yEnd = cy0
-                }
-
-                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
-                while (y < yEnd) {
-                    y++
-                    if (py <= 0) {
-                        py += 2 * dxAbs
-                    } else {
-                        x = if (dx > 0 == dy > 0) x + 1 else x - 1
-                        py += 2 * (dxAbs - dyAbs)
-                    }
-                    if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
-                }
-            }
-        }
-
-        override fun drawRect(
-            target: Pixmap.Mutable,
-            x0: Int,
-            y0: Int,
-            x1: Int,
-            y1: Int,
-            color: Pixel,
-            pattern: LinePattern,
-            mode: Pixel.Mode,
-        ) {
-            val left = minOf(x0, x1)
-            val top = minOf(y0, y1)
-            val right = maxOf(x0, x1)
-            val bottom = maxOf(y0, y1)
-            OutlineService.drawLine(target, left, top, right, top, color, pattern, mode)
-            OutlineService.drawLine(target, right, top, right, bottom, color, pattern, mode)
-            OutlineService.drawLine(target, right, bottom, left, bottom, color, pattern, mode)
-            OutlineService.drawLine(target, left, bottom, left, top, color, pattern, mode)
-        }
-
-        override fun drawCircle(
-            target: Pixmap.Mutable,
-            cx: Int,
-            cy: Int,
-            radius: Int,
-            mask: CircleOctantMask,
-            color: Pixel,
-            mode: Pixel.Mode,
-        ) {
-            if (mask == CircleOctantMask.NONE || !circleTouchesTarget(target, cx, cy, radius)) return
-
-            if (radius == 0) {
-                DrawService.draw(target, cx, cy, color, mode)
-                return
+                x = cx1
+                y = cy1
+                xEnd = cx0
             }
 
-            var x = 0
-            var y = radius
-            var d = 3 - 2 * radius
-            while (y >= x) {
-                if (CircleOctantMask.O1 intersects mask) DrawService.draw(target, cx + x, cy - y, color, mode)
-                if (CircleOctantMask.O3 intersects mask) DrawService.draw(target, cx + y, cy + x, color, mode)
-                if (CircleOctantMask.O5 intersects mask) DrawService.draw(target, cx - x, cy + y, color, mode)
-                if (CircleOctantMask.O7 intersects mask) DrawService.draw(target, cx - y, cy - x, color, mode)
-                if (x != 0 && x != y) {
-                    if (CircleOctantMask.O2 intersects mask) DrawService.draw(target, cx + y, cy - x, color, mode)
-                    if (CircleOctantMask.O4 intersects mask) DrawService.draw(target, cx + x, cy + y, color, mode)
-                    if (CircleOctantMask.O6 intersects mask) DrawService.draw(target, cx - y, cy + x, color, mode)
-                    if (CircleOctantMask.O8 intersects mask) DrawService.draw(target, cx - x, cy - y, color, mode)
-                }
-                if (d < 0) {
-                    d += 4 * x + 6
-                } else {
-                    d += 4 * (x - y) + 10
-                    y--
-                }
+            if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
+            while (x < xEnd) {
                 x++
+                if (px < 0) {
+                    px += 2 * dyAbs
+                } else {
+                    y = if (dx > 0 == dy > 0) y + 1 else y - 1
+                    px += 2 * (dyAbs - dxAbs)
+                }
+                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
             }
-        }
-
-        override fun drawTriangle(
-            target: Pixmap.Mutable,
-            x0: Int,
-            y0: Int,
-            x1: Int,
-            y1: Int,
-            x2: Int,
-            y2: Int,
-            color: Pixel,
-            pattern: LinePattern,
-            mode: Pixel.Mode,
-        ) {
-            val area =
-                (x1 - x0).toLong() * (y2 - y0) -
-                    (y1 - y0).toLong() * (x2 - x0)
-            if (area == 0L) {
-                drawFarthestPairLine(target, x0, y0, x1, y1, x2, y2, color, pattern, mode)
-                return
+        } else {
+            var x: Int
+            var y: Int
+            val yEnd: Int
+            if (dy >= 0) {
+                x = cx0
+                y = cy0
+                yEnd = cy1
+            } else {
+                x = cx1
+                y = cy1
+                yEnd = cy0
             }
 
-            OutlineService.drawLine(target, x0, y0, x1, y1, color, pattern, mode)
-            OutlineService.drawLine(target, x1, y1, x2, y2, color, pattern, mode)
-            OutlineService.drawLine(target, x2, y2, x0, y0, color, pattern, mode)
+            if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
+            while (y < yEnd) {
+                y++
+                if (py <= 0) {
+                    py += 2 * dxAbs
+                } else {
+                    x = if (dx > 0 == dy > 0) x + 1 else x - 1
+                    py += 2 * (dxAbs - dyAbs)
+                }
+                if (filled || pattern.shouldDrawPixel()) DrawService.draw(target, x, y, color, mode)
+            }
         }
     }
+
+    override fun drawRect(
+        target: Pixmap.Mutable,
+        x0: Int,
+        y0: Int,
+        x1: Int,
+        y1: Int,
+        color: Pixel,
+        pattern: LinePattern,
+        mode: Pixel.Mode,
+    ) {
+        val left = minOf(x0, x1)
+        val top = minOf(y0, y1)
+        val right = maxOf(x0, x1)
+        val bottom = maxOf(y0, y1)
+        OutlineService.drawLine(target, left, top, right, top, color, pattern, mode)
+        OutlineService.drawLine(target, right, top, right, bottom, color, pattern, mode)
+        OutlineService.drawLine(target, right, bottom, left, bottom, color, pattern, mode)
+        OutlineService.drawLine(target, left, bottom, left, top, color, pattern, mode)
+    }
+
+    override fun drawCircle(
+        target: Pixmap.Mutable,
+        cx: Int,
+        cy: Int,
+        radius: Int,
+        mask: CircleOctantMask,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ) {
+        if (mask == CircleOctantMask.NONE || !circleTouchesTarget(target, cx, cy, radius)) return
+
+        if (radius == 0) {
+            DrawService.draw(target, cx, cy, color, mode)
+            return
+        }
+
+        var x = 0
+        var y = radius
+        var d = 3 - 2 * radius
+        while (y >= x) {
+            if (CircleOctantMask.O1 intersects mask) DrawService.draw(target, cx + x, cy - y, color, mode)
+            if (CircleOctantMask.O3 intersects mask) DrawService.draw(target, cx + y, cy + x, color, mode)
+            if (CircleOctantMask.O5 intersects mask) DrawService.draw(target, cx - x, cy + y, color, mode)
+            if (CircleOctantMask.O7 intersects mask) DrawService.draw(target, cx - y, cy - x, color, mode)
+            if (x != 0 && x != y) {
+                if (CircleOctantMask.O2 intersects mask) DrawService.draw(target, cx + y, cy - x, color, mode)
+                if (CircleOctantMask.O4 intersects mask) DrawService.draw(target, cx + x, cy + y, color, mode)
+                if (CircleOctantMask.O6 intersects mask) DrawService.draw(target, cx - y, cy + x, color, mode)
+                if (CircleOctantMask.O8 intersects mask) DrawService.draw(target, cx - x, cy - y, color, mode)
+            }
+            if (d < 0) {
+                d += 4 * x + 6
+            } else {
+                d += 4 * (x - y) + 10
+                y--
+            }
+            x++
+        }
+    }
+
+    override fun drawTriangle(
+        target: Pixmap.Mutable,
+        x0: Int,
+        y0: Int,
+        x1: Int,
+        y1: Int,
+        x2: Int,
+        y2: Int,
+        color: Pixel,
+        pattern: LinePattern,
+        mode: Pixel.Mode,
+    ) {
+        val area =
+            (x1 - x0).toLong() * (y2 - y0) -
+                (y1 - y0).toLong() * (x2 - x0)
+        if (area == 0L) {
+            drawFarthestPairLine(target, x0, y0, x1, y1, x2, y2, color, pattern, mode)
+            return
+        }
+
+        OutlineService.drawLine(target, x0, y0, x1, y1, color, pattern, mode)
+        OutlineService.drawLine(target, x1, y1, x2, y2, color, pattern, mode)
+        OutlineService.drawLine(target, x2, y2, x0, y0, color, pattern, mode)
+    }
+}
 
 /** Whether the circle around ([cx], [cy]) of [radius] can reach any cell of [target]. */
 internal fun circleTouchesTarget(

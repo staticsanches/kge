@@ -11,7 +11,7 @@ import dev.staticsanches.kge.resource.letClosingIfFailed
  * Creation is an extension capability of the engine with a platform-
  * independent default: the surface storage goes through the current
  * [BufferService], so an allocator override covers surfaces too.
- * PNG loading/encoding is a separate capability, [PngService].
+ * Image loading/encoding is a separate capability, [ImageService].
  */
 interface SpriteService : KGEOverridable {
     /**
@@ -36,7 +36,7 @@ interface SpriteService : KGEOverridable {
     fun duplicate(sprite: Sprite): Sprite
 
     companion object :
-        KGEOverridable.Proxy<SpriteService>(SpriteService::class, spriteServiceDefault),
+        KGEOverridable.Proxy<SpriteService>(SpriteService::class, SpriteServiceDefault),
         SpriteService {
         override fun create(
             width: Int,
@@ -50,27 +50,26 @@ interface SpriteService : KGEOverridable {
 }
 
 /** Platform-independent default — allocation goes through [BufferService]. */
-private val spriteServiceDefault: SpriteService =
-    object : SpriteService {
-        override fun create(
-            width: Int,
-            height: Int,
-            sampleMode: Pixmap.SampleMode,
-            name: String?,
-        ): Sprite {
-            require(width > 0 && height > 0) { "width and height must be positive: ${width}x$height" }
-            // the buffer transfers to the Sprite; a failed construction must
-            // not leak it (letClosingIfFailed — the resource guard)
-            return BufferService
-                .allocate(width * height * Int.SIZE_BYTES, name)
-                .letClosingIfFailed { buffer -> Sprite(width, height, buffer, sampleMode, name) }
-        }
-
-        override fun duplicate(sprite: Sprite): Sprite =
-            BufferService
-                .allocate(sprite.width * sprite.height * Int.SIZE_BYTES, sprite.name)
-                .letClosingIfFailed { buffer ->
-                    buffer.resource.copyInts(0, sprite.buffer, 0, sprite.width * sprite.height)
-                    Sprite(sprite.width, sprite.height, buffer, sprite.sampleMode, sprite.name)
-                }
+private object SpriteServiceDefault : SpriteService {
+    override fun create(
+        width: Int,
+        height: Int,
+        sampleMode: Pixmap.SampleMode,
+        name: String?,
+    ): Sprite {
+        require(width > 0 && height > 0) { "width and height must be positive: ${width}x$height" }
+        // the buffer transfers to the Sprite; a failed construction must
+        // not leak it (letClosingIfFailed — the resource guard)
+        return BufferService
+            .allocate(width * height * Int.SIZE_BYTES, name)
+            .letClosingIfFailed { buffer -> Sprite(width, height, buffer, sampleMode, name) }
     }
+
+    override fun duplicate(sprite: Sprite): Sprite =
+        BufferService
+            .allocate(sprite.width * sprite.height * Int.SIZE_BYTES, sprite.name)
+            .letClosingIfFailed { buffer ->
+                buffer.resource.copyInts(0, sprite.buffer, 0, sprite.width * sprite.height)
+                Sprite(sprite.width, sprite.height, buffer, sprite.sampleMode, sprite.name)
+            }
+}

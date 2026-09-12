@@ -13,9 +13,15 @@ jobs:
       - uses: actions/setup-java@v6
         with: { distribution: zulu, java-version: "21" }
       - uses: gradle/actions/setup-gradle@v6
-      # `build` = check (ktlint + all tests, node-only here: no Chrome on the
-      # runners) + assemble — the webMain metadata compilation is exercised
-      # only by `assemble`, so `allTests`-style node-only runs cannot stay the
-      # gate. ktlint needs no explicit call: its source-set checks are wired
-      # into `check` (decisions log #32).
-      - run: ./gradlew build -x :kge-core:jsBrowserTest -x :kge-core:wasmJsBrowserTest --stacktrace
+      # `build` = check (ktlint + all tests on jvm + js browser + wasmJs
+      # browser) + assemble — the webMain metadata compilation is exercised
+      # only by `assemble`, so `allTests`-style runs cannot stay the gate.
+      # ktlint needs no explicit call: its source-set checks are wired into
+      # `check` (decisions log #32). Chrome/Chromium is preinstalled on the
+      # ubuntu and windows runner images and drives the Karma ChromeHeadless
+      # suites; the macOS image does not document Chrome, so it runs the JVM
+      # suite only (decisions log #19).
+      - if: matrix.os != 'macos-latest'
+        run: ./gradlew build --rerun-tasks --stacktrace
+      - if: matrix.os == 'macos-latest'
+        run: ./gradlew build --rerun-tasks -x :kge-core:jsBrowserTest -x :kge-core:wasmJsBrowserTest --stacktrace

@@ -27,17 +27,27 @@ kotlin {
             freeCompilerArgs.add("-Xjdk-release=11")
         }
     }
+    // The web targets are browser-only: the engine runs in the browser, and the
+    // browser test tasks (ChromeHeadless via Karma) are the web suites. Node is
+    // intentionally not a target — browser-only capabilities such as
+    // createImageBitmap must be reachable and testable.
     js(IR) {
         browser {
-            testTask {}
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
         }
-        nodejs()
     }
     wasmJs {
         browser {
-            testTask {}
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
         }
-        nodejs()
     }
 
     sourceSets {
@@ -49,10 +59,6 @@ kotlin {
         webMain.dependencies {
             implementation(libs.kotlin.js)
             implementation(libs.kotlinx.browser)
-            implementation(npm("pngjs", "7.0.0"))
-            // the browser test bundles resolve the codec's Buffer import to
-            // this package; node resolves the same specifier to its builtin.
-            implementation(npm("buffer", "6.0.3"))
         }
         jvmMain.dependencies {
             // kotlin-logging 8.0.4 (jvm variant) dropped the compile-scope

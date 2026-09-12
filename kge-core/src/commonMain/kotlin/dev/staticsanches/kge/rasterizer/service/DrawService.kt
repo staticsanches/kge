@@ -30,7 +30,7 @@ interface DrawService : KGEOverridable {
     ): Boolean
 
     companion object :
-        KGEOverridable.Proxy<DrawService>(DrawService::class, drawServiceDefault),
+        KGEOverridable.Proxy<DrawService>(DrawService::class, DrawServiceDefault),
         DrawService {
         override fun draw(
             target: Pixmap.Mutable,
@@ -43,22 +43,21 @@ interface DrawService : KGEOverridable {
 }
 
 /** The platform-independent default — the mode math is pure CPU over the surface accessors. */
-private val drawServiceDefault: DrawService =
-    object : DrawService {
-        override fun draw(
-            target: Pixmap.Mutable,
-            x: Int,
-            y: Int,
-            color: Pixel,
-            mode: Pixel.Mode,
-        ): Boolean =
-            when (mode) {
-                Pixel.Mode.Normal -> target.set(x, y, color)
-                Pixel.Mode.Mask -> color.a == 255 && target.set(x, y, color)
-                is Pixel.Mode.Alpha -> blendAlpha(target, x, y, color, mode)
-                is Pixel.Mode.Custom -> applyCustom(target, x, y, color, mode)
-            }
-    }
+private object DrawServiceDefault : DrawService {
+    override fun draw(
+        target: Pixmap.Mutable,
+        x: Int,
+        y: Int,
+        color: Pixel,
+        mode: Pixel.Mode,
+    ): Boolean =
+        when (mode) {
+            Pixel.Mode.Normal -> target.set(x, y, color)
+            Pixel.Mode.Mask -> color.a == 255 && target.set(x, y, color)
+            is Pixel.Mode.Alpha -> blendAlpha(target, x, y, color, mode)
+            is Pixel.Mode.Custom -> applyCustom(target, x, y, color, mode)
+        }
+}
 
 private fun blendAlpha(
     target: Pixmap.Mutable,

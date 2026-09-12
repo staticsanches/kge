@@ -22,11 +22,12 @@ typealias-actual; web TypedArray emulation) + `MemoryAllocatorService` — the
 first platform-defaulted T2 service. C5 (surface — S3/S4, log #33) closed:
 `Pixmap`/`MutablePixmap` (mode-aware `get`, nearest/bilinear sampling),
 `Sprite` over native memory and the platform-independent
-`SpriteService` (PNG to S5). **S5 (PNG codec, log #34) closed**:
-`PngService` (decode/encode/load seam, JVM STB zero-copy, web pngjs `.sync`),
-the typed `PngSource` load boundary (`base64`/`url`/`fetch` factories), and a
-module-wide kotest `ProjectConfig` that resets service overrides after every
-test. **C6 (raster ops, R1, log #35) closed**: four per-scope raster
+`SpriteService`. **S5 (PNG codec, log #34) closed, then generalized by S6 (log
+#19, closed 2026-09-11)**: `ImageService` (generic `Decoder<T>`/`Encoder<T>`,
+suspend `load`/`save`, JVM STB, web-native `createImageBitmap`/canvas), the
+extension codecs (`BytesDecoder`/`Base64Decoder`/`UrlDecoder`/`FetchDecoder`,
+`PngEncoder`/`JpegEncoder`/`Base64PngEncoder`), and a module-wide kotest
+`ProjectConfig` that resets service overrides after every test. **C6 (raster ops, R1, log #35) closed**: four per-scope raster
 sub-services (`DrawService`/`OutlineService`/`FillService`/`DrawSpriteService`)
 aggregated by `Rasterizer`, pixel-mode blend via the draw seam, native bulk
 buffer ops, and the `SpriteService` rename. **Vector/point concept (closed
@@ -49,8 +50,12 @@ views, `BlitService`/`blit`/`blitRegion` over a `Pixmap` source (the
 — `ALL` is the untouched C6 behavior. **Line patterns (closed 2026-09-11, log
 #18)**: the `LinePattern` sealed type and the required `pattern` on
 `drawLine`/`drawRect`/`drawTriangle`, consumed per walked cell from the first
-cell of the clipped walk — `Filled` is the untouched pre-change behavior. Next:
-`C8` (state), per the roadmap; no renderer or engine loop yet.
+cell of the clipped walk — `Filled` is the untouched pre-change behavior. **Image service
+`S6` (closed 2026-09-11, log #19)**: supersedes `S5` with a platform-generic
+`ImageService` (generic `Decoder<T>`/`Encoder<T>`, suspend `load`/`save`,
+`Sprite` RGBA-only, `PNG`/`JPEG` uniform encode, documented per-platform decode
+divergence). The web targets are now **browser-only** (node dropped) and the
+browser suites run in CI. Next: `C8` (state). No renderer or engine loop yet.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the
@@ -118,8 +123,9 @@ These two are the only active documents; older plans/specs were deleted
   configuration cache (both enabled in gradle.properties) can return up-to-date
   results without executing — a "green" can be stale. Historical proof:
   `jvmTest` once reported "1 test" while the kotest engine never ran (decisions
-  log item 15). Only force-executed green counts. JVM, JS (node) and wasmJs
-  (node) run the same commonTest suite.
+  log item 15). Only force-executed green counts. JVM, JS (browser) and wasmJs
+  (browser) run the same commonTest suite (the web targets are browser-only —
+  node was dropped at S6, log #19).
 - **Behavior reference**: olcPixelGameEngine v2.30 semantics + exact pixel math;
   old tests are not ported, evidence of `main` is not a mandate (see the
   roadmap's three lenses).
@@ -130,10 +136,10 @@ These two are the only active documents; older plans/specs were deleted
 - **Commit messages are succinct** (subject + non-obvious core only): a
   one-line subject, then at most a few body lines covering only what is not
   deducible from the diff — the "why", recorded decisions, non-obvious
-  consequences. No gate history, no test counts, no review narratives, no
-  change-by-change recap (that is what the diff shows), no doc/location
-  pointers. Long-form context lives in the decisions log and KDocs, never in
-  the commit body.
+  consequences. Every line — subject included — stays within 80 columns. No
+  gate history, no test counts, no review narratives, no change-by-change recap
+  (that is what the diff shows), no doc/location pointers. Long-form context
+  lives in the decisions log and KDocs, never in the commit body.
 - **Delivery**: commit-ready work; the owner reviews, pushes, and may implement
   parts personally. Do not push.
 
@@ -141,7 +147,7 @@ These two are the only active documents; older plans/specs were deleted
 
 ```bash
 ./gradlew build --rerun-tasks  # full gate: ktlint (wired into check) + all targets' tests + assemble/metadata
-./gradlew :kge-core:allTests   # tests only (jvm + js + wasmJs, node + browser)
+./gradlew :kge-core:allTests   # tests only (jvm + js browser + wasmJs browser)
 ./gradlew :kge-core:jvmTest    # JVM only
 ```
 
