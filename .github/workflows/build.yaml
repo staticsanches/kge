@@ -13,28 +13,21 @@ jobs:
       - uses: actions/setup-java@v6
         with: { distribution: zulu, java-version: "21" }
       - uses: gradle/actions/setup-gradle@v6
-      # Chrome for Testing, on every runner. The ubuntu/windows images ship
-      # Chrome and the macOS image ships `Google Chrome` too (verified against
-      # the macos-26-arm64 image readme), but pinning the channel removes image
-      # drift and guarantees the binary is where Karma looks. `CHROME_BIN` is
-      # what the KGP Karma ChromeHeadless launcher reads on macOS/Windows.
-      - uses: browser-actions/setup-chrome@v2
-        id: setup-chrome
-        with:
-          chrome-version: stable
-      - name: Point Karma at the pinned Chrome
-        shell: bash
-        run: echo "CHROME_BIN=${{ steps.setup-chrome.outputs.chrome-path }}" >> "$GITHUB_ENV"
-      # The JVM GL smoke test opens a hidden GLFW window. On the ubuntu runner
-      # there is no X display, so the build runs through setup-xvfb, which
-      # installs xvfb and wraps the command (macOS/Windows just run it).
+      # The JVM GL smoke test uses the production GLFW path, headless. Linux
+      # needs a display (Xvfb) plus Mesa's software driver; Windows gets Mesa
+      # from setup-mesa-dist-win; the macOS runner cannot create a GL context,
+      # so the probe skips there.
+      - if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
+      - if: matrix.os == 'windows-latest'
+        uses: ssciwr/setup-mesa-dist-win@v3
       # `build` = check (ktlint + all tests on jvm + js browser + wasmJs
       # browser) + assemble — the webMain metadata compilation is exercised
       # only by `assemble`, so `allTests`-style runs cannot stay the gate.
       # ktlint needs no explicit call: its source-set checks are wired into
       # `check` (decisions log #32). All three OSes run the full suite now
-      # (decisions log #19's macOS exclusion rested on an unverified "no
-      # Chrome" claim).
-      - uses: coactions/setup-xvfb@v1
-        with:
-          run: ./gradlew build --rerun-tasks --stacktrace
+      # (the old macOS exclusion rested on an unverified "no Chrome" claim).
+      - if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a ./gradlew build --rerun-tasks --stacktrace
+      - if: matrix.os != 'ubuntu-latest'
+        run: ./gradlew build --rerun-tasks --stacktrace

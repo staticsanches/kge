@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWasmJsInterop::class)
+
 package dev.staticsanches.kge.renderer
 
 import io.kotest.core.spec.style.FunSpec
@@ -11,6 +13,7 @@ import web.gl.RGBA
 import web.gl.UNSIGNED_BYTE
 import web.gl.WebGL2RenderingContext
 import web.html.HTMLCanvasElement
+import kotlin.js.ExperimentalWasmJsInterop
 
 /**
  * SPIKE probe (throwaway): is a WebGL2 context available in the Karma

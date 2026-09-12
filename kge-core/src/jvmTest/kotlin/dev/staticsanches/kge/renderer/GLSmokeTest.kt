@@ -2,42 +2,25 @@ package dev.staticsanches.kge.renderer
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL33
-import org.lwjgl.system.MemoryUtil.memUTF8
 import java.nio.ByteBuffer
 
+private val glContext: GlTestContext? = GlTestContext.detect()
+
 /**
- * SPIKE probe (throwaway): can a JVM unit test create a headless GL context and
- * read a pixel back? Creates a hidden GLFW window with an OpenGL 3.3 core
- * context, renders into an off-screen framebuffer and reads one pixel.
- *
- * The point is to find out what the jvmTest task needs on each CI OS (macOS
- * main-thread rule, ubuntu display/xvfb, GL version availability), not to pin
- * an engine API. Delete or promote to the C9 harness once the facts are in.
+ * SPIKE probe (throwaway): can a JVM unit test get a GL context with no
+ * display and read a pixel back? Renders into an off-screen framebuffer and
+ * reads one pixel. Skips (disabled) when no backend is available, which is the
+ * case on the GitHub macOS/Windows runners. Delete or promote to the C9 harness
+ * once the facts are in.
  */
 class GLSmokeTest :
     FunSpec({
-        test("hidden GLFW window + GL 3.3 context clears an FBO and reads it back") {
-            val glfwError = arrayOfNulls<String>(1)
-            GLFW.glfwSetErrorCallback { code, description ->
-                glfwError[0] = "GLFW error $code: ${memUTF8(description)}"
-            }
-
-            check(GLFW.glfwInit()) { glfwError[0] ?: "glfwInit returned false" }
-            try {
-                GLFW.glfwDefaultWindowHints()
-                GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE)
-                GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3)
-                GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3)
-                GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
-                GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE)
-
-                val window = GLFW.glfwCreateWindow(64, 64, "kge-gl-smoke", 0L, 0L)
-                check(window != 0L) { glfwError[0] ?: "glfwCreateWindow returned 0" }
-                try {
-                    GLFW.glfwMakeContextCurrent(window)
+        test("offscreen GL context (${glContext?.backend ?: "unavailable"}) clears an FBO and reads a pixel back")
+            .config(enabled = glContext != null) {
+                glContext!!.use { context ->
+                    context.makeCurrent()
                     GL.createCapabilities()
 
                     val framebuffer = GL33.glGenFramebuffers()
@@ -78,11 +61,6 @@ class GLSmokeTest :
                         GL33.glDeleteTextures(texture)
                         GL33.glDeleteFramebuffers(framebuffer)
                     }
-                } finally {
-                    GLFW.glfwDestroyWindow(window)
                 }
-            } finally {
-                GLFW.glfwTerminate()
             }
-        }
     })

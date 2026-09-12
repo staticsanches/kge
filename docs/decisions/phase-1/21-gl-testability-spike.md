@@ -61,3 +61,56 @@ decision). Findings below are verified locally on macOS (arm64, Google Chrome
 
 Note: `.github/workflows/build.yaml` still triggers on `branches: [restructure]`;
 the current work branch is `feature`, so the run must be targeted accordingly.
+
+### 2026-09-12 — first CI run: findings and corrections (supersedes the CI decisions above)
+
+The first pushed run (`34671433552`) failed on all three runners:
+
+- **ubuntu — `setup-chrome` breaks the sandbox.** Chrome for Testing aborts with
+  `FATAL ... No usable sandbox!`; Ubuntu 24.04 disables unprivileged user
+  namespaces via AppArmor. The image's own Chrome (used before this change) did
+  not hit it.
+- **macOS/Windows — `ChromeHeadless has not captured in 60000 ms`.** The
+  combination of `setup-chrome`/`CHROME_BIN` and the
+  `--use-angle=swiftshader` flag made Karma time out launching Chrome. Windows
+  previously ran the web suites green with the image Chrome and the default
+  launcher.
+- **JVM GL — `glfwCreateWindow` returned 0 on the macOS and Windows runners.**
+  `glfwInit` succeeds but the hosted runners have no usable display/GPU for a GL
+  window. The hidden-window approach is therefore not viable there.
+- Minor: `coactions/setup-xvfb@v1` targets Node 20 (deprecated) and its
+  `dist/cleanup.sh` is missing (post-run error).
+
+Corrections (owner decisions):
+
+- **Drop `setup-chrome`/`CHROME_BIN`; use the Chrome the runner image ships.**
+- **Karma launcher flags become `--no-sandbox --enable-unsafe-swiftshader`**
+  (drop `--use-angle=swiftshader`).
+- **JVM GL moves to an offscreen context (owner): EGL surfaceless (Mesa) where
+  available, hidden-GLFW fallback for dev machines, and a clean skip when
+  neither works.** No xvfb: an offscreen context needs no display. The ubuntu
+  job installs Mesa's EGL (`libegl-mesa0`, `libgl1-mesa-dri`).
+- EGL is Linux-only (no EGL on macOS); OSMesa would need the native library.
+  So JVM GL coverage in CI is expected on ubuntu only; macOS/Windows skip.
+
+Still unverified after the correction (next CI run): EGL surfaceless on the
+ubuntu runner; the image Chrome with the corrected launcher on all three OSes;
+Windows JVM (expected to skip).
+
+### 2026-09-12 — GLFW + Mesa instead of EGL/OSMesa (owner)
+
+Reconsidering what the engine actually uses: EGL is a non-production context API
+and is absent on macOS, so it is the wrong base for the harness. The engine's
+JVM path is GLFW; the closest CI can get to it without a GPU is the production
+GLFW path on a real software GL driver (Mesa llvmpipe):
+
+- **Linux:** Xvfb + Mesa (`libgl1-mesa-dri`, `libglx-mesa0`); the build runs
+  under `xvfb-run -a`.
+- **Windows:** `ssciwr/setup-mesa-dist-win@v3` installs Mesa (llvmpipe) so GLFW
+  gets an OpenGL context without a GPU. (Low-adoption action; unverified.)
+- **macOS:** hosted runners cannot create a GL context and no software GL stack
+  exists for macOS, so the probe skips there.
+
+`lwjgl-egl` was removed. This is still software rendering, not the user's GPU:
+it exercises the API and driver, not pixel parity. The C9 primary oracle
+remains a recording GL backend (all OSes, no GPU); real GL is a smoke test.
