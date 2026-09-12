@@ -75,6 +75,11 @@ kotlin {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)
         }
+        // The WebGL2 smoke probe uses the kotlin-wrappers `web.*` bindings;
+        // the test source set does not inherit webMain's `implementation` deps.
+        webTest.dependencies {
+            implementation(libs.kotlin.browser)
+        }
         jvmTest.dependencies {
             implementation(libs.kotest.runner.junit5)
 
@@ -134,12 +139,32 @@ kotlin {
                     classifier = lwjglNatives
                 }
             }
+            // GL smoke-test probe (spike): a hidden GLFW window + OpenGL 3.3
+            // context + FBO readback. Only the test needs GL today; the
+            // renderer (C9) will move GLFW/OpenGL to jvmMain.
+            implementation(libs.lwjgl.glfw)
+            implementation(libs.lwjgl.opengl)
+            runtimeOnly(libs.lwjgl.glfw.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
+            runtimeOnly(libs.lwjgl.opengl.get()) {
+                artifact {
+                    classifier = lwjglNatives
+                }
+            }
         }
     }
 }
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    // macOS/AppKit requires GLFW (and any GL context work) on the process's
+    // first thread; without this the JVM GL smoke test aborts in glfwInit.
+    if (System.getProperty("os.name").startsWith("Mac")) {
+        jvmArgs("-XstartOnFirstThread")
+    }
 }
 
 ktlint {

@@ -35,8 +35,8 @@ buffer ops, and the `SpriteService` rename. **Vector/point concept (closed
 `Int2D` overloads on the raster sub-services (interface defaults + companion
 `Proxy` analog forwarding). **Ordering revision (2026-09-10, owner):** the old
 `C7` (simple text) is dropped — text becomes **elaborate text** (shaping +
-rasterization + atlas + blit), shipped **last** as `R6`, after `R2`, `C8`,
-`C9`, `C10`; the `main` bitmap font is not ported. **R2 (viewport/clipping,
+rasterization + atlas + blit), shipped **last** as `R6`, after `R2`, `C9`,
+`C10`; the `main` bitmap font is not ported. **R2 (viewport/clipping,
 closed 2026-09-10)**: the pure `Viewport` sealed type, the `ClipService` seam
 (fifth raster sub-service, olc `ClipLineToDrawTarget` Cohen–Sutherland),
 `Pixmap : Viewport.Bounded`, and the clip-then-walk `drawLine` that clears the
@@ -55,7 +55,8 @@ cell of the clipped walk — `Filled` is the untouched pre-change behavior. **Im
 `ImageService` (generic `Decoder<T>`/`Encoder<T>`, suspend `load`/`save`,
 `Sprite` RGBA-only, `PNG`/`JPEG` uniform encode, documented per-platform decode
 divergence). The web targets are now **browser-only** (node dropped) and the
-browser suites run in CI. Next: `C8` (state). No renderer or engine loop yet.
+browser suites run in CI. Next: `C9` (renderer/GL/decals; `C8` state was
+dissolved into `C10`, log #20). No renderer or engine loop yet.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the

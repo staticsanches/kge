@@ -236,10 +236,13 @@ internal helper.
   2026-09-08 (findings below, recorded for the E1 touch-point).
 - **E2 ● Addons (user-facing API surface)** — mixins with defaults over
   facades/state. **E3 ● State** — `WithKGEState`, window composition, pure
-  state machines; TimeState platform-coupled through a clock (form decided in
-  C8). **E4 ◐ Input mapping** — common key enum + action types + platform
-  mapping; open at C10 (KeyCode/InputAction touch-point). **E5 ○ Configuration**
-  and **E6 ○ Window** — sub-concepts of E1/E3.
+  state machines; TimeState platform-coupled through a clock. **No standalone
+  concept** (`C8` dissolved, decisions-log #20, 2026-09-11): handled at the
+  `C10` touch-point, where the loop/window is the real consumer; the shape and
+  `WithKGEState`'s field split are open there. **E4 ◐ Input mapping** — common
+  key enum + action types + platform mapping; open at C10 (KeyCode/InputAction
+  touch-point). **E5 ○ Configuration** and **E6 ○ Window** — sub-concepts of
+  E1/E3.
 
 ### E1 — unified suspend loop: spike findings (2026-09-08, recorded pre-touch-point)
 
@@ -353,9 +356,10 @@ at its touch-point)
 (closed 2026-09-10; cleared the C6 partial-OOB `drawLine` debt + S3's
 `Viewport.Bounded`)
 → line patterns (R1 widening — closed 2026-09-11)
-→ `S6` image service (generalizes `S5` — touch-point 2026-09-11)
-→ `C8` state (E3) → `C9` renderer/GL/decals (R5 → R4 → R3)
-→ `C10` engine (E1 loop/window + E2 addons + E4 KeyCode/InputAction)
+→ `S6` image service (generalizes `S5` — closed 2026-09-11)
+→ `C9` renderer/GL/decals (R5 → R4 → R3)
+→ `C10` engine (E1 loop/window + E2 addons + E3 state + E4 KeyCode/InputAction;
+`C8` state dissolved into it — decisions-log #20)
 → `R6` elaborate text (shaping + rasterization + atlas + blit — the final
 concept; see the catalog; not the `main` bitmap font).
 
@@ -569,3 +573,13 @@ pngjs/buffer interop. The web targets are now **browser-only** (node dropped;
 Chrome-bearing runners (ubuntu/windows; macOS JVM-only). PNG/JPEG encode is
 uniform; decode breadth and JPEG quality diverge and are documented. Two-axis
 review clean after one fix round. Next concept: `C8` (state, E3).
+
+**2026-09-11 — `C8` state dissolved into `C10` (decisions-log #20).** At the
+touch-point, E3's claims were examined against olc and `main`: `WithKGEState` is
+a `main` god-interface mixing concerns already owned by R1/R3/R4/R5/R6/E4/E6;
+`main`'s `TimeState` diverges in unit per platform (JVM seconds × JS
+milliseconds) and couples FPS to the clock, whereas olc measures seconds and
+counts FPS in the loop; `DimensionState` is window/GL; "pure state machines" has
+no source. No part has a consumer before the loop/window, so the owner dropped
+the standalone concept and folded E3 into `C10`. Next concept: `C9`
+(renderer/GL/decals, R5 → R4 → R3).
