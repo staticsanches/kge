@@ -167,3 +167,59 @@ GL33, ~96 µs/quad. olc's `DrawDecal` instead does
   olc draw path, so a plan-level defect (wrong buffer strategy) passed. The
   review process now mandates a behavior-parity check against the olc reference,
   with divergences accepted only when a rationale is recorded (AGENTS.md).
+
+### Correction (2026-09-12) — `Texture.update` re-specifies with `texImage2D`
+
+`Texture.update` issued `texSubImage2D` at `(0, 0)` with the sprite's
+dimensions over the storage `Texture.create` had allocated. That is `main`'s
+`BaseRenderer.updateTexture`; olc's `UpdateTexture` issues
+`glTexImage2D(TEXTURE_2D, 0, RGBA, spr->width, spr->height, 0, RGBA,
+UNSIGNED_BYTE, data)`, re-specifying (and resizing) the texture from the sprite.
+
+- **Fix.** `update` uses the seam's `texImage2D`; `create` still allocates a
+  null texture so a texture exists before an update, and `read`/`apply` are
+  unchanged. The engine path is unaffected (a `Sprite`'s size is fixed and
+  `Decal` sizes its texture from the sprite), but a public
+  `Renderer.updateTexture`/`Texture.update` with a differently sized sprite now
+  resizes instead of leaving stale texels.
+- **Tests.** `TextureTest` expects `texImage2D` and pins the re-specify at a
+  differing sprite size; the renderer and decal recording expectations were
+  updated to the same call.
+- **Seam.** `texSubImage2D` stays on `GLService` as a general command, like the
+  retained size-only `bufferData`/`bufferSubData`; `update` no longer calls it.
+
+### Correction (2026-09-12) — decal vertex `z`/`w` match olc
+
+`DefaultRenderer.drawDecal` wrote the built-in vertex `z = 0`, `w = 1`. olc's
+GL33 `DrawDecal` writes `{pos.x, pos.y, decal.w[i], 0}` with the CPU
+`di.w = {1, 1, 1, 1}` (`olcPixelGameEngine.h:6240`, `:3571`), so `z = 1`,
+`w = 0` — the same values the layer quad already used. The built-in shader
+ignores both components, so this is a byte-layout parity fix, not an observable
+one; `RendererDrawTest` now pins `1f, 0f` for decal vertices.
+
+### Post-C9 parity audit — accepted divergences and limitations
+
+A follow-up audit compared the raster, surface and renderer code against olc
+v2.30 and closed the remaining candidates: each is recorded here as a decision
+rather than left as an open finding (the same audit corrected `sampleBL`, the
+texture upload and the decal vertex above).
+
+- **Blit `scale <= 0` paints nothing (accepted).** `BlitService` and
+  `RasterizerTest` pin it. olc `DrawSprite` sends `scale == 0` to the `else`
+  (1:1) branch because its `scale` is `uint32_t` (`:3369`); KGE's `scale` is a
+  signed `Int`, so a non-positive guard is deliberate and the olc zero case is
+  an unsigned-type accident (a negative scale is not representable in olc).
+- **Wrap maps to `GL_CLAMP_TO_EDGE` (accepted).** Desktop olc uses `GL_CLAMP`
+  (`:6284`) and swaps to `GL_CLAMP_TO_EDGE` only under Emscripten (`:1781`);
+  `GL_CLAMP` does not exist in the core profile KGE targets, and
+  `CLAMP_TO_EDGE` is the olc-web value, so the mapping is the only valid one.
+- **Decal reads live `sprite.width`/`height` (no-op).** olc caches the decal's
+  `width`/`height` and a UV scale; KGE reads the `Sprite`'s `val` dimensions
+  when it builds the geometry. A `Sprite`'s size is immutable, so the values
+  coincide and the divergence has no observable path.
+- **`fillTriangle` edge math is `Int` (accepted limitation, not an olc
+  divergence).** The half-open edge test overflows far from the origin
+  (products of coordinate deltas, roughly beyond ±20k); the primitive assumes
+  screen-scale coordinates, as olc's screen-space scanline also does. No
+  change: the per-pixel test is the hot path and switching to `Long` (emulated
+  on web) is a measured-performance risk without a benchmark.

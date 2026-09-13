@@ -52,12 +52,12 @@ class DecalIntegrationTest :
                                 "texParameteri",
                                 "texImage2D",
                                 "bindTexture",
-                                "texSubImage2D",
+                                "texImage2D",
                             )
                         recorder.calls.last() shouldBe
                             RecordedGLCall(
-                                "texSubImage2D",
-                                listOf(GL.TEXTURE_2D, 0, 0, 0, 4, 4, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
+                                "texImage2D",
+                                listOf(GL.TEXTURE_2D, 0, GL.RGBA, 4, 4, 0, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
                             )
 
                         renderer.prepareDrawing(scope)

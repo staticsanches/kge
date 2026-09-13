@@ -96,8 +96,8 @@ class RendererTextureTest :
                         listOf(
                             RecordedGLCall("bindTexture", listOf(GL.TEXTURE_2D, handle)),
                             RecordedGLCall(
-                                "texSubImage2D",
-                                listOf(GL.TEXTURE_2D, 0, 0, 0, 4, 2, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
+                                "texImage2D",
+                                listOf(GL.TEXTURE_2D, 0, GL.RGBA, 4, 2, 0, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
                             ),
                         )
                 }

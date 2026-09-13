@@ -108,7 +108,7 @@ class RendererSurfaceTest :
                         "texParameteri",
                         "texImage2D",
                         "bindTexture",
-                        "texSubImage2D",
+                        "texImage2D",
                         "bindTexture",
                         "getTexImage",
                         "bindTexture",

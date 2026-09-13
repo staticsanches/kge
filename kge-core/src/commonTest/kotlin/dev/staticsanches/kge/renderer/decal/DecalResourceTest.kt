@@ -80,9 +80,9 @@ class DecalResourceTest :
                     renderer.calls[1].second shouldBe listOf(decal.texture, sprite)
 
                     gl.calls.first() shouldBe RecordedGLCall("createTexture", emptyList())
-                    gl.calls.last().name shouldBe "texSubImage2D"
+                    gl.calls.last().name shouldBe "texImage2D"
                     gl.calls.last().arguments shouldBe
-                        listOf(GL.TEXTURE_2D, 0, 0, 0, 4, 2, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer)
+                        listOf(GL.TEXTURE_2D, 0, GL.RGBA, 4, 2, 0, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer)
                 }
             }
         }
@@ -102,8 +102,8 @@ class DecalResourceTest :
                         listOf(
                             RecordedGLCall("bindTexture", listOf(GL.TEXTURE_2D, handle)),
                             RecordedGLCall(
-                                "texSubImage2D",
-                                listOf(GL.TEXTURE_2D, 0, 0, 0, 4, 2, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
+                                "texImage2D",
+                                listOf(GL.TEXTURE_2D, 0, GL.RGBA, 4, 2, 0, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
                             ),
                         )
                 }
@@ -171,17 +171,20 @@ class DecalResourceTest :
             val failure = IllegalStateException("upload failed")
             GLService.override(
                 object : GLService by gl {
-                    override fun texSubImage2D(
+                    override fun texImage2D(
                         target: GLenum,
                         level: GLint,
-                        xOffset: GLint,
-                        yOffset: GLint,
+                        internalFormat: GLenum,
                         width: GLsizei,
                         height: GLsizei,
+                        border: GLint,
                         format: GLenum,
                         type: GLenum,
-                        srcData: ByteBuffer,
-                    ): Unit = throw failure
+                        srcData: ByteBuffer?,
+                    ) {
+                        if (srcData != null) throw failure
+                        gl.texImage2D(target, level, internalFormat, width, height, border, format, type, srcData)
+                    }
                 },
             )
             SpriteService.create(2, 2, Pixmap.SampleMode.NORMAL, null).use { sprite ->

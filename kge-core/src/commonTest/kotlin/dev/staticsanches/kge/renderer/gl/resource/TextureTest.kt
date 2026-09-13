@@ -69,8 +69,29 @@ class TextureTest :
                         listOf(
                             RecordedGLCall("bindTexture", listOf(GL.TEXTURE_2D, handle)),
                             RecordedGLCall(
-                                "texSubImage2D",
-                                listOf(GL.TEXTURE_2D, 0, 0, 0, 4, 2, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
+                                "texImage2D",
+                                listOf(GL.TEXTURE_2D, 0, GL.RGBA, 4, 2, 0, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
+                            ),
+                        )
+                }
+            }
+        }
+
+        test("update re-specifies the texture at the sprite's dimensions") {
+            val recorder = recordingService()
+
+            Texture.create(4, 2, GL.NEAREST, GL.REPEAT).use { texture ->
+                val handle = recorder.lastCreatedTexture
+                SpriteService.create(3, 1, Pixmap.SampleMode.NORMAL, null).use { sprite ->
+                    recorder.clear()
+                    texture.update(sprite)
+
+                    recorder.calls shouldBe
+                        listOf(
+                            RecordedGLCall("bindTexture", listOf(GL.TEXTURE_2D, handle)),
+                            RecordedGLCall(
+                                "texImage2D",
+                                listOf(GL.TEXTURE_2D, 0, GL.RGBA, 3, 1, 0, GL.RGBA, GL.UNSIGNED_BYTE, sprite.buffer),
                             ),
                         )
                 }

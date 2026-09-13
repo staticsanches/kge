@@ -6,12 +6,13 @@ import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Viewport
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.min
 
 /**
  * A 2D pixel surface, row-major over conventional x/y coordinates. Coordinates
- * outside the surface do not throw: [get] follows [sampleMode] and
- * [sample]/[sampleBL] dispatch through it, so sampling is mode-aware everywhere.
+ * outside the surface do not throw: [get], [sample] and [sampleBL] resolve
+ * their reads through the [sampleMode] policy.
  */
 interface Pixmap :
     Sequence<Pixel>,
@@ -126,9 +127,13 @@ interface Pixmap :
         )
 
     /**
-     * Bilinear blend: the four [get] neighbors of the fractional texel at
-     * `(u * width - 0.5, v * height - 0.5)`, the RGB channels weighted and
-     * truncated to bytes, the alpha channel forced to 255.
+     * Bilinear blend: the four neighbors of the fractional texel at
+     * `(u * width - 0.5, v * height - 0.5)`. On each axis the low neighbor is
+     * floored at the first cell and the high one capped at the last, so for
+     * `u`/`v` in `[0, 1]` every read is in bounds; an extreme coordinate still
+     * reaches an out-of-range corner, which dispatches through [get] and so
+     * follows [sampleMode]. The RGB channels are weighted and truncated to
+     * bytes, the alpha channel forced to 255.
      */
     fun sampleBL(
         u: Float,
@@ -140,10 +145,14 @@ interface Pixmap :
         val fy = floor(sy).toInt()
         val wx = sx - fx
         val wy = sy - fy
-        val c00 = get(fx, fy)
-        val c10 = get(fx + 1, fy)
-        val c01 = get(fx, fy + 1)
-        val c11 = get(fx + 1, fy + 1)
+        val x0 = max(fx, 0)
+        val y0 = max(fy, 0)
+        val x1 = min(fx + 1, width - 1)
+        val y1 = min(fy + 1, height - 1)
+        val c00 = get(x0, y0)
+        val c10 = get(x1, y0)
+        val c01 = get(x0, y1)
+        val c11 = get(x1, y1)
         val r = c00.r * (1f - wx) * (1f - wy) + c10.r * wx * (1f - wy) + c01.r * (1f - wx) * wy + c11.r * wx * wy
         val g = c00.g * (1f - wx) * (1f - wy) + c10.g * wx * (1f - wy) + c01.g * (1f - wx) * wy + c11.g * wx * wy
         val b = c00.b * (1f - wx) * (1f - wy) + c10.b * wx * (1f - wy) + c01.b * (1f - wx) * wy + c11.b * wx * wy

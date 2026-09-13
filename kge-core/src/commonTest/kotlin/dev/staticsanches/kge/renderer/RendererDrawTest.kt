@@ -196,8 +196,8 @@ class RendererDrawTest :
                                 listOf(
                                     position,
                                     -position,
-                                    0f,
                                     1f,
+                                    0f,
                                     position * 0.5f,
                                     position * 0.25f,
                                     Colors.WHITE.nativeRGBA,

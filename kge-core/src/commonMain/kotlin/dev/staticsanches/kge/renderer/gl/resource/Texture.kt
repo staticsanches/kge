@@ -29,16 +29,16 @@ class Texture
     constructor(
         private val wrapper: ResourceWrapper<GLTexture>,
     ) : KGEResource by wrapper {
-        /** Uploads all of [sprite]'s pixels into the whole texture (CPU → GPU). */
+        /** (Re)specifies the texture from all of [sprite]'s pixels (CPU → GPU). */
         fun update(sprite: Sprite) {
             GL.bindTexture(GL.TEXTURE_2D, wrapper.resource)
-            GL.texSubImage2D(
+            GL.texImage2D(
                 GL.TEXTURE_2D,
                 0,
-                0,
-                0,
+                GL.RGBA,
                 sprite.width,
                 sprite.height,
+                0,
                 GL.RGBA,
                 GL.UNSIGNED_BYTE,
                 sprite.buffer,

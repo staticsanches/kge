@@ -97,6 +97,40 @@ class PixmapTest :
             c.a shouldBe 255
         }
 
+        test("sampleBL clamps the corners to the edges") {
+            val row = PixmapDouble(4, 1)
+            row.uncheckedSet(0, 0, Pixel.rgba(10, 0, 0, 255))
+            row.uncheckedSet(1, 0, Pixel.rgba(20, 0, 0, 255))
+            row.uncheckedSet(2, 0, Pixel.rgba(30, 0, 0, 255))
+            row.uncheckedSet(3, 0, Pixel.rgba(40, 0, 0, 255))
+
+            row.sampleBL(0f, 0.5f).r shouldBe 10 // both x corners clamp to the first texel
+            row.sampleBL(1f, 0.5f).r shouldBe 40 // both x corners clamp to the last texel
+
+            val column = PixmapDouble(1, 4)
+            column.uncheckedSet(0, 0, Pixel.rgba(10, 0, 0, 255))
+            column.uncheckedSet(0, 1, Pixel.rgba(20, 0, 0, 255))
+            column.uncheckedSet(0, 2, Pixel.rgba(30, 0, 0, 255))
+            column.uncheckedSet(0, 3, Pixel.rgba(40, 0, 0, 255))
+
+            column.sampleBL(0.5f, 0f).r shouldBe 10 // both y corners clamp to the first texel
+            column.sampleBL(0.5f, 1f).r shouldBe 40 // both y corners clamp to the last texel
+        }
+
+        test("sampleBL reads a still-out-of-range corner through the sample mode") {
+            val row = PixmapDouble(4, 1)
+            row.uncheckedSet(0, 0, Pixel.rgba(10, 0, 0, 255))
+            row.uncheckedSet(1, 0, Pixel.rgba(20, 0, 0, 255))
+            row.uncheckedSet(2, 0, Pixel.rgba(30, 0, 0, 255))
+            row.uncheckedSet(3, 0, Pixel.rgba(40, 0, 0, 255))
+
+            // u=10 → x=39: the low corner stays out of range (transparent under NORMAL),
+            // the high corner is capped to the last texel → 0 * 0.5 + 40 * 0.5
+            row.sampleBL(10f, 0.5f).r shouldBe 20
+            // u=-10 → x=-41: the high corner stays out of range → 10 * 0.5 + 0 * 0.5
+            row.sampleBL(-10f, 0.5f).r shouldBe 5
+        }
+
         test("set is bounds-checked: false and no write outside, true inside") {
             val p = PixmapDouble(2, 2)
 

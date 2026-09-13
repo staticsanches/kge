@@ -122,3 +122,22 @@ messages carry the label. `duplicate` preserves it.
   ktlint clean via the `check` wiring of #32; `ktlintFormat` remains manual per
   the owner).
 
+### Correction (2026-09-12) — `sampleBL` folds its bilinear corners
+
+The C5 `sampleBL` read its four bilinear corners through `get(fx, …)` /
+`get(fx + 1, …)` with no index fold, so the surface's default `NORMAL` mode
+returned transparent for an edge corner (`fx == -1` at `u == 0`, `fx + 1 ==
+width` at `u == 1`) and bilinear sampling faded toward transparent at the
+borders. olc `Sprite::SampleBL` folds each axis (`x0 = max(x, 0)`,
+`x1 = min(x + 1, width - 1)`, same for `y`) and reads through `GetPixel`, which
+applies the sprite's sample mode; `main`'s `PixelMap.sampleBL` folded
+identically.
+
+- **Fix.** `sampleBL` folds the four indices as olc does and reads them through
+  `get`, so for `u`/`v` in `[0, 1]` every read is in bounds; a coordinate still
+  out of range after the fold is resolved by `get`, following `sampleMode`.
+  KDoc updated.
+- **Tests.** `PixmapTest` pins the edge texel at `u`/`v` 0 and 1 (previously the
+  transparent blend) and the still-out-of-range corner at `u = ±10` through the
+  `get` path (the unfolded read was out of bounds).
+
