@@ -10,10 +10,9 @@ import io.kotest.matchers.shouldBe
 
 /**
  * The raw shader/program command seam: every command reaches the overridable
- * backend with its arguments in order, and the `create*` handles round-trip.
- * The real-backend checks (compile/link failure with the info log,
- * `getUniformLocation` normalizing the inactive-uniform sentinel to `null`) are
- * platform behavior pinned by the real-GL step, not by the recorder.
+ * backend in order and the `create*` handles round-trip. Compile/link failure
+ * info logs and `getUniformLocation`'s inactive-uniform sentinel are real-GL
+ * behavior, not pinned here.
  */
 class ShaderProgramTest :
     FunSpec({

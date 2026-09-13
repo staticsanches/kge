@@ -23,8 +23,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The last two renderer ops, `clearBuffer` and `updateViewport`, and a sweep
- * over the whole surface that pins every method is implemented (no stub left).
+ * `clearBuffer` and `updateViewport`, plus a sweep over the whole surface that
+ * pins every method is implemented (no stub left).
  */
 class RendererSurfaceTest :
     FunSpec({
@@ -115,14 +115,12 @@ class RendererSurfaceTest :
                         "disable",
                         "bindBuffer",
                         "bufferData",
-                        "bindBuffer",
-                        "bufferSubData",
                         "drawArrays",
                         "disable",
                         "blendFunc",
                         "bindTexture",
                         "bindBuffer",
-                        "bufferSubData",
+                        "bufferData",
                         "drawArrays",
                         "clearColor",
                         "clear",

@@ -14,11 +14,10 @@ import dev.staticsanches.kge.resource.ResourceScope
 import dev.staticsanches.kge.resource.letClosingIfFailed
 
 /**
- * The engine-defined common [Renderer] default: common drawing logic over the
- * overridable [GL], with no platform code of its own and no state of its
- * own. The built-in quad program and its staging buffer are built eagerly by
- * [createResources] into the engine-owned [ResourceScope] and resolved from it
- * by every draw.
+ * The engine-defined common [Renderer] default: drawing logic over the
+ * overridable [GL], with no state of its own. The built-in quad program and its
+ * staging buffer are built eagerly by [createResources] into the engine-owned
+ * [ResourceScope] and resolved from it by every draw.
  */
 internal class DefaultRenderer : Renderer {
     override fun createResources(
@@ -75,8 +74,7 @@ internal class DefaultRenderer : Renderer {
         data.resource.putVertex(2 * VertexLayout.BYTES, -1f, 1f, 1f, 0f, u0, v0, tint)
         data.resource.putVertex(3 * VertexLayout.BYTES, 1f, 1f, 1f, 0f, u1, v0, tint)
 
-        GL.bindBuffer(GL.ARRAY_BUFFER, quad.staging.buffer)
-        GL.bufferSubData(GL.ARRAY_BUFFER, 0, data.resource)
+        quad.staging.upload(VertexLayout.BYTES * LAYER_QUAD_VERTICES)
         GL.drawArrays(GL.TRIANGLE_STRIP, 0, LAYER_QUAD_VERTICES)
     }
 
@@ -107,8 +105,7 @@ internal class DefaultRenderer : Renderer {
             )
         }
 
-        GL.bindBuffer(GL.ARRAY_BUFFER, quad.staging.buffer)
-        GL.bufferSubData(GL.ARRAY_BUFFER, 0, data.resource)
+        quad.staging.upload(VertexLayout.BYTES * vertices)
         GL.drawArrays(instance.structure.toGLPrimitive(instance.mode), 0, vertices)
     }
 

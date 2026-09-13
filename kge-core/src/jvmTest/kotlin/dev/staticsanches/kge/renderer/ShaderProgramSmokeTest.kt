@@ -13,11 +13,10 @@ private val shaderDevice: GlfwTestDevice? = GlfwTestDevice.detect()
  * The real-GL shader/program smoke for the JVM platform default: link the
  * engine's built-in program and pin that an active uniform resolves to a
  * location while an absent one normalizes to `null` (the backend maps the
- * driver's `-1` sentinel). Skips (disabled) with no context — the hosted macOS
- * runner (decisions-log chunk 21).
+ * driver's `-1` sentinel). Skips when no context is available.
  *
- * It is a spec of its own because the JVM GLFW test device is single-use per
- * spec: [GlfwTestDevice.close] terminates GLFW, so a spec may own only one.
+ * A spec of its own because closing the JVM GLFW test device terminates GLFW, so
+ * a spec may own only one.
  */
 class ShaderProgramSmokeTest :
     FunSpec({

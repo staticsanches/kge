@@ -27,14 +27,12 @@ private val SMOKE_COLOR = Pixel.rgba(0x3366CCFFu)
 /**
  * The real-GL decal smoke for the JVM platform default: create a decal from a
  * solid-color [Sprite], build its `DecalInstance` with the common draw service,
- * render it into an off-screen framebuffer and read one pixel back. This
- * exercises decal creation + upload + the built-in program + the draw service +
- * the real GL33 backend together.
+ * render it into an off-screen framebuffer and read one pixel back. Exercises
+ * decal creation, upload, the built-in program and the real GL33 backend.
  *
- * The renderer is a test-local [DefaultRenderer] (overriding the service), so
- * its built-in program/buffer are never shared across the process's GL
- * contexts. Skips (disabled) when no context is available — the hosted macOS
- * runner (decisions-log chunk 21).
+ * The renderer is a test-local service override, so its built-in program/buffer
+ * are never shared across the process's GL contexts. Skips when no context is
+ * available (the hosted macOS runner cannot create one).
  */
 class DecalSmokeTest :
     FunSpec({

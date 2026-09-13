@@ -6,10 +6,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The raw-backed capability: a [Pixmap.RawBacked] maps a local pixel to an
- * int-element offset over its own buffer; a contiguous surface ([Sprite]) is
- * raw-backed, a non-contiguous one is not, and the buffer accessor fails fast
- * after close.
+ * The raw-backed capability: a `Pixmap.RawBacked` maps a local pixel to an
+ * int-element offset over its own buffer; a contiguous surface is raw-backed,
+ * a non-contiguous one is not, and the buffer accessor fails fast after close.
  */
 @OptIn(KGESensitiveAPI::class)
 class PixmapRawBackedTest :

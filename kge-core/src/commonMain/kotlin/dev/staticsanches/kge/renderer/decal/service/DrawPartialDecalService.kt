@@ -11,22 +11,19 @@ import kotlin.math.floor
 
 /**
  * The partial-decal geometry seam: [drawPartialDecal] turns a sub-rectangle of
- * a [Decal] into a four-vertex [DecalInstance]. It is stateless and pure CPU
- * math; the engine supplies the [viewport] size.
+ * a [Decal] into a four-vertex [DecalInstance].
  *
- * The engine-defined default follows olc v2.30's `DrawPartialDecal` exactly:
- * the screen corners are quantised to the pixel grid so tile atlases sample
- * cleanly, and the UVs carry the `0.0001` epsilon against the sprite-size UV
- * scale. A consumer may replace the whole behavior for the process via
- * [override][KGEOverridable.Proxy.override].
+ * The default follows olc v2.30's `DrawPartialDecal`: the screen corners are
+ * quantised to the pixel grid so tile atlases sample cleanly, and the UVs carry
+ * the `0.0001` epsilon against the sprite-size UV scale. A consumer may replace
+ * the whole behavior for the process via [override][KGEOverridable.Proxy.override].
  */
 interface DrawPartialDecalService : KGEOverridable {
     /**
      * Builds the four-vertex quad for the [sourceSize]-sized region at
      * [sourcePosition] of [decal]'s texture, anchored at [position] (in pixels),
      * scaled by [scale] and tinted uniformly by [tint]. [viewport] is the
-     * drawable size in pixels; [mode] and [structure] are carried into the
-     * instance unchanged.
+     * drawable size; [mode] and [structure] are carried unchanged.
      */
     fun drawPartialDecal(
         position: Float2D,

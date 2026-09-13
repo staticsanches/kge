@@ -7,10 +7,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The device seam contract: [GpuDevice] only makes a context current and
- * presents — it has no window, viewport or GL knowledge. The seam and
- * [GLService] are independent, so the engine loop can drive a real device
- * around the recording backend on any target.
+ * [GpuDevice] only makes a context current and presents — it has no window,
+ * viewport or GL knowledge, and is independent of [GLService].
  */
 class GpuDeviceTest :
     FunSpec({

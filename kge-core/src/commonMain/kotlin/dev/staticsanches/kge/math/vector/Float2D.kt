@@ -8,11 +8,8 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * A 2D point/vector over single-precision components — a plain value type:
- * equality, hash and destructuring come from the `data` machinery, [toString]
- * renders the `(x, y)` pair through `Float.toString`. Arithmetic is
- * componentwise and overloaded by operator; transcendental results follow the
- * platform's `kotlin.math`.
+ * A 2D point/vector over single-precision components. Arithmetic is
+ * componentwise; transcendental results follow the platform's `kotlin.math`.
  */
 data class Float2D(
     val x: Float,
@@ -31,15 +28,14 @@ data class Float2D(
     operator fun div(scalar: Float): Float2D = Float2D(x / scalar, y / scalar)
 
     /**
-     * Divides by an integer vector componentwise — the inverted-screen form; a
-     * zero [Int2D] component yields ±Infinity/`NaN` per IEEE on every target,
-     * unlike [Int2D.div] which throws.
+     * Divides componentwise by an [Int2D]; a zero component yields
+     * ±Infinity/`NaN` per IEEE, unlike [Int2D.div] which throws.
      */
     operator fun div(other: Int2D): Float2D = Float2D(x / other.x, y / other.y)
 
     operator fun unaryMinus(): Float2D = Float2D(-x, -y)
 
-    /** The signed component product, `x * y`. */
+    /** The signed component product. */
     fun area(): Float = x * y
 
     /** The length. */
@@ -48,10 +44,10 @@ data class Float2D(
     /** The squared length. */
     fun mag2(): Float = x * x + y * y
 
-    /** The unit vector, mirroring the reference's `this * (1 / mag())`. */
+    /** The unit vector. */
     fun norm(): Float2D = this * (1f / mag())
 
-    /** The counter-clockwise quarter turn of this vector, `(-y, x)`. */
+    /** The counter-clockwise quarter turn, `(-y, x)`. */
     fun perp(): Float2D = Float2D(-y, x)
 
     /** Each component rounded down. */
@@ -66,13 +62,13 @@ data class Float2D(
     /** The componentwise larger vector. */
     fun max(other: Float2D): Float2D = Float2D(maxOf(x, other.x), maxOf(y, other.y))
 
-    /** The component product sum, `x * ox + y * oy`. */
+    /** The component product sum. */
     fun dot(other: Float2D): Float = x * other.x + y * other.y
 
-    /** The signed area of the parallelogram, `x * oy - y * ox`. */
+    /** The signed area of the parallelogram. */
     fun cross(other: Float2D): Float = x * other.y - y * other.x
 
-    /** Bounds each component to the low/high rectangle: `max(lo).min(hi)`. */
+    /** Bounds each component to the low/high rectangle. */
     fun clamp(
         low: Float2D,
         high: Float2D,
@@ -90,7 +86,7 @@ data class Float2D(
     /** Cartesian from radius and angle, `(cos(y) * x, sin(y) * x)`. */
     fun cart(): Float2D = Float2D(cos(y) * x, sin(y) * x)
 
-    /** Mirrors this vector around [normal], `this - normal * (2 * dot(normal))`. */
+    /** Mirrors this vector around [normal]. */
     fun reflect(normal: Float2D): Float2D = this - normal * (2f * dot(normal))
 
     /** Narrows both components, truncating toward zero. */

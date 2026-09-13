@@ -5,14 +5,14 @@ import org.lwjgl.opengl.GL as LwjglGL
 
 /**
  * The JVM real-GL test device: a hidden GLFW window with an OpenGL 3.3 core
- * context the Linux and Windows CI runners obtain through Mesa's software
- * driver (llvmpipe) — Xvfb on Linux, `setup-mesa-dist-win` on Windows.
- * [detect] returns null when the platform cannot give a context (the hosted
- * macOS runner), which makes the real-GL probe skip.
+ * context, obtained on Linux and Windows CI through Mesa's software driver
+ * (llvmpipe) — Xvfb on Linux, `setup-mesa-dist-win` on Windows. [detect] returns
+ * null when the platform cannot provide a context (the hosted macOS runner), so
+ * the real-GL probes skip.
  *
- * It owns the window it creates and releases it — destroying the window,
- * terminating GLFW and clearing the thread-local capabilities — on [close].
- * The device behavior itself is the shared [GlfwGpuDevice].
+ * It owns the window and releases it on [close]: destroying the window,
+ * terminating GLFW and clearing the thread-local capabilities. The device
+ * behavior is the shared [GlfwGpuDevice].
  */
 internal class GlfwTestDevice private constructor(
     private val window: Long,

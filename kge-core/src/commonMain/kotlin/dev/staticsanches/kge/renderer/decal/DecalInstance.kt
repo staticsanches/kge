@@ -5,17 +5,15 @@ import dev.staticsanches.kge.math.vector.Float2D
 
 /**
  * One drawable unit of a [Decal]: the geometry the common draw services build
- * and the renderer consumes. It is the contract between the two, not the
- * primary user API.
+ * and the renderer consumes.
  *
  * The parallel per-vertex lists — [pos] (clip space), [uv] (texture
  * coordinates) and [tint] — are snapshotted at construction, so the instance is
- * immutable. There is no separate vertex count, no `w` and no depth: the
- * geometry is 2D and the vertex count derives from the lists. The [decal] is
- * never null; untextured/3D geometry belongs to a future task type.
+ * immutable. The vertex count derives from the lists; the geometry is 2D, with
+ * no `w` or depth. [decal] is never null.
  */
 class DecalInstance(
-    /** The texture this geometry samples; never null. */
+    /** The texture this geometry samples. */
     val decal: Decal,
     pos: List<Float2D>,
     uv: List<Float2D>,
@@ -25,16 +23,12 @@ class DecalInstance(
     /** How the vertex list is assembled into primitives. */
     val structure: Decal.Structure,
 ) {
-    /** The per-vertex clip-space positions. */
     val pos: List<Float2D> = pos.toList()
 
-    /** The per-vertex texture coordinates. */
     val uv: List<Float2D> = uv.toList()
 
-    /** The per-vertex tints. */
     val tint: List<Pixel> = tint.toList()
 
-    /** The number of vertices, derived from [pos]. */
     val vertexCount: Int get() = pos.size
 
     init {

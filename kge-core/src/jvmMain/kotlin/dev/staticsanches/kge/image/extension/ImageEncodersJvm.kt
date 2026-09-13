@@ -8,10 +8,8 @@ import java.io.ByteArrayOutputStream
 import java.nio.channels.Channels
 
 /**
- * JVM backend: STB. Encode writes the sprite's row-major R,G,B,A bytes through
- * `stbi_write_png_to_func`/`stbi_write_jpg_to_func` into a
- * `ByteArrayOutputStream`; `comp = 4` and PNG's default stride. JPEG uses the
- * fixed quality [JPEG_QUALITY].
+ * JVM backend: STB. Encodes the sprite's row-major R,G,B,A bytes as PNG
+ * (default stride) or JPEG at the fixed [JPEG_QUALITY].
  */
 internal actual fun encodePngBytes(sprite: Sprite): ByteArray {
     val output = ByteArrayOutputStream()

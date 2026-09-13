@@ -9,11 +9,11 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
 /**
- * The concrete surface over native memory: storage is the byte layout the
- * engine uploads later — `(y * width + x) * 4`, RGBA little-endian — the
- * hot paths fill/copy the buffer directly, and ownership follows the
- * resource contract (fail-fast after close, idempotent close, leak reported
- * on collection). The Pixmap algorithms themselves are proven in PixmapTest.
+ * The concrete surface over native memory: storage is the upload layout
+ * `(y * width + x) * 4` RGBA little-endian, hot paths fill/copy the buffer
+ * directly, and ownership follows the resource contract (fail-fast after
+ * close, idempotent close, leak on collection). The Pixmap algorithms
+ * themselves are proven in PixmapTest.
  */
 class SpriteTest :
     FunSpec({

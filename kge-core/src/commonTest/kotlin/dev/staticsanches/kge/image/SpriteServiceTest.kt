@@ -9,12 +9,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The surface-creation service on the extension mechanism: the default is
- * platform-independent (it allocates through the current
- * [BufferService]), contract A proves an overridden allocator is the
- * one the service uses, contract B proves an overridden service decorator is
- * observable, and duplicate is a detached pixel copy preserving the sample
- * mode.
+ * The surface-creation service on the extension mechanism: the default
+ * allocates through the current `BufferService`, an overridden allocator is
+ * the one used, an overridden service decorator is observable, and duplicate
+ * is a detached pixel copy preserving the sample mode.
  */
 class SpriteServiceTest :
     FunSpec({

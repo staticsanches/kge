@@ -16,13 +16,12 @@ import kotlin.math.abs
 import kotlin.math.atan2
 
 /**
- * The raster aggregate ([Rasterizer]) over its sub-services. Every pixel-mode
- * write passes through the [DrawService.draw] seam: out of bounds it never
- * throws and never touches the storage, and the old-pixel read for
- * Alpha/Custom is the stored value — the target's sample mode is irrelevant
- * to raster draws. [FillService.fillRect] fills an inclusive rectangle that
- * is endpoint-agnostic and clipped to the target; under Normal on a [Sprite]
- * it writes the rows directly, so its result must equal the per-pixel draw.
+ * The `Rasterizer` aggregate over its sub-services. Every pixel-mode write
+ * passes through the `DrawService.draw` seam: out of bounds never throws and
+ * never touches storage, and the old-pixel read for Alpha/Custom is the stored
+ * value (the target's sample mode is irrelevant). `FillService.fillRect` fills
+ * an inclusive, endpoint-agnostic, clipped rectangle whose direct row writes
+ * must equal the per-pixel draw.
  */
 class RasterizerTest :
     FunSpec({

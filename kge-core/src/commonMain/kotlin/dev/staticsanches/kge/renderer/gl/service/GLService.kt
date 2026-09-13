@@ -19,21 +19,17 @@ import dev.staticsanches.kge.renderer.gl.GLsizeiptr
 import dev.staticsanches.kge.renderer.gl.GLuint
 
 /**
- * The raw GL command seam: a thin, near 1:1 wrapper over the platform GL API
- * that the renderer drives and no one above it sees.
+ * The raw GL command seam: a thin, near 1:1 wrapper over the platform GL API.
  *
- * Commands take `GLenum` integers and platform handles — the typed mapping
- * (`Decal.Mode`→blend function, structure→primitive, filter/wrap→parameters)
- * belongs to the renderer. The platform default is the real backend (LWJGL
- * `GL33` on the JVM, WebGL2 on the web); a consumer may replace the whole
- * behavior for the process via [override][KGEOverridable.Proxy.override], and
- * the recording test backend is one such replacement. [createTexture] and the
- * other `create*` methods return a handle the engine owns; deletion is the
- * caller's responsibility through the matching `delete*`.
+ * Commands take `GLenum` integers and platform handles. The default backend is
+ * the real platform API (LWJGL `GL33` on the JVM, WebGL2 on the web); a
+ * consumer may replace the whole behavior for the process via
+ * [override][KGEOverridable.Proxy.override]. The `create*` methods return a
+ * handle the caller owns and must release through the matching `delete*`.
  *
  * Compile and link failures are detected inside the backend, which throws with
- * the driver's info log. [getUniformLocation] normalizes the backend's "no
- * such uniform" sentinel to `null`.
+ * the driver's info log; [getUniformLocation] normalizes the backend's "no such
+ * uniform" sentinel to `null`.
  */
 interface GLService : KGEOverridable {
     // Texture
@@ -96,10 +92,8 @@ interface GLService : KGEOverridable {
 
     /**
      * Reads the whole [width]x[height] image at [level] of the texture bound to
-     * [target] into [dstData] (GPU → CPU). The same commands serve both
-     * backends: the JVM maps to `glGetTexImage`; the web, which has no such
-     * call, reads through an internal framebuffer attachment using [width] and
-     * [height].
+     * [target] into [dstData]. The web backend needs [width]/[height] because it
+     * has no `glGetTexImage`.
      */
     fun getTexImage(
         target: GLenum,
@@ -176,10 +170,16 @@ interface GLService : KGEOverridable {
         buffer: GLBuffer?,
     )
 
-    /** Uploads the whole [srcData] into [target] with the given [usage] hint. */
+    /**
+     * Orphan-uploads the first [byteCount] bytes of [srcData] into [target],
+     * re-specifying the storage to exactly that size so a queued draw cannot
+     * reference overwritten storage. [byteCount] must be within
+     * `0..srcData.capacity()`.
+     */
     fun bufferData(
         target: GLenum,
         srcData: ByteBuffer,
+        byteCount: GLsizeiptr,
         usage: GLenum,
     )
 
@@ -373,8 +373,9 @@ interface GLService : KGEOverridable {
         override fun bufferData(
             target: GLenum,
             srcData: ByteBuffer,
+            byteCount: GLsizeiptr,
             usage: GLenum,
-        ) = delegate.bufferData(target, srcData, usage)
+        ) = delegate.bufferData(target, srcData, byteCount, usage)
 
         override fun bufferData(
             target: GLenum,

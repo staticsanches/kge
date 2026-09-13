@@ -1,21 +1,16 @@
 package dev.staticsanches.kge.resource
 
 /**
- * Registers resources for leak detection.
- *
- * A resource is registered exactly once, at the moment it is created and
- * owned by a [KGEResource]. When the wrapper is collected without a prior
- * [KGECleanable.clean], [LeakReporterService] reports the leak; the exact
- * close/leak race semantics live in [KGEResourceCleanableState].
+ * Registers resources for collection-based leak detection. A resource is
+ * registered once, when its owning wrapper is created; if the wrapper is
+ * collected without [KGECleanable.clean], [LeakReporterService] reports it.
  */
 object KGELeakDetector {
     /**
      * Registers [obj] for collection-based leak detection.
      *
-     * The mechanism holds no strong references: [obj] must become collectable
-     * when the owning wrapper becomes collectable, and [action] must not hold
-     * a reference to [obj] (it would keep [obj] alive and the leak would never
-     * be observed).
+     * The mechanism holds no strong references: [action] must not capture
+     * [obj], or the leak would never be observed.
      */
     fun register(
         obj: Any,
@@ -24,10 +19,7 @@ object KGELeakDetector {
     ): KGECleanable = KGEResourceCleanable(obj, representation, action)
 }
 
-/**
- * The engine-side cleanable: common state machine plus the platform-registered
- * collection trigger ([registerCollectionTrigger]).
- */
+/** Engine-side [KGECleanable]: the state machine plus a platform collection trigger. */
 internal class KGEResourceCleanable(
     obj: Any,
     representation: String,
@@ -63,11 +55,9 @@ internal interface KGECleanableHandle {
  * `java.lang.ref.Cleaner` cleanup on JVM, a FinalizationRegistry callback on
  * the web targets.
  *
- * An [KGECleanableHandle.unregister] is always accepted, but the delivery guarantee is
- * platform-shaped: on web it genuinely cancels the registration; on JVM it
- * runs the registration callback unconditionally, so a call after the state
- * was claimed (see [KGEResourceCleanableState]) reaches a no-op state machine
- * and delivers nothing. Callers must claim the resource state before
+ * [KGECleanableHandle.unregister] is always accepted, but delivery is
+ * platform-shaped: on web it cancels the registration; on JVM it runs the
+ * callback unconditionally. Callers must claim the resource state before
  * unregistering.
  */
 internal expect fun registerCollectionTrigger(

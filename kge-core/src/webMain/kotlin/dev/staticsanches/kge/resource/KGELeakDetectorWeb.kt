@@ -9,14 +9,9 @@ import kotlin.js.JsReference
 import kotlin.js.toJsReference
 
 /**
- * Web collection trigger: a FinalizationRegistry instance, shared by the js
- * and wasmJs targets.
- *
- * `toJsReference()` is the identity mapping on js (a Kotlin object IS a JS
- * object) and creates the externref wrapper on wasmJs — one code path for
- * both. Observation is inherently best-effort: the host collects when it
- * collects, and the spec makes no delivery guarantee; the leak report is a
- * last-resort signal, never a deterministic contract.
+ * Web collection trigger: a FinalizationRegistry (js + wasmJs). Observation is
+ * best-effort — the host collects when it collects, so the leak report is
+ * never a deterministic signal.
  */
 internal actual fun registerCollectionTrigger(
     obj: Any,

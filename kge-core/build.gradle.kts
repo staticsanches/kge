@@ -6,31 +6,29 @@ plugins {
 }
 
 kotlin {
-    // Project-wide opt-in: the engine's own code and tests use the sensitive
-    // members without repeating the annotation — external consumers still face
-    // the compile-time opt-in error.
+    // Project-wide opt-in: engine code uses sensitive members without repeating
+    // the annotation; external consumers still face the compile-time error.
     compilerOptions {
         optIn.add("dev.staticsanches.kge.annotations.KGESensitiveAPI")
-        // ByteBuffer is an expect/actual class (JDK-NIO typealias on JVM, TypedArray
-        // emulation on web). That language feature is still Beta (KT-61573) and the
-        // compiler's own recommendation is to silence it with this flag.
+        // ByteBuffer is an expect/actual class (JDK-NIO typealias on JVM,
+        // TypedArray emulation on web) — a Beta feature (KT-61573) that the
+        // compiler recommends silencing with this flag.
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
     jvm {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-            // java.nio.ByteBuffer is `sealed` since JDK 21; the typealias-actual
-            // modality check (expect abstract vs sealed target) fails against the
-            // running JDK's metadata, so the JVM API surface is taken from the JDK
-            // 11 release where the class is a plain abstract class. Runtime stays
-            // the JDK 21 class.
+            // java.nio.ByteBuffer is `sealed` since JDK 21; the expect/actual
+            // modality check fails against the running JDK's metadata, so the
+            // JVM API surface is taken from the JDK 11 release (plain abstract
+            // class). Runtime stays the JDK 21 class.
             freeCompilerArgs.add("-Xjdk-release=11")
         }
     }
-    // The web targets are browser-only: the engine runs in the browser, and the
-    // browser test tasks (ChromeHeadless via Karma) are the web suites. Node is
-    // intentionally not a target — browser-only capabilities such as
-    // createImageBitmap must be reachable and testable.
+    // The web targets are browser-only: the engine runs in the browser and the
+    // Karma/ChromeHeadless tasks are the web suites. Node is intentionally not
+    // a target — browser-only capabilities such as createImageBitmap must stay
+    // reachable and testable.
     js(IR) {
         browser {
             testTask {
@@ -104,29 +102,27 @@ kotlin {
         webMain.dependencies {
             implementation(libs.kotlin.js)
             implementation(libs.kotlinx.browser)
-            // The GL handles and the WebGL2 backend (later step) are the
-            // kotlin-wrappers `web.gl` DOM types, not the kotlinx browser ones.
+            // The GL handles and the WebGL2 backend are kotlin-wrappers
+            // `web.gl` DOM types, not the kotlinx browser ones.
             implementation(libs.kotlin.browser)
         }
         jvmMain.dependencies {
-            // kotlin-logging 8.0.4 (jvm variant) dropped the compile-scope
-            // slf4j-api dependency: its JVM logger factory needs it at runtime,
-            // so the engine declares it explicitly.
+            // kotlin-logging 8.0.4 (jvm variant) dropped its compile-scope
+            // slf4j-api dependency, but its JVM logger factory needs it at
+            // runtime; declare it explicitly.
             implementation(libs.slf4j.api)
-            // Native memory via LWJGL: the BOM in the `platform()` form supplies
-            // the versionless lwjgl-core and lwjgl-stb (PNG via STB).
+            // BOM in `platform()` form supplies the versionless lwjgl-core and
+            // lwjgl-stb (PNG via STB).
             implementation(project.dependencies.platform(libs.lwjgl.bom))
             implementation(libs.lwjgl.core)
             implementation(libs.lwjgl.stb)
-            // The GL backend is the production LWJGL GL33 default.
             implementation(libs.lwjgl.opengl)
             // The device seam's JVM implementation drives a GLFW window's
-            // context; the window itself is created by the owner (the window
+            // context; the window itself is created by the owner (window
             // concept, later).
             implementation(libs.lwjgl.glfw)
-            // Production natives: a downstream JVM consumer must be able to
-            // load LWJGL at runtime, so the host's natives are declared on the
-            // production runtime classpath (the test source set inherits them).
+            // Host natives go on the production runtime classpath so a downstream
+            // JVM consumer can load LWJGL (the test source set inherits them).
             runtimeOnly(libs.lwjgl.core.get()) {
                 artifact {
                     classifier = lwjglNatives
@@ -152,8 +148,8 @@ kotlin {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)
         }
-        // The WebGL2 smoke probe uses the kotlin-wrappers `web.*` bindings;
-        // the test source set does not inherit webMain's `implementation` deps.
+        // The WebGL2 smoke probe uses kotlin-wrappers `web.*`; the test source
+        // set does not inherit webMain's `implementation` deps.
         webTest.dependencies {
             implementation(libs.kotlin.browser)
         }
@@ -165,8 +161,8 @@ kotlin {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-    // macOS/AppKit requires GLFW (and any GL context work) on the process's
-    // first thread; without this the JVM GL smoke test aborts in glfwInit.
+    // macOS/AppKit requires GLFW (and GL context work) on the process's first
+    // thread; without this the JVM GL smoke test aborts in glfwInit.
     if (System.getProperty("os.name").startsWith("Mac")) {
         jvmArgs("-XstartOnFirstThread")
     }
@@ -174,15 +170,14 @@ tasks.withType<Test>().configureEach {
 
 ktlint {
     filter {
-        // KSP-generated test discovery code (io.kotest.framework.runtime) lives under
-        // build/generated/ and is third-party generated — not ours to lint.
+        // KSP-generated test discovery code (io.kotest.framework.runtime) under
+        // build/generated/ is third-party generated — not ours to lint.
         exclude { element -> element.file.invariantSeparatorsPath.contains("/build/generated/") }
     }
 }
 
-// ktlint-gradle 14.2.0 wires the extension filter above only into the check
-// tasks; the format tasks (the pre-commit `ktlintFormat`) need the same
-// exclusion per task — both task types implement PatternFilterable.
+// ktlint-gradle 14.2.0 wires the extension filter only into the check tasks;
+// the format tasks need the same exclusion per task (both are PatternFilterable).
 tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().configureEach {
     exclude { element -> element.file.invariantSeparatorsPath.contains("/build/generated/") }
 }

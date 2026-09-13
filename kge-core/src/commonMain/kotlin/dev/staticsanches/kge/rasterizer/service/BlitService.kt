@@ -10,19 +10,16 @@ import dev.staticsanches.kge.rasterizer.Rasterizer
 
 /**
  * The blit family: [blit] paints a whole [Pixmap] source, [blitRegion] a
- * sub-rectangle of one. Each source pixel lands as a `scale x scale` block,
- * resolving [Pixel.Mode] through [DrawService.draw] via the [Rasterizer]
- * aggregate; a raw-backed source and target additionally enable a whole-row
- * raw-copy fast path under Normal at scale 1 without a horizontal flip.
+ * sub-rectangle. Each source pixel lands as a `scale x scale` block, resolving
+ * [Pixel.Mode] through [DrawService.draw] via the [Rasterizer] aggregate.
  */
 interface BlitService : KGEOverridable {
     /**
-     * Blits [source] so its top-left corner lands at ([x], [y]), painting the
-     * pixel at source column/row (`c`, `r`) at `(x + (c * scale), y +
-     * (r * scale))` as a `scale x scale` block. [flip] mirrors the read axes
-     * inside the same footprint; a non-positive [scale] paints nothing. Each
-     * source pixel resolves [mode] through the draw seam, so out-of-bounds
-     * cells of the destination are dropped.
+     * Blits [source] so its top-left lands at ([x], [y]); source cell (`c`,
+     * `r`) paints a `scale x scale` block at `(x + c*scale, y + r*scale)`.
+     * [flip] mirrors the read axes within the same footprint; a non-positive
+     * [scale] paints nothing. Each pixel resolves [mode] through the draw seam,
+     * so out-of-bounds destination cells are dropped.
      */
     fun blit(
         target: Pixmap.Mutable,
@@ -34,7 +31,7 @@ interface BlitService : KGEOverridable {
         mode: Pixel.Mode,
     )
 
-    /** The [Int2D] form of [blit] — unpacks the position to the raw method. */
+    /** The [Int2D] form of [blit]. */
     fun blit(
         target: Pixmap.Mutable,
         position: Int2D,
@@ -46,10 +43,9 @@ interface BlitService : KGEOverridable {
 
     /**
      * Blits the [size]-sized region of [source] at [origin] so its top-left
-     * lands at ([x], [y]), with the same footprint, flip and mode rules as
-     * [blit]. The region must be non-empty and inside [source], else
-     * [IllegalArgumentException]; any destination clip is the ordinary
-     * footprint clip.
+     * lands at ([x], [y]), with [blit]'s footprint, flip and mode rules. The
+     * region must be non-empty and inside [source], else
+     * [IllegalArgumentException].
      */
     fun blitRegion(
         target: Pixmap.Mutable,
@@ -63,7 +59,7 @@ interface BlitService : KGEOverridable {
         mode: Pixel.Mode,
     )
 
-    /** The [Int2D] form of [blitRegion] — unpacks the position to the raw method. */
+    /** The [Int2D] form of [blitRegion]. */
     fun blitRegion(
         target: Pixmap.Mutable,
         position: Int2D,
@@ -122,7 +118,7 @@ interface BlitService : KGEOverridable {
     }
 }
 
-/** The platform-independent default — the blit is pure CPU over the surface accessors. */
+/** The platform-independent default. */
 @OptIn(KGESensitiveAPI::class)
 private object BlitServiceDefault : BlitService {
     override fun blit(
@@ -187,9 +183,8 @@ private object BlitServiceDefault : BlitService {
             x + w <= target.width &&
             y + h <= target.height
         ) {
-            // whole rows are copied raw: NORMAL ignores alpha, so the
-            // copied ints match the draw seam verbatim write; a vertical
-            // flip only swaps which source row lands on each target row.
+            // NORMAL ignores alpha, so copied ints match the draw seam; a
+            // vertical flip only swaps which source row lands where.
             copyRows(target, source, x, y, sx, sy, w, h, flipV)
             return
         }
@@ -221,9 +216,8 @@ private object BlitServiceDefault : BlitService {
     ) {
         val dstBuffer = dst.buffer
         val srcBuffer = src.buffer
-        // when the rectangle fills whole rows in both buffers the block is
-        // one contiguous int run on each side, so a single bulk copy covers
-        // it instead of one copy per row
+        // when the rectangle fills whole rows the block is one contiguous int
+        // run on each side, so one bulk copy replaces a copy per row
         if (!flipV && sx == 0 && x == 0 && w == src.stride && w == dst.stride) {
             dstBuffer.copyInts(
                 dst.index(0, y) * Int.SIZE_BYTES,

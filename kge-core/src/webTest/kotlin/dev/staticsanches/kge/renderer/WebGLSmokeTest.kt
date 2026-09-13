@@ -12,10 +12,9 @@ import io.kotest.matchers.shouldBe
 import kotlin.js.ExperimentalWasmJsInterop
 
 /**
- * The real-GL smoke for the web platform default ([GLService] over the
- * installed WebGL2 context): the device makes the canvas context current, the
- * service clears the canvas and reads a pixel back into an engine buffer. Runs
- * on both browser targets (js + wasmJs).
+ * The real-GL smoke for the web platform default ([GLService] over the installed
+ * WebGL2 context): clear the canvas and read a pixel back into an engine buffer.
+ * Runs on both browser targets (js + wasmJs).
  */
 class WebGLSmokeTest :
     FunSpec({

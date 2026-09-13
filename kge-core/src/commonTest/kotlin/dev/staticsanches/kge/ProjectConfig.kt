@@ -8,10 +8,9 @@ import io.kotest.core.test.TestCase
 import io.kotest.engine.test.TestResult
 
 /**
- * Module-wide kotest project config: the overridable-service registry is
- * process-wide, so an override left behind by one test must never leak into
- * the next. [KGEOverridable.Proxy.resetAll] runs after every test on every
- * target; specs do not repeat the teardown themselves.
+ * The overridable-service registry is process-wide; an override left behind by
+ * one test must never leak into the next. Reset runs after every test on every
+ * target, so specs do not repeat the teardown.
  */
 class ProjectConfig : AbstractProjectConfig() {
     override val extensions: List<Extension> = listOf(ServiceResetExtension)

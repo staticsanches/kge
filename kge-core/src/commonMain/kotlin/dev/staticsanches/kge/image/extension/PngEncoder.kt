@@ -13,8 +13,8 @@ import kotlinx.coroutines.withContext
  * The default encoder of a [Sprite] to PNG bytes in an engine buffer.
  *
  * PNG is lossless, so decoding the payload back on the same platform returns
- * the identical RGBA surface. The returned wrapper is caller-owned: close it to
- * release the buffer. Encoding is CPU-bound and runs on [Dispatchers.Default].
+ * the identical RGBA surface. The returned wrapper is caller-owned and must be
+ * closed. Runs on [Dispatchers.Default].
  */
 object PngEncoder : ImageService.Encoder<ResourceWrapper<ByteBuffer>> {
     override suspend fun encode(sprite: Sprite): ResourceWrapper<ByteBuffer> =

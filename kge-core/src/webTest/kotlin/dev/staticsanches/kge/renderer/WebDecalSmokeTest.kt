@@ -30,9 +30,8 @@ private val SMOKE_COLOR = Pixel.rgba(0x3366CCFFu)
  * render it onto the canvas and read one pixel back. Runs on both browser
  * targets (js + wasmJs).
  *
- * The renderer is a test-local [DefaultRenderer] (overriding the service), so
- * its built-in program/buffer are never shared across the process's GL
- * contexts.
+ * The renderer is a test-local service override, so its built-in program/buffer
+ * are never shared across the process's GL contexts.
  */
 class WebDecalSmokeTest :
     FunSpec({

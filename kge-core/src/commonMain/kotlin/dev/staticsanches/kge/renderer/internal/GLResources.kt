@@ -11,11 +11,10 @@ import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.resource.letClosingIfFailed
 
 /*
- * The renderer's internal T1 wrappers over the raw GL objects. Each wrapper
- * owns one handle: its creation path is recorded through [GL], `close`
- * deletes the handle exactly once, and any use afterwards fails fast. A
- * failure while the object is being built (a failed compile or link) closes
- * it before the failure propagates (letClosingIfFailed).
+ * Internal T1 wrappers over raw GL objects. Each wrapper owns one handle:
+ * `close` deletes it exactly once, and any use afterwards fails fast. A failure
+ * while the object is being built closes it before the failure propagates
+ * (letClosingIfFailed).
  */
 
 /** Creates, fills and compiles a shader of [type]; the caller owns it. */
@@ -37,9 +36,9 @@ internal fun createShaderResource(
 }
 
 /**
- * Compiles [vertexSource] and [fragmentSource], links them into a program and
- * returns the program. The shaders are deleted once linked; a failed compile or
- * link frees everything already allocated.
+ * Compiles [vertexSource] and [fragmentSource] and links them into a program.
+ * The shaders are deleted once linked; a failed compile or link frees
+ * everything already allocated.
  */
 internal fun createProgramResource(
     vertexSource: String,

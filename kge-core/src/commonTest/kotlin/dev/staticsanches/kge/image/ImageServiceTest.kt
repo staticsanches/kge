@@ -9,12 +9,11 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The codec seam, driven by in-memory fake codecs — no platform I/O: [load]
- * orchestrates decode + surface creation by *adopting* the decoder's buffer
- * (zero-copy), [save] delegates to the encoder, and the extension mechanism
- * makes a decorator observable. The resource discipline is proven by the
- * deterministic [ResourceWrapper.cleaned] state — no GC-driven leak reporter,
- * whose wasmJs callbacks leak across tests.
+ * The codec seam driven by in-memory fake codecs (no platform I/O): `load`
+ * adopts the decoder's buffer zero-copy, `save` delegates to the encoder, and
+ * the extension mechanism makes a decorator observable. Resource discipline is
+ * pinned through `ResourceWrapper.cleaned` rather than the GC-driven leak
+ * reporter, whose wasmJs callbacks leak across tests.
  */
 class ImageServiceTest :
     FunSpec({

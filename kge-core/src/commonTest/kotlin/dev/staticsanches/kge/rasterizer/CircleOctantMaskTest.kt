@@ -4,9 +4,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The pure [CircleOctantMask] set algebra: an 8-bit selection of the clockwise
- * octants, combined with [CircleOctantMask.or] and tested with
- * [CircleOctantMask.intersects].
+ * [CircleOctantMask] set algebra: an 8-bit clockwise-octant selection, combined
+ * with [CircleOctantMask.or] and queried with [CircleOctantMask.intersects].
  */
 class CircleOctantMaskTest :
     FunSpec({

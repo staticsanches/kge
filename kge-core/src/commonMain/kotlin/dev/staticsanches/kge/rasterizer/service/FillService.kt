@@ -13,17 +13,15 @@ import kotlin.math.abs
 
 /**
  * The fill family: solid rectangles, circles and triangles over a
- * [Pixmap.Mutable]. Every painted cell resolves its [Pixel.Mode] through
- * [DrawService.draw] via the [Rasterizer] aggregate; a collinear
- * triangle fills the line through [OutlineService.drawLine]. A raw-backed
- * target additionally enables the private raw-row fast paths.
+ * [Pixmap.Mutable], resolving each painted cell's [Pixel.Mode] through
+ * [DrawService.draw] via the [Rasterizer] aggregate. A collinear triangle draws
+ * the line through [OutlineService.drawLine].
  */
 interface FillService : KGEOverridable {
     /**
      * Fills the inclusive rectangle whose opposite corners are ([x0], [y0])
-     * and ([x1], [y1]) — `(x1 - x0 + 1) x (y1 - y0 + 1)` pixels, so both
-     * endpoint orders paint the same box. The part outside the target is
-     * clipped away; a rectangle with no pixel in common paints nothing.
+     * and ([x1], [y1]), so either endpoint order paints the same box. The part
+     * outside the target is clipped away; no common pixel paints nothing.
      */
     fun fillRect(
         target: Pixmap.Mutable,
@@ -37,12 +35,10 @@ interface FillService : KGEOverridable {
 
     /**
      * Fills the selected octants of the reference midpoint circle of [radius]
-     * around ([cx], [cy]) — whole rows per arc step, split into octant
-     * segments so no cell is painted twice. See [CircleOctantMask] for the
-     * octant orientation (clockwise from the top) and the odd-octant
-     * boundary ownership. A [CircleOctantMask.NONE] mask paints nothing;
-     * otherwise a radius of zero paints the center only and a negative
-     * radius paints nothing.
+     * around ([cx], [cy]), each cell painted once. See [CircleOctantMask] for
+     * the octant orientation and boundary ownership. A [CircleOctantMask.NONE]
+     * mask paints nothing; otherwise radius zero paints the center only and a
+     * negative radius paints nothing.
      */
     fun fillCircle(
         target: Pixmap.Mutable,
@@ -55,13 +51,11 @@ interface FillService : KGEOverridable {
     )
 
     /**
-     * Fills the triangle with the given vertices, vertex order irrelevant.
-     * A pixel is painted when its center is inside the triangle; a center
-     * lying exactly on an edge is owned by the bottom/right edges, never by
-     * the top/left ones — so two triangles sharing an edge paint the shared
-     * boundary pixels exactly once. The row of a bottom vertex is not
-     * painted (its pixel centers lie beyond the edge). Collinear vertices
-     * draw the line between the farthest pair.
+     * Fills the triangle with the given vertices, order irrelevant. A pixel is
+     * painted when its center is inside; a center exactly on an edge belongs to
+     * the bottom/right edges, never the top/left, so two triangles sharing an
+     * edge paint the boundary pixels once. The row of a bottom vertex is not
+     * painted. Collinear vertices draw the line between the farthest pair.
      */
     fun fillTriangle(
         target: Pixmap.Mutable,
@@ -75,7 +69,7 @@ interface FillService : KGEOverridable {
         mode: Pixel.Mode,
     )
 
-    /** The [Int2D] form of [fillRect] — unpacks the diagonal corners to the raw method. */
+    /** The [Int2D] form of [fillRect]. */
     fun fillRect(
         target: Pixmap.Mutable,
         diagonalStart: Int2D,
@@ -84,7 +78,7 @@ interface FillService : KGEOverridable {
         mode: Pixel.Mode,
     ): Unit = fillRect(target, diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, mode)
 
-    /** The [Int2D] form of [fillCircle] — unpacks the center to the raw method. */
+    /** The [Int2D] form of [fillCircle]. */
     fun fillCircle(
         target: Pixmap.Mutable,
         center: Int2D,
@@ -94,7 +88,7 @@ interface FillService : KGEOverridable {
         mode: Pixel.Mode,
     ): Unit = fillCircle(target, center.x, center.y, radius, mask, color, mode)
 
-    /** The [Int2D] form of [fillTriangle] — unpacks the vertices to the raw method. */
+    /** The [Int2D] form of [fillTriangle]. */
     fun fillTriangle(
         target: Pixmap.Mutable,
         p0: Int2D,
@@ -167,7 +161,7 @@ interface FillService : KGEOverridable {
     }
 }
 
-/** The platform-independent default — the algorithms are pure CPU over the surface accessors. */
+/** The platform-independent default. */
 @OptIn(KGESensitiveAPI::class)
 private object FillServiceDefault : FillService {
     override fun fillRect(
@@ -191,8 +185,7 @@ private object FillServiceDefault : FillService {
         val clipBottom = minOf(bottom, target.height - 1)
 
         if (target is Pixmap.RawBacked && mode == Pixel.Mode.Normal) {
-            // the raw row fast path: NORMAL ignores alpha, so the int
-            // pattern fill matches the draw seam verbatim write
+            // NORMAL ignores alpha, so the int fill matches the draw seam
             fillRectRawRows(target, clipLeft, clipTop, clipRight, clipBottom, color)
             return
         }
@@ -341,12 +334,10 @@ private fun fillRow(
 }
 
 /**
- * Paints one row of a [FillService.fillCircle]. With [CircleOctantMask.ALL]
- * the whole [fromX]..[toX] row is painted unchanged; otherwise the row is
- * split at `cx-|dy|`, `cx` and `cx+|dy|` (with `dy = y - cy`) into the
- * octant segments, and only those whose octant [mask] selects are painted.
- * A cell on a boundary belongs to the odd octant; the `dy == 0` row always
- * paints its center — [CircleOctantMask.NONE] is filtered by the caller.
+ * Paints one row of a [FillService.fillCircle], split into the octant segments
+ * selected by [mask] (a [CircleOctantMask.ALL] mask paints the whole row). A
+ * boundary cell belongs to the odd octant; the `dy == 0` row always paints its
+ * center — [CircleOctantMask.NONE] is filtered by the caller.
  */
 private fun fillCircleRow(
     target: Pixmap.Mutable,

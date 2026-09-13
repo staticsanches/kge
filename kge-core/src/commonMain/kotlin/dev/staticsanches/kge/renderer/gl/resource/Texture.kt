@@ -14,17 +14,15 @@ import dev.staticsanches.kge.resource.onCollectionObserved
 /**
  * The GPU storage of a [Sprite], owned through the T1 resource contract.
  *
- * [create] allocates an RGBA8 texture of the given size and sets its filter and
- * wrap parameters to the raw GL enums the caller supplies — the typed mapping
- * (`Decal.Filter`/`Decal.Wrap` to GL) belongs to the renderer. [update] uploads
- * a sprite's pixels (CPU → GPU), [read] reads them back (GPU → CPU), and
- * [apply] binds the texture for the next draw.
+ * [create] allocates an RGBA8 texture and sets its raw GL filter/wrap
+ * parameters — the typed mapping belongs to the renderer. [update] uploads a
+ * sprite's pixels (CPU → GPU), [read] reads them back (GPU → CPU), and [apply]
+ * binds the texture for the next draw.
  *
- * The class owns its GL object: [close] deletes it exactly once, and every
- * operation afterwards fails fast. An unclosed instance is reported by the leak
- * detector. The constructor is a resource seam for an external backend that
- * creates a wrapper around a handle it owns; production code creates through
- * [create].
+ * The class owns its GL object: [close] deletes it exactly once and every
+ * operation afterwards fails fast; an unclosed instance is reported by the leak
+ * detector. The constructor is the seam for an external backend creating a
+ * wrapper around a handle it owns; production code creates through [create].
  */
 class Texture
     @KGESensitiveAPI
@@ -69,13 +67,11 @@ class Texture
 
         companion object {
             /**
-             * Creates a [width]x[height] RGBA8 texture, applying [filter] to both
-             * the magnification and minification filters and [wrap] to both texture
-             * axes. [name] is the resource's diagnostic label.
-             *
-             * The GL object is deleted when the texture is [close]d, and also when
-             * the parameter/upload setup below fails, so a failed creation never
-             * leaks it ([letClosingIfFailed]).
+             * Creates a [width]x[height] RGBA8 texture with [filter] on both the
+             * magnification and minification filters and [wrap] on both axes;
+             * [name] is the resource's diagnostic label. The GL object is deleted
+             * on [close], and also if setup fails, so a failed creation never
+             * leaks it.
              */
             fun create(
                 width: Int,

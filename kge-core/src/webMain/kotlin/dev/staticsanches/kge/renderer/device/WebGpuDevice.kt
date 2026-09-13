@@ -4,14 +4,10 @@ import dev.staticsanches.kge.renderer.gl.updateGLContext
 import web.gl.WebGL2RenderingContext
 
 /**
- * Web device over a [WebGL2RenderingContext] the owner created (the engine's
- * window concept and the canvas test harness). There is no context switch to
- * make on the browser's single thread: [makeCurrent] installs [context] as the
- * context the WebGL2 backend operates on, and [present] is a no-op because the
- * browser composites the canvas at the end of the task.
- *
- * The context install is process-wide ([updateGLContext]); the owner is
- * responsible for clearing it when the device is no longer used.
+ * Web device over a [WebGL2RenderingContext] the owner created. [makeCurrent]
+ * installs it process-wide for the backend; [present] is a no-op because the
+ * browser composites the canvas at the end of the task. The owner clears the
+ * context when the device is retired.
  */
 internal class WebGpuDevice(
     private val context: WebGL2RenderingContext,

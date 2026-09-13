@@ -6,20 +6,16 @@ import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Rasterizer
 
 /**
- * The draw seam: the per-pixel write every raster primitive resolves
- * [Pixel.Mode] through. [draw] bounds-checks before it reads, so an
- * out-of-bounds draw never throws and never touches the storage; the old
- * pixel for Alpha/Custom is always the stored value, never a sample-mode
- * wrap. The other sub-services ([OutlineService], [FillService],
- * [BlitService]) resolve their per-pixel work here via the
- * [Rasterizer] aggregate, so an override of this service is observed by
- * every primitive.
+ * The draw seam: via the [Rasterizer] aggregate, the per-pixel write every
+ * raster primitive resolves [Pixel.Mode] through. Out-of-bounds draws never
+ * throw and never touch storage; the old pixel for Alpha/Custom is the stored
+ * value, never a sample-mode wrap.
  */
 interface DrawService : KGEOverridable {
     /**
-     * Resolves [mode] against the stored pixel at ([x], [y]) and writes the
-     * result, returning whether a pixel was written. Out of bounds no pixel
-     * is written and `false` is returned, whatever the mode.
+     * Resolves [mode] against the stored pixel at ([x], [y]), writes the result
+     * and returns whether a pixel was written — out of bounds, `false` for
+     * every mode.
      */
     fun draw(
         target: Pixmap.Mutable,
@@ -42,7 +38,7 @@ interface DrawService : KGEOverridable {
     }
 }
 
-/** The platform-independent default — the mode math is pure CPU over the surface accessors. */
+/** The platform-independent default. */
 private object DrawServiceDefault : DrawService {
     override fun draw(
         target: Pixmap.Mutable,

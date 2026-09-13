@@ -8,15 +8,11 @@ internal expect val translatorDefault: TranslatorService
 internal expect val translatorExpectedDefault: String
 
 /**
- * The extension-contract proof: a test-defined service that follows the
- * facade-contract shape — the service is an interface (`TranslatorService`)
- * and its companion object is the stateless facade delegating per call to the
- * current implementation. The default is per-platform ([translatorDefault]
- * actuals); [TranslatorService.original] exposes the engine default to
- * decorators; [TranslatorService.override] replaces the active implementation
- * (last-declared-wins). The expected default output is asserted against
- * [translatorExpectedDefault] — a literal per target declared independently of
- * the implementation, so a wrong or copied literal fails that target's test.
+ * The extension-contract proof: a service is an interface plus a companion
+ * facade delegating per call to the active implementation. The default is
+ * per-platform; [TranslatorService.original] exposes it to decorators, and a
+ * later override supersedes an earlier one (last-declared-wins). The expected
+ * default is a per-target literal declared independently of the implementation.
  */
 interface TranslatorService : KGEOverridable {
     fun translate(message: String): String

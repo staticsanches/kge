@@ -6,12 +6,11 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 /**
- * The pixel-mode write policies and the blend resolution math: [Normal]
- * writes verbatim, [Mask] writes only opaque colors, [Alpha] blends by
- * `a = (color.a / 255f) * blendFactor`, truncating, to an always-opaque
- * result, and [Custom] resolves through [Pixel.Mode.Custom.apply]. Blends
- * are exercised through [DrawService.draw] on a 1x1 sprite; the out-of-bounds
- * policy lives in RasterizerTest.
+ * The pixel-mode write policies and blend math: `Normal` writes verbatim,
+ * `Mask` writes only opaque colors, `Alpha` blends by
+ * `a = (color.a / 255f) * blendFactor` truncating to an always-opaque result,
+ * and `Custom` resolves through its own `apply`. Blends run through
+ * `DrawService.draw` on a 1x1 sprite.
  */
 class ModeTest :
     FunSpec({

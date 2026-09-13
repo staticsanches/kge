@@ -3,12 +3,10 @@ package dev.staticsanches.kge.math.vector
 import kotlin.math.sqrt
 
 /**
- * A 2D point/vector over integer components — a plain value type: equality,
- * hash and destructuring come from the `data` machinery, [toString] renders
- * the `(x, y)` pair. Arithmetic is componentwise and overloaded by operator;
- * division truncates like `Int / Int` for nonzero divisors, and dividing by a zero
- * component throws `ArithmeticException` on every target — Kotlin/JS `Int / Int` does
- * not throw; Int2D pins the JVM/wasm behavior uniformly.
+ * A 2D point/vector over integer components. Arithmetic is componentwise;
+ * division truncates like `Int / Int`, and a zero divisor throws
+ * `ArithmeticException` on every target — Kotlin/JS `Int / Int` does not, and
+ * Int2D pins the JVM/wasm behavior.
  */
 data class Int2D(
     val x: Int,
@@ -31,10 +29,10 @@ data class Int2D(
     /** The counter-clockwise quarter turn of this vector, `(-y, x)`. */
     fun perp(): Int2D = Int2D(-y, x)
 
-    /** The component product sum, `x * ox + y * oy`. */
+    /** The component product sum. */
     fun dot(other: Int2D): Int = x * other.x + y * other.y
 
-    /** The signed area of the parallelogram, `x * oy - y * ox`. */
+    /** The signed area of the parallelogram. */
     fun cross(other: Int2D): Int = x * other.y - y * other.x
 
     /** The squared length, `x * x + y * y`, wrapping like `Int` arithmetic. */
@@ -46,7 +44,7 @@ data class Int2D(
      */
     fun mag(): Double = sqrt(mag2().toDouble())
 
-    /** The signed component product, `x * y`. */
+    /** The signed component product. */
     fun area(): Int = x * y
 
     /** The componentwise smaller vector. */
@@ -55,7 +53,7 @@ data class Int2D(
     /** The componentwise larger vector. */
     fun max(other: Int2D): Int2D = Int2D(maxOf(x, other.x), maxOf(y, other.y))
 
-    /** Bounds each component to the low/high rectangle: `max(lo).min(hi)`. */
+    /** Bounds each component to the low/high rectangle. */
     fun clamp(
         low: Int2D,
         high: Int2D,
@@ -67,16 +65,11 @@ data class Int2D(
     override fun toString(): String = "($x, $y)"
 
     companion object {
-        /** The origin `(0, 0)`, shared to avoid reallocating it per use. */
+        /** The origin `(0, 0)`. */
         val ZERO: Int2D = Int2D(0, 0)
     }
 }
 
-/**
- * Kotlin/JS `Int / Int` on a zero divisor does not throw and yields a
- * defined-but-non-JVM result — the guard pins the uniform
- * `ArithmeticException` on all targets.
- */
 private fun Int.checkedDiv(divisor: Int): Int {
     if (divisor == 0) throw ArithmeticException("/ by zero")
     return this / divisor

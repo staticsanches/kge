@@ -21,6 +21,7 @@ import dev.staticsanches.kge.renderer.gl.GLuint
 import dev.staticsanches.kge.renderer.gl.gl
 import js.buffer.ArrayBufferLike
 import js.buffer.ArrayBufferView
+import org.khronos.webgl.Uint8Array
 import web.gl.COLOR_ATTACHMENT0
 import web.gl.COMPILE_STATUS
 import web.gl.FRAMEBUFFER
@@ -34,13 +35,9 @@ import kotlin.js.ExperimentalWasmJsInterop
 import js.reflect.unsafeCast as jsUnsafeCast
 
 /**
- * Web backend (js + wasmJs): a near 1:1 mapping over the current
- * [web.gl.WebGL2RenderingContext] installed through
- * [dev.staticsanches.kge.renderer.gl.updateGLContext] by the web device
- * ([dev.staticsanches.kge.renderer.device.WebGpuDevice.makeCurrent]), whose
- * owner clears it when the device is retired. The engine's int `GLenum`s are
- * reinterpreted as the binding's opaque `GLenum` type; compile and link
- * failures are checked here and thrown with the driver's info log.
+ * Web backend (js + wasmJs): a near 1:1 mapping over the current WebGL2 context.
+ * Engine `GLenum` ints are reinterpreted as the binding's opaque enum type;
+ * compile and link failures are thrown with the driver's info log.
  */
 internal object WebGLService : GLService {
     // Texture
@@ -123,9 +120,8 @@ internal object WebGLService : GLService {
         type: GLenum,
         dstData: ByteBuffer,
     ) {
-        // WebGL2 has no getTexImage: attach the currently bound texture to an
-        // internal framebuffer and read it back, restoring the previous
-        // framebuffer binding afterwards.
+        // WebGL2 has no getTexImage: read through an internal framebuffer,
+        // restoring the previous binding afterwards.
         val texture = jsUnsafeCast<WebGLTexture>(gl.getParameter(TEXTURE_BINDING_2D))
         val previous = jsUnsafeCast<WebGLFramebuffer>(gl.getParameter(FRAMEBUFFER_BINDING))
         val framebuffer = checkNotNull(gl.createFramebuffer()) { "Unable to create a GL framebuffer" }
@@ -207,8 +203,9 @@ internal object WebGLService : GLService {
     override fun bufferData(
         target: GLenum,
         srcData: ByteBuffer,
+        byteCount: GLsizeiptr,
         usage: GLenum,
-    ) = gl.bufferData(target.asGLenum(), srcData.asArrayBufferView(), usage.asGLenum())
+    ) = gl.bufferData(target.asGLenum(), srcData.asArrayBufferView(byteCount), usage.asGLenum())
 
     override fun bufferData(
         target: GLenum,
@@ -287,11 +284,15 @@ private fun Int.asGLuint(): web.gl.GLuint = jsUnsafeCast(this)
 private fun Int.asGLbitfield(): web.gl.GLbitfield = jsUnsafeCast(this)
 
 /**
- * Reads a GL status query as a Kotlin boolean. The binding returns a JS
- * boolean, which compares unequal to Kotlin `true` on Kotlin/Wasm (its
- * `toString()` is still `"true"`), so the equality check is not portable.
+ * Reads a GL status query as a Kotlin boolean. The binding returns a JS boolean
+ * that compares unequal to Kotlin `true` on Kotlin/Wasm, so equality alone is
+ * not portable.
  */
 private fun glStatusTrue(value: Any?): Boolean = value == true || value?.toString() == "true"
 
 /** Reinterprets the engine buffer's backing `Uint8Array` as the binding's view type. */
 private fun ByteBuffer.asArrayBufferView(): ArrayBufferView<ArrayBufferLike> = jsUnsafeCast(nativeBytes)
+
+/** Reinterprets the first [byteCount] bytes of the engine buffer's backing `Uint8Array`. */
+private fun ByteBuffer.asArrayBufferView(byteCount: Int): ArrayBufferView<ArrayBufferLike> =
+    jsUnsafeCast(Uint8Array(nativeBytes.buffer, 0, byteCount))

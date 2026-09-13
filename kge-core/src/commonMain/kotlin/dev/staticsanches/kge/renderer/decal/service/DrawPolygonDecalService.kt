@@ -10,20 +10,19 @@ import dev.staticsanches.kge.renderer.decal.DecalInstance
 /**
  * The arbitrary textured-polygon geometry seam: [drawPolygonDecal] turns a
  * caller-supplied vertex/UV/tint list over a [Decal] into an N-vertex
- * [DecalInstance]. It is stateless and pure CPU math; the engine supplies the
- * [viewport] size.
+ * [DecalInstance].
  *
- * The engine-defined default follows olc v2.30's `DrawPolygonDecal`: the
- * vertices are converted to clip space (y flipped, scale by the viewport), and
- * the UVs and tints are taken per vertex as given. A consumer may replace the
- * whole behavior for the process via [override][KGEOverridable.Proxy.override].
+ * The default follows olc v2.30's `DrawPolygonDecal`: the vertices are converted
+ * to clip space (y flipped, scaled by the viewport) and the UVs and tints are
+ * taken per vertex as given. A consumer may replace the whole behavior for the
+ * process via [override][KGEOverridable.Proxy.override].
  */
 interface DrawPolygonDecalService : KGEOverridable {
     /**
      * Builds one vertex per entry of [pos], with the parallel [uv] and [tint]
      * entries. [pos] are screen-space pixels; [uv] are texture coordinates as
-     * given. [viewport] is the drawable size in pixels; [mode] and [structure]
-     * are carried into the instance unchanged.
+     * given. [viewport] is the drawable size; [mode] and [structure] are carried
+     * unchanged.
      */
     fun drawPolygonDecal(
         decal: Decal,

@@ -11,9 +11,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [DrawPolygonDecalService]: an arbitrary N-vertex textured polygon. The
- * vertices are converted to clip space (y flipped); UVs and tints are taken
- * per vertex as given (olc's `DrawPolygonDecal`).
+ * [DrawPolygonDecalService]: an arbitrary N-vertex textured polygon. Vertices
+ * convert to clip space (y flipped); UVs and tints are taken per vertex as given
+ * (olc's `DrawPolygonDecal`).
  */
 class DrawPolygonDecalServiceTest :
     FunSpec({

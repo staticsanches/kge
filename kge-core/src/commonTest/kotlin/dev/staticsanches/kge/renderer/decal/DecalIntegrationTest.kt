@@ -1,5 +1,4 @@
-// The handles are `web.gl` interop types on the web targets; transporting them
-// through the common recording assertions is the intended, safe use.
+// Handles are `web.gl` interop types on web targets; the recording assertions carry them.
 @file:Suppress("OPT_IN_USAGE")
 
 package dev.staticsanches.kge.renderer.decal
@@ -23,11 +22,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The decal → renderer → GL contract, end to end: a `Decal` is created from a
- * `Sprite` through the overridable `Renderer` (texture + initial upload), a
- * common draw service builds the `DecalInstance`, and `Renderer.drawDecal`
- * records the expected sequence — bind, per-mode blend, per-structure
- * primitive, one draw.
+ * The decal → renderer → GL contract end to end: `Decal` creation through the
+ * overridable `Renderer` (texture + initial upload), a draw service building the
+ * `DecalInstance`, and `Renderer.drawDecal` recording the sequence — bind,
+ * per-mode blend, per-structure primitive, one draw.
  */
 class DecalIntegrationTest :
     FunSpec({
@@ -80,7 +78,7 @@ class DecalIntegrationTest :
                         renderer.drawDecal(scope, instance)
 
                         recorder.calls.map { it.name } shouldBe
-                            listOf("disable", "blendFunc", "bindTexture", "bindBuffer", "bufferSubData", "drawArrays")
+                            listOf("disable", "blendFunc", "bindTexture", "bindBuffer", "bufferData", "drawArrays")
                         recorder.calls[1].arguments shouldBe listOf(GL.SRC_ALPHA, GL.ONE)
                         recorder.calls[2].arguments shouldBe listOf(GL.TEXTURE_2D, handle)
                         recorder.calls[3].arguments shouldBe listOf(GL.ARRAY_BUFFER, recorder.lastCreatedBuffer)

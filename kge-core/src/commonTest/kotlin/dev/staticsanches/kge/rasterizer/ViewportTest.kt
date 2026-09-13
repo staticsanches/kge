@@ -5,9 +5,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The pure [Viewport] hierarchy and its `contains` predicate. The lower bound
- * is inclusive and the upper bound is exclusive; a missing bound on a partial
- * variant constrains no axis.
+ * The [Viewport] hierarchy and its `contains` predicate: lower bound inclusive,
+ * upper bound exclusive; a missing bound on a partial variant constrains no axis.
  */
 class ViewportTest :
     FunSpec({

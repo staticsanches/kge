@@ -13,27 +13,21 @@ import dev.staticsanches.kge.renderer.internal.rendererDefault
 import dev.staticsanches.kge.resource.ResourceScope
 
 /**
- * The common renderer: the typed drawing surface over the raw, overridable
- * [dev.staticsanches.kge.renderer.gl.service.GLService]. It owns no window and
- * no layers — the engine makes a device's context current, hands the renderer
- * calls, and presents through the device — and it maps the typed vocabulary
- * (`Decal` filter/wrap/mode/structure, `Pixel`) to raw GL commands.
+ * The typed drawing surface over the raw, overridable
+ * [dev.staticsanches.kge.renderer.gl.service.GLService].
  *
- * The renderer is stateless: it holds no GPU objects. The built-in quad program
- * and its staging buffer live in the [ResourceScope] the engine owns and
- * closes; [createResources] builds them once at startup while a context is
- * current, and every draw resolves them through the same scope.
- *
- * The engine-defined default is a common implementation (see `rendererDefault`)
- * built on the platform GL backend; a consumer may replace the whole behavior
- * for the process via [override][KGEOverridable.Proxy.override].
+ * The renderer is stateless: it holds no GPU objects. Its built-in GPU
+ * resources live in the [ResourceScope] the engine owns and closes;
+ * [createResources] builds them once at startup while a context is current,
+ * and every draw resolves them through the same scope. A consumer may replace
+ * the whole behavior for the process via
+ * [override][KGEOverridable.Proxy.override].
  */
 interface Renderer : KGEOverridable {
     /**
-     * Builds the renderer's built-in GPU resources into [scope], using
-     * [device] to make the context current when they are released. Called once
-     * by the engine at startup with a current context; the scope owns and
-     * closes them.
+     * Builds the renderer's built-in GPU resources into [scope]. Called once by
+     * the engine at startup with a current context; the scope owns and closes
+     * them, making [device]'s context current on release.
      */
     fun createResources(
         device: GpuDevice,
@@ -41,10 +35,9 @@ interface Renderer : KGEOverridable {
     )
 
     /**
-     * Creates a [Texture] of [width]x[height] RGBA8 pixels with the given
-     * sampling [filter] and edge [wrap] behavior. [name] is the resource's
-     * diagnostic label. The caller owns it and closes it through
-     * [Texture.close].
+     * Creates a [width]x[height] RGBA8 [Texture] with the given sampling
+     * [filter] and edge [wrap] behavior; [name] is its diagnostic label. The
+     * caller owns it and closes it through [Texture.close].
      */
     fun createTexture(
         width: Int,
@@ -74,7 +67,7 @@ interface Renderer : KGEOverridable {
 
     /**
      * Draws the full-screen layer quad sampling [offset]/[scale] in texture
-     * space and tinted by [tint].
+     * space, tinted by [tint].
      */
     fun drawLayerQuad(
         scope: ResourceScope,

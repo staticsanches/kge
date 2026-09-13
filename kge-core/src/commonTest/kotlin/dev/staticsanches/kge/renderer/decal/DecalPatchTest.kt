@@ -6,9 +6,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [DecalPatch]: the decal plus its four normalized texture coordinates in the
- * order bottom-left, top-left, top-right, bottom-right (olc's `DecalPatch`).
- * The two `Decal.patch` factories build that order.
+ * [DecalPatch]: the decal plus four normalized texture coordinates ordered
+ * bottom-left, top-left, top-right, bottom-right (olc's `DecalPatch`); both
+ * `Decal.patch` factories build that order.
  */
 class DecalPatchTest :
     FunSpec({

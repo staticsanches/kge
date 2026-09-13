@@ -6,22 +6,18 @@ import dev.staticsanches.kge.buffer.fillInts
 import dev.staticsanches.kge.buffer.formatBytes
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.ResourceWrapper
-import dev.staticsanches.kge.resource.letClosingIfFailed
 import dev.staticsanches.kge.resource.onCollectionObserved
 
 /**
- * The concrete 2D surface: pixel `(x, y)` is the little-endian RGBA int at
- * byte offset `(y * width + x) * 4`. The sprite owns its
- * [ResourceWrapper]: close releases the native memory and every access fails
- * fast afterwards — including the out-of-bounds paths, which never reach the
- * storage. Created content is unspecified until written; the wrapper contract
- * owns the lifetime, so an unclosed creation is reported on collection.
+ * The concrete 2D surface: pixel `(x, y)` is the little-endian RGBA int at byte
+ * offset `(y * width + x) * 4`. The sprite owns its [ResourceWrapper]: close
+ * releases the native memory, and every access — including the out-of-bounds
+ * paths — fails fast afterwards. Content is unspecified until written; an
+ * unclosed sprite is reported on collection.
  *
- * The constructor is the resource seam; creation and duplication go through
- * [SpriteService]. A constructor rejection (dimensions, capacity)
- * means ownership never transferred: the caller keeps the wrapper and must
- * close it — [letClosingIfFailed] is the guard for allocate-then-construct
- * call sites.
+ * A constructor rejection (dimensions, capacity) means ownership never
+ * transferred: the caller keeps the wrapper and must close it. Creation and
+ * duplication go through [SpriteService].
  */
 @OptIn(KGESensitiveAPI::class)
 class Sprite(
@@ -41,7 +37,7 @@ class Sprite(
         }
     }
 
-    /** The out-of-bounds branches return without touching the storage, so the fail-fast check is first. */
+    /** Fails fast once released; the out-of-bounds branches do not touch the storage. */
     override fun get(
         x: Int,
         y: Int,
@@ -84,10 +80,9 @@ class Sprite(
     }
 
     /**
-     * The sprite's raw storage — its own buffer. The caller owns the bytes;
-     * writing outside the [Pixmap] contract (layout, bounds, sample mode) is
-     * the caller's responsibility. Resolves the owning wrapper on demand, so
-     * it fails fast once the sprite is released.
+     * The sprite's raw storage, fails fast once the sprite is released. The
+     * caller owns the bytes; writing outside the [Pixmap] contract (layout,
+     * bounds, sample mode) is the caller's responsibility.
      */
     @KGESensitiveAPI
     override val buffer: ByteBuffer get() = storage.resource

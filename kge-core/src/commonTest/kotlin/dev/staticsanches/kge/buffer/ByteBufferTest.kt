@@ -10,11 +10,11 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 
 /**
- * The byte buffer contract: allocation through [BufferService] returns
- * a [ResourceWrapper] whose resource is a [ByteBuffer] of the requested size,
- * with the resource lifecycle of the engine (close idempotent, use-after-close
- * fail-fast, leak detection on collection). The initial content is unspecified
- * by contract, so every test sets the data it reads.
+ * The byte buffer contract: allocation through [BufferService] returns a
+ * [ResourceWrapper] whose resource is a [ByteBuffer] of the requested size,
+ * with the engine resource lifecycle (close idempotent, use-after-close
+ * fail-fast, leak detection on collection). Initial content is unspecified, so
+ * every test sets the data it reads.
  */
 class ByteBufferTest :
     FunSpec({

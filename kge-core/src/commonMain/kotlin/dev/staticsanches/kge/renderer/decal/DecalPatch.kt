@@ -4,10 +4,8 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.math.vector.Float2D
 
 /**
- * A [Decal] plus four normalized texture coordinates, in the order
- * bottom-left, top-left, top-right, bottom-right — olc's `DecalPatch`. The
- * coordinates are the UVs of a quadrilateral of the decal's texture that the
- * patch draw form maps onto a transformed screen quad.
+ * A [Decal] plus four normalized texture coordinates, in the order bottom-left,
+ * top-left, top-right, bottom-right — olc's `DecalPatch`.
  *
  * The coordinates are snapshotted at construction, so a patch is immutable.
  * Built through [Decal.patch] or the sensitive constructor for a custom patch.

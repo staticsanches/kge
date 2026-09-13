@@ -3,12 +3,12 @@
 // the root classloader scope, which breaks cross-plugin class visibility for
 // plugins with compile-only KGP references.
 
-// Serialize the root yarn tasks. They share Yarn's global instance mutex, and the
-// configuration cache runs tasks in parallel (even within a project), so without
-// ordering they overlap. On Windows that leaves the wasm installs incomplete:
-// :kotlinWasmStoreYarnLock aborts on a missing build/wasm/yarn.lock, and
-// :kotlinWasmToolingSetup can leave the tooling dir without kotlin-web-helpers,
-// breaking :wasmJsBrowserTest. Ordering removes the contention.
+// Root yarn tasks share Yarn's global instance mutex, but the configuration
+// cache runs them in parallel (even within a project); on Windows that overlap
+// leaves the wasm installs incomplete — :kotlinWasmStoreYarnLock aborts on a
+// missing build/wasm/yarn.lock, and :kotlinWasmToolingSetup can leave the
+// tooling dir without kotlin-web-helpers, breaking :wasmJsBrowserTest. Order
+// them to serialize.
 tasks.matching { it.name == "kotlinWasmToolingSetup" }.configureEach {
     dependsOn(tasks.matching { it.name == "kotlinNpmInstall" })
 }

@@ -1,27 +1,20 @@
 package dev.staticsanches.kge.resource
 
 /**
- * The engine-owned owner of a group of resources, keyed by a typed [Key].
+ * Owns a group of resources keyed by a typed [Key] and closes them in reverse
+ * registration order (LIFO), so dependencies must be registered before their
+ * dependents.
  *
- * The scope itself is a [KGEResource], so the engine can hold it on the same
- * lifecycle path as the resources it owns and close it once at teardown.
- * Resources are closed in reverse registration order (LIFO): a resource
- * registered later may depend on an earlier one, so dependencies must be
- * registered before their dependents.
- *
- * A scope is single-threaded — GL is context/thread affine, and its close
- * drives each resource's release on the registering thread. It must be safely
- * published (created and populated before the thread that uses it starts), so
- * no synchronization is needed. The scope holds no GPU context of its own; a
- * resource that needs a current context makes it current in its own [close].
+ * The scope is single-threaded: it drives each resource's release on the
+ * registering thread, so it must be safely published (populated before the
+ * using thread starts). It holds no GPU context; a resource that needs one
+ * makes it current in its own [close].
  */
 class ResourceScope : KGEResource {
     /**
-     * The marker interface a resource key implements.
-     *
-     * A key is created by the registrant that owns the resource and matched by
-     * identity; its type parameter ties it to that resource's type, so `get`
-     * returns the concrete type without a cast at the call site.
+     * The key a resource is registered under. Created and owned by the
+     * registrant and matched by identity; the type parameter ties it to the
+     * resource's type, so `get` returns the concrete type without a cast.
      */
     interface Key<T : KGEResource>
 

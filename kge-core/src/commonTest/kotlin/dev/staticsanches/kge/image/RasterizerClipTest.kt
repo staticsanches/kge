@@ -8,9 +8,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * A [Pixmap] is a [dev.staticsanches.kge.rasterizer.Viewport.Bounded] over its
- * dimensions, and [dev.staticsanches.kge.rasterizer.service.OutlineService
- * .drawLine] clips through the active clip seam before it walks.
+ * A `Pixmap` is a `Viewport.Bounded` over its dimensions, and `drawLine` clips
+ * through the active clip seam before it walks.
  */
 class RasterizerClipTest :
     FunSpec({

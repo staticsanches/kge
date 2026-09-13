@@ -9,12 +9,9 @@ import kotlin.math.floor
 import kotlin.math.min
 
 /**
- * A 2D pixel surface, row-major over conventional x/y coordinates.
- *
- * The interface owns the algorithms; a concrete surface ([Sprite]) supplies
- * only the raw accessors and the storage. Coordinates outside the surface do
- * not throw — [get] follows the [sampleMode] policy and [sample]/[sampleBL]
- * dispatch through it, so sampling is mode-aware everywhere.
+ * A 2D pixel surface, row-major over conventional x/y coordinates. Coordinates
+ * outside the surface do not throw: [get] follows [sampleMode] and
+ * [sample]/[sampleBL] dispatch through it, so sampling is mode-aware everywhere.
  */
 interface Pixmap :
     Sequence<Pixel>,
@@ -157,11 +154,8 @@ interface Pixmap :
     override fun iterator(): Iterator<Pixel> = PixmapRowMajorIterator(this)
 
     /**
-     * A [Pixmap] with writable pixels.
-     *
-     * The default bodies own [set] (bounds-checked), [clear] and [inv]; the
-     * concrete surface supplies [uncheckedSet] and may override [clear] —
-     * Sprite fills its native buffer directly.
+     * A [Pixmap] with writable pixels; the concrete surface supplies
+     * [uncheckedSet] and may override [clear] to fill native storage directly.
      */
     interface Mutable : Pixmap {
         /** The writable read policy: a [Pixmap.Mutable] view owns its [sampleMode]. */
@@ -262,14 +256,12 @@ interface Pixmap :
     }
 
     /**
-     * A [Pixmap] whose pixels sit in the raw [buffer]: a row [stride] in int
+     * A [Pixmap] whose pixels sit in a raw [buffer]: a row [stride] in int
      * elements and the [baseIndex] of the view's local `(0, 0)`. A surface
-     * that implements it always has contiguous storage; a surface without one
-     * (an algorithmic surface, a view over a non-contiguous source) simply
-     * does not implement this interface. [buffer] resolves the owning resource
-     * on demand, so the release fail-fast after close is preserved, and
-     * [index] maps a local pixel to its int-element offset — multiply by
-     * [Int.SIZE_BYTES] for the byte offset the buffer API expects.
+     * implementing it always has contiguous storage; one without contiguous
+     * storage simply does not implement this interface. [index] maps a local
+     * pixel to its int-element offset — multiply by [Int.SIZE_BYTES] for the
+     * byte offset the buffer API expects.
      */
     @KGESensitiveAPI
     interface RawBacked : Pixmap {
@@ -282,7 +274,7 @@ interface Pixmap :
         /** The int-element index of the view's local `(0, 0)`. */
         val baseIndex: Int
 
-        /** The int-element offset of ([x], [y]): `baseIndex + y * stride + x`. */
+        /** The int-element offset of the local pixel ([x], [y]). */
         fun index(
             x: Int,
             y: Int,

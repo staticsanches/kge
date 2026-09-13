@@ -4,11 +4,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The deterministic core of leak detection. The collection trigger is
- * platform-machinery (a `Cleaner` / FinalizationRegistry callback) whose timing
- * is not observable from a test; what must be proven here is the state machine
- * every trigger funnels into: cleaned flag, exactly-once action, exactly-once
- * report, and the close-after-leak ordering.
+ * The deterministic core of leak detection. The collection trigger's timing is
+ * platform machinery, not observable from a test, so these prove the state
+ * machine every trigger funnels into: cleaned flag, exactly-once action and
+ * report, and the close-versus-collection ordering.
  */
 class KGEResourceCleanableStateTest :
     FunSpec({
@@ -62,8 +61,8 @@ class KGEResourceCleanableStateTest :
             var calls = 0
             val state = KGEResourceCleanableState("R4", KGECleanAction { calls++ })
 
-            state.onCollected() // GC wins
-            state.clean() // close comes too late
+            state.onCollected()
+            state.clean()
 
             reports shouldBe listOf("R4")
             calls shouldBe 0

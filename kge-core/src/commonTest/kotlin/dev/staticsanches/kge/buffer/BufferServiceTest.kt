@@ -7,10 +7,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The allocation service contract under the extension mechanism: the facade
- * resolves the platform default, an override is observable by every caller, a
- * decorator reaches the engine default through [BufferService.original]
- * and `resetAll` restores it.
+ * The allocation service contract: the facade resolves the platform default,
+ * an override is observable by every caller, and a decorator reaches the
+ * engine default through [BufferService.original].
  */
 class BufferServiceTest :
     FunSpec({

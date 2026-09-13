@@ -2,11 +2,10 @@ package dev.staticsanches.kge.image
 
 /**
  * The CSS Color Module Level 4 named-color palette (spec §6.1), plus
- * [Colors.TRANSPARENT], regenerated from the specification — the spec table is the
- * source of truth.
+ * [Colors.TRANSPARENT].
  *
- * Named colors are opaque (`A = 0xFF`); the 9 alias pairs (gray/grey, aqua/cyan,
- * magenta/fuchsia, …) keep both spellings, as in the spec. Alpha is straight.
+ * Named colors are opaque (`A = 0xFF`); the alias pairs (gray/grey, aqua/cyan,
+ * magenta/fuchsia, …) keep both spellings. Alpha is straight.
  */
 object Colors {
     /** Fully transparent black — CSS `transparent` (a special value, not a named color). */

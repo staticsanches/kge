@@ -10,31 +10,21 @@ import kotlinx.coroutines.withContext
 /**
  * Loads and saves [Sprite]s through caller-supplied codecs.
  *
- * The codec seam is an extension capability of the engine: [load] and [save]
- * are platform-independent orchestration, and the format/platform choice
- * lives in the [Decoder]/[Encoder] the caller passes. A consumer may replace
- * the whole behavior for the process via
- * [override][KGEOverridable.Proxy.override]. The engine never owns a payload
- * handed to [load] or returned by [save] — the caller does.
- *
- * The codec work is dispatched on [Dispatchers.Default] so it runs off the
- * caller's thread, even for a caller-supplied codec that does not switch
- * dispatchers itself; a codec may still switch internally (e.g.
- * [Dispatchers.IO] for a blocking read). A direct codec call that bypasses
- * [load]/[save] is the caller's responsibility to dispatch.
+ * The caller owns every payload handed to [load] or returned by [save]. Codec
+ * work runs on [Dispatchers.Default], so a caller-supplied codec runs off the
+ * caller's thread; a direct codec call bypassing [load]/[save] must dispatch
+ * itself. A consumer may replace the whole behavior for the process via
+ * [override][KGEOverridable.Proxy.override].
  */
 interface ImageService : KGEOverridable {
     /**
      * A payload-to-sprite decoder: one call on [data] hands the decoded
-     * `width`, `height` and row-major RGBA pixels to `consume`.
+     * `width`, `height` and row-major RGBA `pixels` to `consume`.
      *
-     * Ownership: the decoder allocates `pixels` — an engine buffer of exactly
-     * `width * height * 4` bytes — and owns it until it invokes `consume`; on
-     * every path before that call it must close it. Invoking
-     * `consume(width, height, pixels)` transfers ownership to the consumer: the
-     * decoder must not close or use `pixels` afterwards, whatever happens —
-     * `consume` throwing included. [data] is caller-owned and is not closed by
-     * the decoder.
+     * The decoder allocates `pixels` (exactly `width * height * 4` bytes) and
+     * owns it until it invokes `consume`; on any earlier path it must close it.
+     * `consume` transfers ownership, after which the decoder must not close or
+     * use `pixels` even if `consume` throws. [data] is caller-owned.
      */
     fun interface Decoder<in T> {
         suspend fun decode(
@@ -52,22 +42,11 @@ interface ImageService : KGEOverridable {
     }
 
     /**
-     * Decodes [data] with [decoder] into a surface born with [sampleMode] and
-     * [name] ([Sprite]'s diagnostic label). The decode runs on
-     * [Dispatchers.Default].
-     *
-     * The decoder must call `consume` exactly once, with positive dimensions
-     * and an engine buffer of exactly `width * height * 4` bytes; a second call,
-     * a missing call, or a wrong-sized buffer throws. [load] **adopts** that
-     * buffer as the returned [Sprite]'s storage (zero-copy), so the surface owns
-     * it. When the [Sprite] cannot be constructed, or [decoder] fails after
-     * `consume`, the buffer — and any already-created surface — is closed before
-     * the failure propagates; a second `consume`'s extra buffer is closed too,
-     * so nothing leaks. [data] is caller-owned and is never closed here.
-     *
-     * Adoption cannot go through `SpriteService.create` — the allocator would
-     * allocate a second buffer and copy — so [load] constructs the [Sprite]
-     * directly over the decoder's buffer.
+     * Decodes [data] with [decoder] into a [Sprite] with [sampleMode] and
+     * [name], adopting the decoder's buffer (zero-copy). The decoder must call
+     * `consume` exactly once with positive dimensions and an exactly
+     * `width * height * 4`-byte buffer, else throws; the buffer is closed on
+     * failure. [data] is caller-owned; runs on [Dispatchers.Default].
      */
     suspend fun <T> load(
         data: T,

@@ -21,9 +21,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
 /**
- * The public [Texture] resource: creation records the raw GL setup, the
- * operations record their bind + upload/readback, and the T1 lifecycle holds
- * (idempotent close, fail-fast use-after-close, no leak on failed creation).
+ * The [Texture] resource: creation pins the raw GL setup, and the T1 lifecycle
+ * holds — idempotent close, fail-fast use-after-close, no leak on failure.
  */
 class TextureTest :
     FunSpec({

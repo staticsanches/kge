@@ -8,13 +8,10 @@ import kotlinx.coroutines.withContext
 import java.net.URL
 
 /**
- * The JVM decoder for a [URL] — file, classpath and http(s) URLs alike,
- * resolved by the platform URL machinery.
+ * The JVM decoder for a [URL] — file, classpath and http(s) alike.
  *
- * The whole payload is read into a transient engine buffer, decoded through
- * [BytesDecoder], and the transient is released on every path. The blocking
- * stream read runs on [Dispatchers.IO]; the image decode runs on
- * [Dispatchers.Default] inside [BytesDecoder].
+ * The blocking read runs on [Dispatchers.IO]; the payload is decoded from a
+ * transient buffer via [BytesDecoder], released on every path.
  */
 object UrlDecoder : ImageService.Decoder<URL> {
     override suspend fun decode(

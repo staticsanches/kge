@@ -6,14 +6,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 /**
  * Reports resources that were collected without being closed.
  *
- * Leak reporting is an extension capability of the engine: the engine default
- * is the log sink; a consumer may replace it for the whole process via
- * [override][KGEOverridable.Proxy.override] — e.g. a test asserting a leak,
- * or a crash on leak in nightly builds — and every detection is observed from
- * the next call on.
+ * The engine default logs the leak; a consumer may replace it process-wide via
+ * [override][KGEOverridable.Proxy.override].
  */
 interface LeakReporterService : KGEOverridable {
-    /** Reports that the resource represented by [representation] leaked. */
     fun report(representation: String)
 
     companion object :

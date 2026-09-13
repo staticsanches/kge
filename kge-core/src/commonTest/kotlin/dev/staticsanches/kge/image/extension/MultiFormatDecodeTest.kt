@@ -12,16 +12,11 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [BytesDecoder]'s multi-format breadth: the backend auto-detects the input
+ * `BytesDecoder`'s multi-format breadth: the backend auto-detects the input
  * (`stbi_load_from_memory` on the JVM, `createImageBitmap` on the web), so one
- * `Decoder` reads every format each platform supports.
- *
- * JPEG is lossy, so only the dimensions are pinned — the decoded pixels differ
- * from the source by compression artifacts. GIF is palette-based (a source
- * pixel above 50% alpha may be quantized to a palette entry), so only the
- * dimensions are pinned too. The BMP fixture is a 32-bit `BI_BITFIELDS`
- * surface with an alpha mask (see [tinyBmpBytes]), i.e. genuinely lossless, so
- * its pixels are pinned against the shared palette.
+ * decoder reads every format each platform supports. JPEG (lossy) and GIF
+ * (palette-quantized) pin dimensions only; the 32-bit `BI_BITFIELDS` BMP is
+ * lossless, so its pixels are pinned against the shared palette.
  */
 class MultiFormatDecodeTest :
     FunSpec({

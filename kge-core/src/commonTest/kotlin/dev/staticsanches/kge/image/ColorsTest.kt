@@ -4,8 +4,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * Pins [Colors] to the CSS Color Module Level 4 §6.1 table (values regenerated from
- * the spec, not copied from main). Generated fixture — source: spec extraction.
+ * Pins [Colors] to the CSS Color Module Level 4 §6.1 table: every named
+ * constant, the alias pairs, the GREEN/LIME distinction and fully transparent
+ * black.
  */
 class ColorsTest :
     FunSpec({

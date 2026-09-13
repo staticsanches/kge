@@ -10,11 +10,10 @@ internal fun Sprite.rowMajorPixels(): List<Pixel> =
     (0 until height).flatMap { y -> (0 until width).map { x -> uncheckedGet(x, y) } }
 
 /**
- * The shared test fixture: a 2x2 RGBA8 PNG (bit depth 8, color type 6, no
- * interlace) whose four pixels are distinct and carry non-trivial alpha —
- * generated offline and byte-verified (PNG signature, per-chunk CRC32 and a
- * zlib round trip). Its bytes are embedded so every test target decodes the
- * same input without classpath resource differences.
+ * The shared fixture: a 2x2 RGBA8 PNG (bit depth 8, color type 6, no
+ * interlace) whose four pixels are distinct and carry non-trivial alpha,
+ * generated offline and byte-verified (signature, per-chunk CRC32, zlib round
+ * trip). Embedded so every test target decodes the same input.
  */
 internal val tinyPngBytes: ByteArray =
     byteArrayOf(

@@ -10,9 +10,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * JVM-only decode pin: on the JVM the engine buffer IS `java.nio.ByteBuffer`,
- * whose position must not influence [BytesDecoder] — decode reads the payload
- * from its start, matching the position-less web buffer (uniform contract).
+ * JVM-only decode pin: the `java.nio.ByteBuffer` position must not influence
+ * [BytesDecoder]; decode reads from the payload start, matching the
+ * position-less web buffer.
  */
 class BytesImageDecodeJvmTest :
     FunSpec({

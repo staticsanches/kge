@@ -113,8 +113,8 @@ class Float2DTest :
             }
 
             test("norm of a 3-4-5 vector is the unit components") {
-                // Float math on JS is not float32-rounded, so the norm of a
-                // scaled vector is tolerance-guarded, never exact.
+                // Float math on JS is not float32-rounded, so a norm is
+                // tolerance-guarded, never exact.
                 expectClose(Float2D(3f, 4f).norm(), Float2D(0.6f, 0.8f))
             }
 

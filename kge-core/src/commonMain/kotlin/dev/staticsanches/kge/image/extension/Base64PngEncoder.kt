@@ -7,13 +7,11 @@ import kotlinx.coroutines.withContext
 import kotlin.io.encoding.Base64
 
 /**
- * The default encoder of a [Sprite] to a base64-encoded PNG — the portable
- * download / data-URL representation.
+ * The default encoder of a [Sprite] to a base64-encoded PNG.
  *
- * The PNG bytes are produced by [PngEncoder] and the transient buffer is
- * released before returning; the returned [String] is not a resource. The
- * base64 conversion is CPU-bound and runs on [Dispatchers.Default], like the
- * PNG encoding it wraps.
+ * The PNG bytes come from [PngEncoder] with a transient buffer released before
+ * returning; the returned [String] is not a resource. Runs on
+ * [Dispatchers.Default].
  */
 object Base64PngEncoder : ImageService.Encoder<String> {
     override suspend fun encode(sprite: Sprite): String =

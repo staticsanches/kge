@@ -12,10 +12,8 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The GL seam contract at step 0: the [GL] namespace and the [GLService]
- * facade both resolve the overridable backend per call, the recording backend
- * captures the raw commands, fabricated handles survive the round-trip, and
- * `resetAll` leaves the platform backend in place as the engine default.
+ * The GL seam: both the [GL] namespace and the [GLService] facade resolve the
+ * overridable backend per call, and `resetAll` restores the platform default.
  */
 class GLServiceTest :
     FunSpec({

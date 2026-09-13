@@ -8,13 +8,11 @@ import kotlinx.coroutines.withContext
 import kotlin.io.encoding.Base64
 
 /**
- * The default decoder for a base64-encoded image payload — the portable
- * download / data-URL representation.
+ * The default decoder for a base64-encoded image payload.
  *
- * [data] is decoded into a transient engine buffer, decoded through
- * [BytesDecoder], and the transient is released on every path; the [String]
- * payload itself is not a resource. An invalid base64 string throws before any
- * image decode runs. Decoding is CPU-bound and runs on [Dispatchers.Default].
+ * [data] is decoded through [BytesDecoder] with a transient engine buffer that
+ * is released on every path; the [String] payload is not a resource. Invalid
+ * base64 throws before any image decode runs. Runs on [Dispatchers.Default].
  */
 object Base64Decoder : ImageService.Decoder<String> {
     override suspend fun decode(

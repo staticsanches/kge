@@ -7,8 +7,7 @@ import dev.staticsanches.kge.renderer.gl.service.GLService
 /**
  * The user-facing GL namespace: the raw `GLenum` constants and the facade over
  * the overridable [GLService]. Every call resolves the current service on the
- * spot, so an override is observed immediately and this object never holds a
- * resolved instance.
+ * spot, so an override is observed immediately.
  */
 object GL : GLService by GLService {
     // Blending factors

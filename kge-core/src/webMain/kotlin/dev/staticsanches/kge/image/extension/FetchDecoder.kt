@@ -17,10 +17,8 @@ import kotlin.js.Promise
  * The browser decoder for a URL, fetched through the platform `fetch` —
  * http(s) and data: URLs alike.
  *
- * The whole payload is read into a transient engine buffer, decoded through
- * [BytesDecoder], and the transient is released on every path. `fetch` is
- * non-blocking, so no dispatcher is needed; the image decode runs on
- * [kotlinx.coroutines.Dispatchers.Default] inside [BytesDecoder].
+ * `fetch` is non-blocking, so no dispatcher is needed; the payload is decoded
+ * from a transient buffer via [BytesDecoder], released on every path.
  */
 object FetchDecoder : ImageService.Decoder<String> {
     override suspend fun decode(

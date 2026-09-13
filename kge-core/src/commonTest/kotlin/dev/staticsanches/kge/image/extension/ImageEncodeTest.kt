@@ -16,13 +16,11 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 
 /**
- * [PngEncoder]/[JpegEncoder] through the [ImageService] seam: the encoded
- * payload is an engine buffer the caller owns. PNG round-trips losslessly
- * through [BytesDecoder]; JPEG is lossy, so its signature, dimensions and the
- * source's gross luminance structure are asserted (chroma subsampling on a 2x2
- * destroys hue on both backends). The wrapper lifecycle and leak ownership are
- * observed deterministically through [ResourceWrapper.cleaned] (no GC-driven
- * leak reporter, whose wasmJs callbacks leak across tests).
+ * `PngEncoder`/`JpegEncoder` through the `ImageService` seam: the encoded
+ * payload is a caller-owned engine buffer. PNG round-trips losslessly; JPEG is
+ * lossy and chroma-subsamples a 2x2, so only its signature, dimensions and
+ * gross luminance structure are asserted. Wrapper lifecycle and leak ownership
+ * are observed through `ResourceWrapper.cleaned`.
  */
 class ImageEncodeTest :
     FunSpec({
@@ -49,15 +47,10 @@ class ImageEncodeTest :
                         back.width shouldBe sprite.width
                         back.height shouldBe sprite.height
 
-                        // JPEG is lossy and chroma-subsamples this 2x2, so the
-                        // per-pixel hue does not survive on either backend; the
-                        // source's gross luminance structure does. The source is
-                        // yellow > green > red > blue (the 50%-alpha pixels are
-                        // additionally composited against black by the browser
-                        // canvas), and only the two extremes are stable across
-                        // STB and the canvas — observed luminance gaps are
-                        // >=26/255 on both, so 10 is a generous floor and a
-                        // blank or hue-scrambled surface still fails.
+                        // JPEG chroma-subsamples this 2x2, so hue does not
+                        // survive on either backend; the source's gross
+                        // luminance structure does (yellow > green > red >
+                        // blue). The margins are floors, not exact values.
                         val luma = back.rowMajorPixels().map { it.luminance() }
                         val red = luma[RED_INDEX]
                         val green = luma[GREEN_INDEX]

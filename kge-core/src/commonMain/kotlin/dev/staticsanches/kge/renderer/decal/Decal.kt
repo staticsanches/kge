@@ -12,36 +12,25 @@ import dev.staticsanches.kge.resource.letClosingIfFailed
 /**
  * The GPU storage of a [Sprite], owned through the T1 resource contract.
  *
- * A decal carries no geometry: it owns the [texture] uploaded from [sprite] and
- * keeps a reference to the CPU side so [update] (CPU → GPU) and [updateSprite]
- * (GPU → CPU) can reach the pixels. The `Sprite` is not owned by the decal and
- * is not closed with it.
+ * The decal carries no geometry: it owns the [texture] uploaded from [sprite]
+ * and keeps a reference to the CPU side so [update] (CPU → GPU) and
+ * [updateSprite] (GPU → CPU) can reach the pixels. The `Sprite` is not owned
+ * and is not closed with the decal; [close] is the single release path for the
+ * owned texture, which surfaces as a leaked texture if never closed.
  *
- * The texture is created, uploaded, bound and deleted through the overridable
- * [Renderer] — there is no decal-specific service. Because the owned [Texture]
- * is itself a registered T1 resource, a decal that is never [close]d surfaces as
- * a leaked texture; [close] is the single release path.
- *
- * The [Mode]/[Structure]/[Filter]/[Wrap] values are the typed vocabulary the
- * renderer consumes; mapping them to GL belongs to the renderer.
- *
- * The constructor is a resource seam for an external backend that already owns
- * a [Texture]; production code creates through the companion factory.
+ * The constructor is a resource seam for a backend that already owns a
+ * [Texture]; production code creates through the companion factory.
  */
 class Decal
     @KGESensitiveAPI
     constructor(
         textureResource: Texture,
-        /**
-         * The CPU surface this decal mirrors. Not owned: kept only so that [update]
-         * and [updateSprite] can reach the pixels.
-         */
+        /** The CPU surface this decal mirrors; not owned or closed with the decal. */
         val sprite: Sprite,
     ) : KGEResource {
         /**
-         * The GPU storage this decal owns and binds before drawing the
-         * [DecalInstance]s that reference it. Exposed so an external renderer
-         * implementer can bind it; the decal keeps T1 ownership and [close]
+         * The GPU storage this decal owns and binds before drawing. Exposed so an
+         * external renderer can bind it; the decal keeps T1 ownership and [close]
          * remains the only release path.
          */
         @KGESensitiveAPI
@@ -67,8 +56,8 @@ class Decal
 
         /**
          * Builds the [DecalPatch] for the [size]-sized region at [pos], both in
-         * pixels of the decal's texture. The coordinates are bottom-left,
-         * top-left, top-right, bottom-right (olc's `Decal::Patch`).
+         * pixels of the decal's texture. Coordinates are bottom-left, top-left,
+         * top-right, bottom-right (olc's `Decal::Patch`).
          */
         fun patch(
             pos: Int2D,
@@ -100,13 +89,10 @@ class Decal
 
         companion object {
             /**
-             * Creates a decal over [sprite] with the given sampling [filter] and
-             * edge [wrap] behavior, and uploads the pixels in the constructor.
-             *
-             * The texture is created through the overridable [Renderer] and is
-             * deleted when the decal is [close]d, and also when the initial upload
-             * below fails, so a failed creation never leaks it
-             * ([letClosingIfFailed]).
+             * Creates a decal over [sprite] with sampling [filter] and edge [wrap]
+             * behavior, uploading the pixels immediately. The texture is deleted on
+             * [close] and when the initial upload fails, so a failed creation never
+             * leaks it.
              */
             operator fun invoke(
                 sprite: Sprite,

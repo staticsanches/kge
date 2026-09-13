@@ -4,12 +4,9 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 
 /**
- * JVM device over a GLFW window the owner created (the engine's window concept
- * and the hidden-window test harness). The device owns no window: it only makes
- * the existing [window]'s context current — loading the LWJGL GL capabilities
- * for the thread — and swaps its buffers.
- *
- * @param window the GLFW window handle whose context this device drives.
+ * JVM device over a GLFW [window] the owner created; the device owns no window.
+ * [makeCurrent] makes its context current and loads the LWJGL GL capabilities
+ * for the thread, and [present] swaps its buffers.
  */
 internal class GlfwGpuDevice(
     private val window: Long,

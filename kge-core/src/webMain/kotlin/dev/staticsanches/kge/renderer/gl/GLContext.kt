@@ -4,13 +4,12 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import web.gl.WebGL2RenderingContext
 
 /**
- * The current WebGL2 context the [dev.staticsanches.kge.renderer.gl.service.WebGLService]
- * backend operates on, or `null` while none is installed.
+ * The current WebGL2 context the backend operates on, or `null` while none is
+ * installed.
  *
- * The web device installs this process-wide through [updateGLContext]; the
- * device's owner clears it when the device is retired. The test harness does
- * both; an external web device/backend follows the same two calls. Every
- * command fails fast while no context is installed.
+ * The device installs it process-wide through [updateGLContext] and its owner
+ * clears it when the device is retired; commands fail fast while none is
+ * installed.
  */
 @KGESensitiveAPI
 var glContext: WebGL2RenderingContext? = null

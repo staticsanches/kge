@@ -7,8 +7,7 @@ import io.kotest.matchers.shouldBe
 /**
  * The extension-contract proof for the leak-report seam: leak reporting is an
  * engine capability with an engine-fixed default (log), replaceable by a
- * consumer for the whole process — a test overrides it to collect reports and
- * keep leaks observable without parsing logs.
+ * consumer for the whole process.
  */
 class LeakReporterServiceTest :
     FunSpec({

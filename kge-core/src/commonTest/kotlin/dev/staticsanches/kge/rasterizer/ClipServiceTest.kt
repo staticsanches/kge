@@ -13,10 +13,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The default [ClipService] reproduces olc v2.30 `ClipLineToDrawTarget`:
- * integer Cohen–Sutherland with a boundary inclusive at the viewport's
- * exclusive upper bound, truncating division, and a trivial reject on
- * `s1 & s2`.
+ * The default [ClipService] reproduces olc v2.30 `ClipLineToDrawTarget`: integer
+ * Cohen–Sutherland, boundary inclusive at the exclusive upper bound, truncating
+ * division, trivial reject on `s1 & s2`.
  */
 class ClipServiceTest :
     FunSpec({

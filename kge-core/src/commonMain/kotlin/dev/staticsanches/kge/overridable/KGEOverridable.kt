@@ -11,50 +11,34 @@ import kotlin.reflect.KClass
 /**
  * Marks an engine-defined behavior that a consumer may replace at runtime.
  *
- * The engine defines the default implementation; the service's companion
- * object extends [KGEOverridable.Proxy] and acts as the stateless facade,
- * delegating per call to the current implementation. The mechanism owns one
- * process-wide registry of services and each service's current implementation
- * — it is not a generic DI registry; engine wiring between components is
- * plain object composition.
+ * The mechanism keeps one process-wide registry of active implementations —
+ * it is not a general DI registry; engine wiring is plain object composition.
  */
 @OptIn(ExperimentalAtomicApi::class)
 interface KGEOverridable {
     /**
-     * Base of a service facade companion: registers the service on first
-     * touch, resolves the current implementation per call and exposes the
-     * override entry point.
-     *
-     * The constructor is internal — services are engine-defined: consumers
-     * override them, they do not declare new ones.
+     * Base of a service facade companion. Its constructor is internal —
+     * services are engine-defined: consumers override them, they do not
+     * declare new ones.
      */
     abstract class Proxy<O : KGEOverridable> internal constructor(
         private val serviceType: KClass<O>,
         /**
-         * The engine-defined default of this service. Decorators delegate to
-         * it to preserve the engine behavior — always the un-overridden
-         * implementation, whatever is currently active.
+         * The engine-defined default, always the un-overridden implementation.
          */
         val original: O,
     ) {
         private val current = AtomicReference(original)
 
-        /**
-         * Resolves the current implementation of this service.
-         *
-         * Resolution happens on every access, so an [override] affects the
-         * next call without touching the facade.
-         */
+        /** The current implementation, resolved on every access. */
         protected val delegate: O
             get() = current.load()
 
         /**
-         * Replaces the service's active implementation with [impl] for the
-         * whole process. Every consumer observes the new behavior from the
-         * next call on, there is no per-consumer scope, and a later
-         * [override] supersedes the previous one (last-declared-wins). There
-         * is no public undo; an override that does not delegate to [original]
-         * silently replaces the engine default.
+         * Replaces the active implementation for the whole process
+         * (last-declared-wins, no per-consumer scope, no public undo). An
+         * override that does not delegate to [original] silently drops the
+         * engine default.
          */
         @KGESensitiveAPI
         fun override(impl: O): Unit = current.store(impl)
@@ -69,11 +53,9 @@ interface KGEOverridable {
             private val proxies = AtomicReference<PersistentMap<KClass<*>, Proxy<*>>>(persistentHashMapOf())
 
             /**
-             * Discards every override of every service and restores the
-             * engine defaults. There is no per-service undo and no scoping —
-             * this call is the sole path back, and it hits all services at
-             * once. Call it only at lifecycle boundaries: the engine does so
-             * on destroy; tests at teardown.
+             * Restores every service's engine default and discards all
+             * overrides — the sole path back. Call only at lifecycle
+             * boundaries (engine destroy, test teardown).
              */
             @KGESensitiveAPI
             internal fun resetAll() {

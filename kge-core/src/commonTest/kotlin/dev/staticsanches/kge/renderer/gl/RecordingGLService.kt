@@ -10,33 +10,26 @@ internal data class RecordedGLCall(
 )
 
 /**
- * The recording [GLService] test backend: it captures every command in call
- * order instead of touching a GL context, and fabricates the handles the
- * `create*` commands must return through the platform test factories. Because
- * it is a plain service override, the common renderer can be driven through it
- * on every target with no GPU.
+ * A recording [GLService]: captures every command in call order without a GL
+ * context and fabricates the handles the `create*` commands return, so the
+ * common renderer runs against it on every target with no GPU.
  */
 internal class RecordingGLService : GLService {
     private val mutableCalls = mutableListOf<RecordedGLCall>()
     val calls: List<RecordedGLCall> get() = mutableCalls
 
-    /** The handle returned by the most recent [createTexture], for call-sequence assertions. */
     var lastCreatedTexture: GLTexture? = null
         private set
 
-    /** The handle returned by the most recent [createShader], for call-sequence assertions. */
     var lastCreatedShader: GLShader? = null
         private set
 
-    /** The handle returned by the most recent [createProgram], for call-sequence assertions. */
     var lastCreatedProgram: GLProgram? = null
         private set
 
-    /** The handle returned by the most recent [createBuffer], for call-sequence assertions. */
     var lastCreatedBuffer: GLBuffer? = null
         private set
 
-    /** The handle returned by the most recent [createVertexArray], for call-sequence assertions. */
     var lastCreatedVertexArray: GLVertexArrayObject? = null
         private set
 
@@ -193,8 +186,9 @@ internal class RecordingGLService : GLService {
     override fun bufferData(
         target: GLenum,
         srcData: ByteBuffer,
+        byteCount: GLsizeiptr,
         usage: GLenum,
-    ) = record("bufferData", target, srcData, usage)
+    ) = record("bufferData", target, srcData, byteCount, usage)
 
     override fun bufferData(
         target: GLenum,

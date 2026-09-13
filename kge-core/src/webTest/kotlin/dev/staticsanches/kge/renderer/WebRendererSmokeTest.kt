@@ -24,14 +24,14 @@ private val SMOKE_COLOR = Pixel.rgba(0x3366CCFFu)
 
 /**
  * The real-GL renderer smoke for the web platform default: create a source
- * texture through the default [Renderer], upload a solid-color [Sprite], read
- * it back through the backend's framebuffer fallback, render it with a
- * full-screen layer quad onto the canvas and read one pixel back. Runs on both
- * browser targets (js + wasmJs).
+ * texture through the default [Renderer], upload a solid-color [Sprite], read it
+ * back through the backend's framebuffer fallback, render it with a full-screen
+ * layer quad onto the canvas and read one pixel back. Runs on both browser
+ * targets (js + wasmJs).
  *
- * The renderer is a test-local [DefaultRenderer] (overriding the service), so
- * its built-in program/buffer are never shared across the process's GL contexts
- * and are released through the test-local `ResourceScope`.
+ * The renderer is a test-local service override, so its built-in program/buffer
+ * are never shared across the process's GL contexts and are released through the
+ * test-local `ResourceScope`.
  */
 class WebRendererSmokeTest :
     FunSpec({

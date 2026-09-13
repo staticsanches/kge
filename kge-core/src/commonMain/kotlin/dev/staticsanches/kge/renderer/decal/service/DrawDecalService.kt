@@ -13,20 +13,17 @@ import dev.staticsanches.kge.renderer.decal.DecalPatch
  * The full-decal geometry seam: [drawDecal] turns a screen-space position,
  * scale and tint into a four-vertex [DecalInstance] over the whole decal, and
  * its [DecalPatch] overload transforms the patch's four coordinates into the
- * polygon path. It is stateless and pure CPU math: the engine supplies the
- * [viewport] size, the instance carries `mode`/`structure` unchanged, and the
- * renderer uploads it.
+ * polygon path.
  *
- * The engine-defined default follows olc v2.30's `DrawDecal` exactly; a consumer
- * may replace the whole behavior for the process via
- * [override][KGEOverridable.Proxy.override].
+ * The default follows olc v2.30's `DrawDecal`; a consumer may replace the whole
+ * behavior for the process via [override][KGEOverridable.Proxy.override].
  */
 interface DrawDecalService : KGEOverridable {
     /**
      * Builds the four-vertex quad for [decal] anchored at [position] (its
      * top-left, in pixels), scaled by [scale] and tinted uniformly by [tint].
-     * [viewport] is the drawable size in pixels; [mode] and [structure] are
-     * carried into the instance unchanged.
+     * [viewport] is the drawable size; [mode] and [structure] are carried
+     * unchanged.
      */
     fun drawDecal(
         position: Float2D,
@@ -40,10 +37,10 @@ interface DrawDecalService : KGEOverridable {
 
     /**
      * Builds the polygon instance for [patch] anchored at [position] (its
-     * top-left, in pixels), scaled by [scale]. The four patch coordinates are
+     * top-left, in pixels), scaled by [scale]. The patch coordinates are
      * transformed into screen vertices and fed to [DrawPolygonDecalService] with
-     * a uniform white tint. [viewport] is the drawable size in pixels; [mode]
-     * and [structure] are carried into the instance unchanged.
+     * a uniform white tint. [viewport] is the drawable size; [mode] and
+     * [structure] are carried unchanged.
      */
     fun drawDecal(
         position: Float2D,

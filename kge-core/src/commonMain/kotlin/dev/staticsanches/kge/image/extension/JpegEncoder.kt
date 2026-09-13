@@ -11,8 +11,8 @@ import kotlinx.coroutines.withContext
  * The default encoder of a [Sprite] to JPEG bytes in an engine buffer.
  *
  * JPEG is lossy: the payload round-trips dimensions but not exact pixels. The
- * returned wrapper is caller-owned: close it to release the buffer. Encoding is
- * CPU-bound and runs on [Dispatchers.Default].
+ * returned wrapper is caller-owned and must be closed. Runs on
+ * [Dispatchers.Default].
  */
 object JpegEncoder : ImageService.Encoder<ResourceWrapper<ByteBuffer>> {
     override suspend fun encode(sprite: Sprite): ResourceWrapper<ByteBuffer> =

@@ -143,3 +143,27 @@ AutoCloseable` bullet and the `close()` sentence in Renderer/pipeline above.
   and closes the scope on destroy; tests use the same shape. A `RecordingGpuDevice`
   (common test seam) plus the recording `GLService` pin the stateless flow;
   `ResourceScopeTest` pins the scope contract.
+
+### Correction (2026-09-12) — per-draw vertex upload orphans the buffer
+
+The renderer shipped a per-draw upload that diverged from olc: both draws
+issued `bufferSubData(ARRAY_BUFFER, 0, staging)` on the reused staging buffer,
+whose CPU capacity can exceed the bytes drawn and whose storage can still be
+referenced by queued draws — a driver sync plus over-upload. Measured on JVM
+GL33, ~96 µs/quad. olc's `DrawDecal` instead does
+`glBufferData(target, sizeof(vertex) * points, ptr, GL_STREAM_DRAW)` per draw
+(orphan, exact size), ~1.2 µs/quad.
+
+- **Seam.** `bufferData(target, srcData, byteCount, usage)` replaces the
+  whole-buffer `bufferData(target, srcData, usage)` (removed); the JVM limits
+  the view (`duplicate`/`position`/`limit`), the web builds a
+  `Uint8Array(buffer, 0, byteCount)`. The size-only `bufferData(target, size,
+  usage)` and `bufferSubData` stay.
+- **`StagingBuffer`.** `ensureCapacity` grows only the CPU arena; `upload(byteCount)`
+  binds the buffer and orphan-uploads exactly `byteCount` bytes with
+  `GL.STREAM_DRAW`. `DefaultRenderer` uses it for the layer quad (`4 * BYTES`)
+  and each decal (`vertices * BYTES`).
+- **Review lesson.** Both C9 review axes checked the plan and `main`, not the
+  olc draw path, so a plan-level defect (wrong buffer strategy) passed. The
+  review process now mandates a behavior-parity check against the olc reference,
+  with divergences accepted only when a rationale is recorded (AGENTS.md).

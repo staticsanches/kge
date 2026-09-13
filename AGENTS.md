@@ -84,9 +84,16 @@ These two are the only active documents; older plans/specs were deleted
 
 - **Code review**: every code review (concept close / PR review) runs the
   two-axis review (Standards + Spec conformance) — dispatched through the
-  project `review` subagent when it is configured (`.opencode/agent/`), or —
-  when it is not — through two fresh general sub-agents run in parallel, one
-  per axis (never a self-review by the working model that produced the diff).
+  project review sub-agents (`.opencode/agent/review-standards.md` and
+  `.opencode/agent/review-spec.md`) when configured, or — when they are not —
+  through two fresh general sub-agents run in parallel, one per axis (never a
+  self-review by the working model that produced the diff). The Spec axis
+  carries a mandatory **behavior-parity** check against the olcPixelGameEngine
+  v2.30 reference (`~/workspace/olcPixelGameEngine/olcPixelGameEngine.h`, the
+  upstream checkout), because a plan-conformance review does not catch a defect
+  of the plan itself: a divergence from olc is a finding unless a rationale is
+  recorded in the decisions log, the micro-plan, or KDoc, and recorded
+  divergences are listed as accepted rather than suppressed.
   The review writes its report to
   `.opencode/reviews/<name>.md` (gitignored local state) and the marker
   `.opencode/review-passed`; the commit gate is enforced by the opencode
@@ -99,7 +106,9 @@ These two are the only active documents; older plans/specs were deleted
   entry. Never a slice of a concept; never a provisional API a later concept
   must break ("no throwaway commits" — restructure at the concept checkpoint).
 - **TDD**: failing test → run (red) → implement → run (green), per feature; the
-  micro-plan's test code is the contract.
+  micro-plan's test code is the contract. When dispatched, implementation runs
+  through the project `tdd-developer` subagent
+  (`.opencode/agent/tdd-developer.md`), which carries the olc-parity check too.
 - **Resource discipline**: every failure path of engine code that allocated a
   resource must close it — allocate-then-construct call sites wrap the
   construction in `letClosingIfFailed` (the `main` engine's guard, ported to
@@ -110,6 +119,13 @@ These two are the only active documents; older plans/specs were deleted
   pinned by a test. The concept review audits parameters too (the micro-plan
   can record a wrong "detail" — a plan-conformance review does not catch a
   defect of the plan itself).
+- **KDoc discipline**: a KDoc never references the docs tree (`docs/...`) —
+  rationale lives in the decisions log/plan, not in the code — and the KDoc of
+  public API never names `internal`/`private` concepts, methods, or classes.
+  Public API documentation must read on its own, without implementation
+  references. Keep every comment and KDoc succinct and indispensable: the
+  contract and the non-obvious only, never a narration of the code or a
+  rationale essay.
 - **Gate (every concept close)**: `./gradlew build --rerun-tasks`. **Why `build`,
   not only `:kge-core:allTests`:** `build` is
   `check` + `assemble` — the tests of every target plus the `webMain`-class
@@ -141,6 +157,9 @@ These two are the only active documents; older plans/specs were deleted
   gate history, no test counts, no review narratives, no change-by-change recap
   (that is what the diff shows), no doc/location pointers. Long-form context
   lives in the decisions log and KDocs, never in the commit body.
+- **One commit per round**: the round's work is delivered as a single commit —
+  never stack commits; squash before hand-off. The owner pushes that commit,
+  and only then does the next round begin.
 - **Delivery**: commit-ready work; the owner reviews, pushes, and may implement
   parts personally. Do not push.
 

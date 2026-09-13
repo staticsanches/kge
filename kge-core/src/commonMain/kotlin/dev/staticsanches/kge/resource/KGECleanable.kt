@@ -1,10 +1,6 @@
 package dev.staticsanches.kge.resource
 
-/**
- * The per-resource lifecycle handle returned by [KGELeakDetector.register]:
- * the engine's view of one registered resource, holding the close/leak state
- * machine for it.
- */
+/** The close/leak handle for one resource registered with [KGELeakDetector]. */
 interface KGECleanable {
     /** True once the resource is either closed or reported as leaked. */
     val cleaned: Boolean

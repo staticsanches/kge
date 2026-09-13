@@ -1,5 +1,4 @@
-// The handles are `web.gl` interop types on the web targets; transporting them
-// through the common recording assertions is the intended, safe use.
+// Handles are `web.gl` interop types on web targets; the recording assertions carry them.
 @file:Suppress("OPT_IN_USAGE")
 
 package dev.staticsanches.kge.renderer.decal
@@ -57,10 +56,9 @@ private class RecordingRenderer(
 }
 
 /**
- * The [Decal] resource: it creates and owns its [Texture] through the
- * overridable [Renderer], re-uploads/reads back the referenced `Sprite`, and
- * closes the texture exactly once (T1). The `Sprite` is referenced, never
- * owned.
+ * The [Decal] resource: creates and owns its [Texture] through the overridable
+ * [Renderer], re-uploads/reads back the referenced `Sprite`, and closes the
+ * texture exactly once (T1). The `Sprite` is referenced, never owned.
  */
 class DecalResourceTest :
     FunSpec({

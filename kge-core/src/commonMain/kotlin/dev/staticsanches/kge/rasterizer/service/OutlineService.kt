@@ -11,30 +11,25 @@ import kotlin.math.abs
 
 /**
  * The outline family: best-fit integer lines, inclusive rectangles and the
- * reference midpoint circles. Every painted cell resolves its [Pixel.Mode]
- * through [DrawService.draw] via the [Rasterizer] aggregate, and the
+ * reference midpoint circles, resolving each painted cell's [Pixel.Mode]
+ * through [DrawService.draw] via the [Rasterizer] aggregate. The
  * rectangle/triangle composites draw their edges through
- * [OutlineService.drawLine] — so an override of either sub-service is
- * observed by the composites of this family.
+ * [OutlineService.drawLine].
  */
 interface OutlineService : KGEOverridable {
     /**
      * Draws the best-fit integer line from ([x0], [y0]) to ([x1], [y1]),
      * resolving [mode] per pixel through the draw seam. The segment is clipped
-     * to [target] through [ClipService] first — a fully outside line is a
-     * no-op — and the walk then runs over the clipped endpoints, inclusive,
-     * while the error term keeps the original deltas (the reference's
-     * clip-then-walk). When a pixel is equidistant from the ideal line, the
-     * step toward the diagonal neighbor wins.
+     * to [target] through [ClipService] first — a fully outside line is a no-op
+     * — and the walk runs over the clipped endpoints, inclusive, with the error
+     * term keeping the original deltas. An equidistant pixel steps toward the
+     * diagonal neighbor.
      *
-     * [pattern] masks the walked cells: it is consulted once per cell, in walk
-     * order, starting at the first cell of the clipped walk — the clipped
-     * start when the walk runs in increasing order, the clipped end when it
-     * runs in decreasing order (the geometric minimum for the axis walks) —
-     * and only the cells it accepts reach the seam. [LinePattern.Empty] paints
-     * nothing and [LinePattern.Filled] runs the untouched walk; a stateful
-     * pattern ([LinePattern.Dotted], [LinePattern.Custom]) is single-use and
-     * owned by the caller.
+     * [pattern] masks the walked cells, consulted once per cell in walk order
+     * from the first cell of the clipped walk — the clipped start for an
+     * increasing walk, the clipped end for a decreasing one, and the geometric
+     * minimum for the axis walks; only accepted cells reach the seam. A
+     * stateful pattern is single-use and owned by the caller.
      */
     fun drawLine(
         target: Pixmap.Mutable,
@@ -48,12 +43,11 @@ interface OutlineService : KGEOverridable {
     )
 
     /**
-     * Draws the perimeter of the inclusive rectangle whose opposite corners
-     * are ([x0], [y0]) and ([x1], [y1]) — the ring of the same box
-     * [FillService.fillRect] fills, drawn as four [drawLine] calls, so either
-     * corner order paints the same ring and the corners are written twice.
-     * The same [pattern] instance reaches every edge, so a stateful pattern
-     * continues its phase around the ring.
+     * Draws the perimeter of the inclusive rectangle whose opposite corners are
+     * ([x0], [y0]) and ([x1], [y1]) — the ring of the box [FillService.fillRect]
+     * fills, as four [drawLine] calls, so either corner order paints the same
+     * ring and the corners are written twice. The same [pattern] reaches every
+     * edge, so a stateful pattern continues its phase around the ring.
      */
     fun drawRect(
         target: Pixmap.Mutable,
@@ -67,13 +61,11 @@ interface OutlineService : KGEOverridable {
     )
 
     /**
-     * Draws the selected octants of the reference midpoint circle of
-     * [radius] around ([cx], [cy]) — see [CircleOctantMask] for the octant
-     * orientation (clockwise from the top) and the odd-octant boundary
-     * ownership. The painted cells are the midpoint rasterization, which can
-     * reach beyond the exact `radius` (integer-arc cells). A
-     * [CircleOctantMask.NONE] mask paints nothing; otherwise a radius of
-     * zero paints the center only and a negative radius paints nothing.
+     * Draws the selected octants of the reference midpoint circle of [radius]
+     * around ([cx], [cy]); see [CircleOctantMask] for the octant orientation
+     * and boundary ownership. The midpoint rasterization can reach beyond the
+     * exact `radius`. A [CircleOctantMask.NONE] mask paints nothing; otherwise
+     * radius zero paints the center only and a negative radius paints nothing.
      */
     fun drawCircle(
         target: Pixmap.Mutable,
@@ -86,13 +78,10 @@ interface OutlineService : KGEOverridable {
     )
 
     /**
-     * Draws the outline of the triangle with the given vertices, vertex order
-     * irrelevant, as three [drawLine] calls along the edges — so each vertex
-     * is the shared endpoint of two edges and is written twice (idempotent
-     * under Normal, double-blended under Alpha). Collinear vertices draw the
-     * line between the farthest pair once, and a triangle sharing no pixel
-     * with the target paints nothing. The same [pattern] instance reaches
-     * every edge, so a stateful pattern continues its phase.
+     * Draws the triangle outline with the given vertices, order irrelevant, as
+     * three [drawLine] calls, so each vertex is written twice (idempotent under
+     * Normal, double-blended under Alpha). Collinear vertices draw the line
+     * between the farthest pair; the same [pattern] reaches every edge.
      */
     fun drawTriangle(
         target: Pixmap.Mutable,
@@ -107,7 +96,7 @@ interface OutlineService : KGEOverridable {
         mode: Pixel.Mode,
     )
 
-    /** The [Int2D] form of [drawLine] — unpacks the points to the raw method. */
+    /** The [Int2D] form of [drawLine]. */
     fun drawLine(
         target: Pixmap.Mutable,
         start: Int2D,
@@ -117,7 +106,7 @@ interface OutlineService : KGEOverridable {
         mode: Pixel.Mode,
     ): Unit = drawLine(target, start.x, start.y, end.x, end.y, color, pattern, mode)
 
-    /** The [Int2D] form of [drawRect] — unpacks the diagonal corners to the raw method. */
+    /** The [Int2D] form of [drawRect]. */
     fun drawRect(
         target: Pixmap.Mutable,
         diagonalStart: Int2D,
@@ -127,7 +116,7 @@ interface OutlineService : KGEOverridable {
         mode: Pixel.Mode,
     ): Unit = drawRect(target, diagonalStart.x, diagonalStart.y, diagonalEnd.x, diagonalEnd.y, color, pattern, mode)
 
-    /** The [Int2D] form of [drawCircle] — unpacks the center to the raw method. */
+    /** The [Int2D] form of [drawCircle]. */
     fun drawCircle(
         target: Pixmap.Mutable,
         center: Int2D,
@@ -137,7 +126,7 @@ interface OutlineService : KGEOverridable {
         mode: Pixel.Mode,
     ): Unit = drawCircle(target, center.x, center.y, radius, mask, color, mode)
 
-    /** The [Int2D] form of [drawTriangle] — unpacks the vertices to the raw method. */
+    /** The [Int2D] form of [drawTriangle]. */
     fun drawTriangle(
         target: Pixmap.Mutable,
         p0: Int2D,
@@ -235,7 +224,7 @@ interface OutlineService : KGEOverridable {
     }
 }
 
-/** The platform-independent default — the algorithms are pure CPU over the surface accessors. */
+/** The platform-independent default. */
 private object OutlineServiceDefault : OutlineService {
     override fun drawLine(
         target: Pixmap.Mutable,

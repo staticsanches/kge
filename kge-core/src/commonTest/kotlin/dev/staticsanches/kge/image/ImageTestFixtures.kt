@@ -1,18 +1,17 @@
 package dev.staticsanches.kge.image
 
 /*
- * Multi-format decode fixtures (S6 step 6). All are encoded offline from the
- * same 2x2 RGBA surface as tinyPngBytes (red opaque, green 50%, blue opaque,
- * yellow 50%), so the BMP round-trips against tinyPngPixels while the lossy
- * formats pin dimensions only. The bytes are embedded so every test target
- * decodes the same input without classpath resource differences.
+ * Multi-format decode fixtures: all encoded offline from the same 2x2 RGBA
+ * surface as tinyPngBytes (red opaque, green 50%, blue opaque, yellow 50%), so
+ * the BMP round-trips against tinyPngPixels while the lossy formats pin
+ * dimensions only. Embedded so every test target decodes the same input.
  */
 
 /**
- * A 2x2 baseline JPEG (quality 90) generated offline with
- * `magick source.png -quality 90 tiny.jpg`; byte-verified signature `FF D8 FF
- * E0` (JPEG/JFIF, SOI + APP0) and trailer `FF D9` (EOI). Lossy, so only the
- * dimensions are pinned in tests.
+ * A 2x2 baseline JPEG (quality 90), generated offline with
+ * `magick source.png -quality 90 tiny.jpg`; byte-verified signature `FF D8 FF E0`
+ * (JPEG/JFIF) and trailer `FF D9` (EOI). Lossy, so only the dimensions are
+ * pinned.
  */
 internal val tinyJpegBytes: ByteArray =
     byteArrayOf(
@@ -44,9 +43,9 @@ internal val tinyJpegBytes: ByteArray =
     )
 
 /**
- * A 2x2 32-bit `BI_BITFIELDS` BMP (BITMAPV5HEADER, 154 bytes) generated
- * offline with `magick source.png tiny.bmp`; byte-verified signature `42 4D`
- * ("BM"), DIB header size `124` and `biBitCount = 32` with an alpha mask. The
+ * A 2x2 32-bit `BI_BITFIELDS` BMP (BITMAPV5HEADER, 154 bytes), generated
+ * offline with `magick source.png tiny.bmp`; signature `42 4D` ("BM"), DIB
+ * header size `124`, `biBitCount = 32` with an alpha mask. The
  * `getImageData`/STB paths read it as un-premultiplied BGRA, so it is lossless
  * and pinned against [tinyPngPixels].
  */
@@ -65,9 +64,9 @@ internal val tinyBmpBytes: ByteArray =
     )
 
 /**
- * A 2x2 GIF (GIF89a) generated offline with `magick source.png tiny.gif`;
- * byte-verified signature `47 49 46 38 39 61` ("GIF89a"). Palette-based, so a
- * source pixel at 50% alpha is quantized and only the dimensions are pinned.
+ * A 2x2 GIF (GIF89a), generated offline with `magick source.png tiny.gif`;
+ * signature `47 49 46 38 39 61` ("GIF89a"). Palette-based, so a source pixel
+ * at 50% alpha is quantized and only the dimensions are pinned.
  */
 internal val tinyGifBytes: ByteArray =
     byteArrayOf(
@@ -78,10 +77,10 @@ internal val tinyGifBytes: ByteArray =
     )
 
 /**
- * A 2x2 lossless VP8L WEBP generated offline with
- * `cwebp -lossless -quiet source.png -o tiny.webp`; byte-verified signature
- * `52 49 46 46` ("RIFF") + `57 45 42 50` ("WEBP", `VP8L` chunk). Browser-only:
- * the JVM's STB backend has no WEBP decoder, but `createImageBitmap` does.
+ * A 2x2 lossless VP8L WEBP, generated offline with
+ * `cwebp -lossless -quiet source.png -o tiny.webp`; signature `52 49 46 46`
+ * ("RIFF") + `57 45 42 50` ("WEBP", `VP8L` chunk). Browser-only: the JVM's STB
+ * backend has no WEBP decoder, but `createImageBitmap` does.
  */
 internal val tinyWebpBytes: ByteArray =
     byteArrayOf(

@@ -11,19 +11,14 @@ import dev.staticsanches.kge.resource.letClosingIfFailed
 /**
  * The renderer's built-in 2D program and the geometry it draws through.
  *
- * The program is the single quad shader the renderer uses for both layer quads
- * and decals: a `pos4`/`uv2`/`col4` vertex layout whose fragment is
- * `texture * color`. It is built through the general [GL] shader/program
- * operations, so a future user-shader concept can build on the same seam. The
- * vertex array object binds the [staging] buffer's attributes once; the
- * trailing `z`/`w` of the position attribute are carried but unused by this 2D
- * program.
+ * The single quad shader used for both layer quads and decals:
+ * a `pos4`/`uv2`/`col4` layout whose fragment is `texture * color`; the
+ * trailing `z`/`w` of the position attribute are carried but unused. The vertex
+ * array object binds the [staging] buffer's attributes once.
  *
- * The built-in objects are created eagerly by the renderer's `createResources`
- * while a context is current, and are owned by the caller's
- * [dev.staticsanches.kge.resource.ResourceScope]. Each is freed on construction
- * failure ([letClosingIfFailed]-style guards). [close] makes [device]'s context
- * current first, because the scope does not own a context.
+ * Owned by the caller's [dev.staticsanches.kge.resource.ResourceScope]; [close]
+ * makes [device]'s context current first, because the scope does not own a
+ * context.
  */
 internal class BuiltInQuad private constructor(
     private val device: GpuDevice,
@@ -31,10 +26,8 @@ internal class BuiltInQuad private constructor(
     private val vertexArray: ResourceWrapper<GLVertexArrayObject>,
     val staging: StagingBuffer,
 ) : KGEResource {
-    /** The linked built-in program. */
     val programHandle: GLProgram get() = program.resource
 
-    /** The vertex array object the program's attributes are bound to. */
     val vertexArrayHandle: GLVertexArrayObject get() = vertexArray.resource
 
     override fun close() {

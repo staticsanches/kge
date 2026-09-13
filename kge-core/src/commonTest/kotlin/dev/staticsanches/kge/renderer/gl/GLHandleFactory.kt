@@ -1,10 +1,9 @@
 package dev.staticsanches.kge.renderer.gl
 
 /**
- * Test-only handle factories: each fabricates a handle of one kind without a
- * GL context, so [RecordingGLService] can produce and round-trip them on every
- * target. [seed] identifies the handle for logging; the web implementations
- * ignore it because the DOM handle is opaque.
+ * Test-only handle factories: fabricate a handle of one kind without a GL
+ * context, so [RecordingGLService] can round-trip them on every target. [seed]
+ * identifies the handle for logging; web implementations ignore it.
  */
 internal expect fun recordingTextureHandle(seed: Int): GLTexture
 

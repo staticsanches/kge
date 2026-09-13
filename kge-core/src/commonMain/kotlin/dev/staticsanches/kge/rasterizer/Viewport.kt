@@ -3,10 +3,9 @@ package dev.staticsanches.kge.rasterizer
 import dev.staticsanches.kge.math.vector.Int2D
 
 /**
- * A pure integer region: the data of a clip viewport, not the algorithm.
- * [contains] is inclusive at the lower bound and exclusive at the upper bound
- * (`x < upper.x`), so it agrees with the per-pixel write bounds check. The
- * clipping algorithm lives in `ClipService`, which dispatches on the variant.
+ * A pure integer region: the data of a clip viewport, not the algorithm. The
+ * bounds match the per-pixel write check — inclusive lower, exclusive upper
+ * (`x < upper.x`); `ClipService` dispatches the clipping on the variant.
  */
 sealed interface Viewport {
     /** Whether ([x], [y]) lies inside this region. */
@@ -15,7 +14,7 @@ sealed interface Viewport {
         y: Int,
     ): Boolean
 
-    /** The [Int2D] form of [contains] — unpacks the point. */
+    /** The [Int2D] form of [contains]. */
     fun contains(p: Int2D): Boolean = contains(p.x, p.y)
 
     /** A viewport with only a (inclusive) lower bound; no axis is capped high. */

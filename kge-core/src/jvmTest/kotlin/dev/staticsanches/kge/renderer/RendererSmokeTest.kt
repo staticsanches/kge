@@ -26,15 +26,13 @@ private val SMOKE_COLOR = Pixel.rgba(0x3366CCFFu)
  * The real-GL renderer smoke for the JVM platform default: create a source
  * texture through the default [Renderer], upload a solid-color [Sprite], read
  * it back through `glGetTexImage`, render it with a full-screen layer quad into
- * an off-screen framebuffer, and read one pixel back. This exercises the
- * texture + built-in program + staging buffer + draw + real GL33 backend
- * together.
+ * an off-screen framebuffer and read one pixel back. Exercises the texture,
+ * built-in program, staging buffer, draw and real GL33 backend.
  *
- * The renderer is a test-local [DefaultRenderer] (overriding the service), so
- * its built-in program/buffer are never shared across the process's GL contexts
- * and are released through the test-local `ResourceScope`. Skips (disabled)
- * when no context is available — the hosted macOS runner (decisions-log
- * chunk 21).
+ * The renderer is a test-local service override, so its built-in program/buffer
+ * are never shared across the process's GL contexts and are released through the
+ * test-local `ResourceScope`. Skips when no context is available (the hosted
+ * macOS runner cannot create one).
  */
 class RendererSmokeTest :
     FunSpec({

@@ -13,10 +13,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The internal T1 wrappers the renderer builds its GL objects with: creation
- * records the raw command sequence, `close` deletes exactly once, use after
- * close fails fast, and a failure between allocation and hand-off frees the
- * already-allocated objects (the construction-failure branch).
+ * The internal GL resource wrappers: creation pins the raw command sequence,
+ * `close` deletes exactly once, use after close fails fast, and a construction
+ * failure frees the already-allocated objects.
  */
 class GLResourcesTest :
     FunSpec({

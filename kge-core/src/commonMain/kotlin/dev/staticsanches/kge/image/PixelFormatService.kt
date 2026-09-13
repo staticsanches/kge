@@ -7,12 +7,9 @@ import kotlin.text.toHexString
 /**
  * Formats a [Pixel] for display as a string.
  *
- * The pixel's display representation is an extension capability of the engine:
- * the engine default is the uppercase `#RRGGBBAA` hex form; a consumer may
- * replace it for the whole process via
- * [override][KGEOverridable.Proxy.override] — e.g. a debug build rendering
- * `rgba(...)`, or a log consumer — and the change is observed from the next
- * call, including in `Pixel.toString()`.
+ * The engine default is the uppercase `#RRGGBBAA` hex form; a consumer may
+ * replace the whole behavior for the process via
+ * [override][KGEOverridable.Proxy.override], observed from the next call.
  */
 interface PixelFormatService : KGEOverridable {
     /** Renders [pixel] as a display string. */

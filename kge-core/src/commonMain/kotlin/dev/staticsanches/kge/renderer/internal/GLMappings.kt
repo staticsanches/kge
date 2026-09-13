@@ -4,14 +4,12 @@ import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.GLenum
 
-/** Maps the typed texture sampling filter to the raw GL parameter. */
 internal fun Decal.Filter.toGLFilter(): GLenum =
     when (this) {
         Decal.Filter.NEAREST -> GL.NEAREST
         Decal.Filter.LINEAR -> GL.LINEAR
     }
 
-/** Maps the typed texture edge behavior to the raw GL parameter. */
 internal fun Decal.Wrap.toGLWrap(): GLenum =
     when (this) {
         Decal.Wrap.CLAMP_TO_EDGE -> GL.CLAMP_TO_EDGE

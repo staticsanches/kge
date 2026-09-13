@@ -19,10 +19,9 @@ import dev.staticsanches.kge.renderer.gl.GLuint
 import org.lwjgl.opengl.GL33
 
 /**
- * JVM backend: a near 1:1 mapping over LWJGL's `GL33` (the OpenGL 3.3 core
- * profile the engine targets). Handles are the thin wrappers over the raw
- * object names; compile and link failures are checked here and thrown with the
- * driver's info log, and `getUniformLocation` normalizes `-1` to `null`.
+ * JVM backend: a near 1:1 mapping over LWJGL's `GL33` (OpenGL 3.3 core).
+ * Compile and link failures are thrown with the driver's info log, and
+ * `getUniformLocation` normalizes `-1` to `null`.
  */
 internal object LwjglGLService : GLService {
     // Texture
@@ -153,8 +152,14 @@ internal object LwjglGLService : GLService {
     override fun bufferData(
         target: GLenum,
         srcData: ByteBuffer,
+        byteCount: GLsizeiptr,
         usage: GLenum,
-    ) = GL33.glBufferData(target, srcData, usage)
+    ) {
+        val view = srcData.duplicate()
+        view.position(0)
+        view.limit(byteCount)
+        GL33.glBufferData(target, view, usage)
+    }
 
     override fun bufferData(
         target: GLenum,

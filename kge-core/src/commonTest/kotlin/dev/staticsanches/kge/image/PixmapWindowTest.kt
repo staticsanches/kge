@@ -10,11 +10,10 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 
 /**
- * The window view: a [Pixmap] over a sub-rectangle with its own local
- * `0..size` space, the source reached through [Pixmap.window]. A read-only
- * view reads through offset; the writable view propagates writes; validation
- * is strict; the raw backing composes to the root; and a raster fill through
- * a window stays inside it.
+ * The window view: a `Pixmap` over a sub-rectangle in its own local space,
+ * reached through `Pixmap.window`. A read-only view reads through offset, the
+ * writable view propagates writes, validation is strict, the raw backing
+ * composes to the root, and a raster fill stays inside the window.
  */
 @OptIn(KGESensitiveAPI::class)
 class PixmapWindowTest :

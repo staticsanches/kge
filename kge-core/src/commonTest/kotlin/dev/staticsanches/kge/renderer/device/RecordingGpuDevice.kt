@@ -1,10 +1,7 @@
 package dev.staticsanches.kge.renderer.device
 
-/**
- * A recording [GpuDevice] that captures its lifecycle calls in order, so a test
- * can observe that a context was made current and a frame presented without a
- * real window or GL context.
- */
+/** A [GpuDevice] that records its lifecycle calls in order, with no real
+ * window or GL context. */
 internal class RecordingGpuDevice : GpuDevice {
     val calls = mutableListOf<String>()
 

@@ -13,10 +13,9 @@ import io.kotest.matchers.shouldBe
 import kotlin.math.abs
 
 /**
- * Builds a real [Decal] over a [width]x[height] sprite for the geometry tests.
- * A recording [GLService] fabricates the texture's handle; both resources are
- * closed when [block] returns. The decal's sprite dimensions are what the draw
- * services quantise and UV-scale against.
+ * Builds a real [Decal] over a [width]x[height] sprite. A recording [GLService]
+ * fabricates the texture handle; both resources close when [block] returns. The
+ * sprite dimensions drive the draw services' quantisation and UV scale.
  */
 internal fun withTestDecal(
     width: Int = 8,

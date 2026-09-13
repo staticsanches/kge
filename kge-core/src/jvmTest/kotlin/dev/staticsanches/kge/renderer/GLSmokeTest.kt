@@ -13,14 +13,12 @@ private val glDevice: GlfwTestDevice? = GlfwTestDevice.detect()
 
 /**
  * The real-GL smoke for the JVM platform default ([GLService] over LWJGL
- * `GL33`): create a texture and an off-screen framebuffer, clear it through the
- * service and read a pixel back into an engine buffer. The device makes the
- * hidden GLFW context current; the FBO setup is the harness's raw LWJGL (the GL
- * layer has no FBO API) and every engine command goes through the default
- * backend.
+ * `GL33`): create a texture and an off-screen framebuffer, clear through the
+ * service and read a pixel back into an engine buffer. The FBO setup is the
+ * harness's raw LWJGL — the GL layer has no FBO API — while every engine command
+ * goes through the default backend.
  *
- * Skips (disabled) when no backend is available — the hosted macOS runner
- * cannot create a GL context (decisions-log chunk 21).
+ * Skips when no context is available (the hosted macOS runner cannot create one).
  */
 class GLSmokeTest :
     FunSpec({

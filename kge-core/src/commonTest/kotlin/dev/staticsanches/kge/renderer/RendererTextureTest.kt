@@ -21,10 +21,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The renderer's texture ops: it maps the typed `Decal.Filter`/`Decal.Wrap` to
- * the raw GL parameters and wires upload/readback/bind onto the GL layer's
- * public [dev.staticsanches.kge.renderer.gl.resource.Texture] lifecycle. These
- * ops are stateless, so they need no resource scope.
+ * The renderer's texture ops: maps `Decal.Filter`/`Decal.Wrap` to the raw GL
+ * parameters and wires upload/readback/bind onto
+ * [dev.staticsanches.kge.renderer.gl.resource.Texture]. These ops are stateless,
+ * so they need no resource scope.
  */
 class RendererTextureTest :
     FunSpec({

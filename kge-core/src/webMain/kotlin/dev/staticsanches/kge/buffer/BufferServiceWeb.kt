@@ -3,19 +3,7 @@ package dev.staticsanches.kge.buffer
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.ResourceWrapper
 
-/**
- * Web backend (js + wasmJs): memory over a `TypedArray`; garbage-collected,
- * so the release action is a no-op — the wrapper contract owns the lifetime
- * and the leak detection.
- *
- * Fill and copy override the portable loops with the backing `Int32Array`
- * view whenever it exists and the region is int-aligned, falling back to
- * `super` otherwise. Fill writes the first int through [ByteBuffer.putInt]
- * and replicates by doubling `set`s of the filled prefix — the wrapper
- * exposes no typed-array `fill` and no scalar write, so ~log native bulk
- * steps cover the region. Copy goes through `set`, memmove-safe by spec, so
- * overlapping copies within one buffer take the native path too.
- */
+/** Web backend (js + wasmJs): `TypedArray` memory, GC-released, so close is a no-op. */
 internal actual val bufferServiceDefault: BufferService = WebBufferService
 
 private object WebBufferService : BufferService {

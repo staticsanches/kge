@@ -5,15 +5,14 @@ import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.GLBuffer
 import dev.staticsanches.kge.resource.ResourceWrapper
-import dev.staticsanches.kge.resource.letClosingIfFailed
 
 /**
  * The renderer's dynamic CPU staging storage and its GPU vertex buffer.
  *
  * The GL buffer is created once and kept for the renderer's lifetime (its VAO
- * attribute bindings must stay valid); the CPU buffer is reallocated and the
- * GPU storage re-specified only when a request no longer fits, so repeated
- * draws of the same size reuse both. There is no global capacity configuration.
+ * attribute bindings must stay valid); the CPU buffer is reallocated only when a
+ * request no longer fits, so repeated draws of the same size reuse it. Each draw
+ * orphan-uploads exactly the bytes it wrote (see [upload]).
  */
 internal class StagingBuffer(
     private val name: String,
@@ -27,27 +26,36 @@ internal class StagingBuffer(
 
     /**
      * Ensures the staging storage holds at least [byteCount] bytes and returns
-     * the CPU buffer to write into. Storage that already fits is reused
-     * unchanged; otherwise the CPU buffer is reallocated and the GPU storage
-     * re-specified with [GL.DYNAMIC_DRAW]. A failure while growing keeps the
-     * previous storage intact and frees the fresh allocation.
+     * the CPU buffer to write into. A storage that already fits is reused.
      */
     fun ensureCapacity(byteCount: Int): ResourceWrapper<ByteBuffer> {
         require(byteCount >= 0) { "byteCount must be >= 0: $byteCount" }
         data?.let { current -> if (capacityBytes >= byteCount) return current }
 
         val grown = BufferService.allocate(byteCount, "$name staging")
-        grown.letClosingIfFailed { staging ->
-            GL.bindBuffer(GL.ARRAY_BUFFER, vertexBuffer.resource)
-            GL.bufferData(GL.ARRAY_BUFFER, byteCount, GL.DYNAMIC_DRAW)
-            staging
-        }
-
         val previous = data
         data = grown
         capacityBytes = byteCount
         previous?.close()
         return grown
+    }
+
+    /**
+     * Orphan-uploads the first [byteCount] bytes of the current staging storage
+     * into the GPU vertex buffer as [GL.STREAM_DRAW]. The buffer storage is
+     * re-specified to exactly [byteCount] bytes, so a queued draw can never
+     * keep referencing bytes a later upload overwrites.
+     *
+     * [ensureCapacity] must have been called and [byteCount] must be within
+     * `0..capacityBytes`; otherwise this fails fast.
+     */
+    fun upload(byteCount: Int) {
+        require(byteCount in 0..capacityBytes) {
+            "byteCount must be within 0..$capacityBytes: $byteCount"
+        }
+        val current = checkNotNull(data) { "upload before ensureCapacity" }
+        GL.bindBuffer(GL.ARRAY_BUFFER, vertexBuffer.resource)
+        GL.bufferData(GL.ARRAY_BUFFER, current.resource, byteCount, GL.STREAM_DRAW)
     }
 
     override fun close() {

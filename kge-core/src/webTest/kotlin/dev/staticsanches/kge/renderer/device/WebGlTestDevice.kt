@@ -8,12 +8,12 @@ import web.html.HTMLCanvasElement
 
 /**
  * The web real-GL test device: an off-DOM canvas with a WebGL2 context, the
- * browser counterpart of [GlfwTestDevice]. [create] fails fast when Chrome
+ * browser counterpart of [GlfwTestDevice]. [create] fails fast when the browser
  * cannot give a WebGL2 context.
  *
- * [close] clears the process-wide context install the device made current, so
- * a later test never observes a stale context. The canvas stays referenced
- * through the context for the device's lifetime.
+ * [close] clears the process-wide context install, so a later test never
+ * observes a stale context. The canvas stays referenced through the context for
+ * the device's lifetime.
  */
 internal class WebGlTestDevice private constructor(
     private val canvas: HTMLCanvasElement,

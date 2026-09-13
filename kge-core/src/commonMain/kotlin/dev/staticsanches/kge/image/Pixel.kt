@@ -7,12 +7,11 @@ import kotlin.math.min
 /**
  * A 32-bit RGBA color.
  *
- * The [nativeRGBA] value stores the color little-endian packed —
- * `R | G shl 8 | B shl 16 | A shl 24` — so its memory bytes read R, G, B, A, the channel
- * order RGBA surfaces and GL_RGBA uploads expect. All planned targets run little-endian,
- * so no conversion is ever needed. [rgba] holds the same color in the canonical
- * `0xRRGGBBAA` value convention (alpha in the low byte); the factories take either form.
- * The constructor is private: a `Pixel` is created through the factories or `Colors`.
+ * [nativeRGBA] stores the color little-endian packed —
+ * `R | G shl 8 | B shl 16 | A shl 24` — so its memory bytes read R, G, B, A.
+ * [rgba] is the same color as canonical `0xRRGGBBAA` (alpha in the low byte);
+ * the factories take either form. The constructor is private: create a `Pixel`
+ * through the factories or [Colors].
  *
  * @property nativeRGBA the little-endian packed value (memory bytes read R,G,B,A).
  * @property rgba the canonical `0xRRGGBBAA` value (alpha in the low byte).
@@ -52,8 +51,6 @@ value class Pixel
 
         /**
          * How a raster draw resolves the new pixel against the stored one.
-         * The write policy belongs to the pixel type; the raster draw seam is
-         * its consumer.
          *
          * - [Normal] writes the color verbatim, alpha ignored.
          * - [Mask] writes only when `color.a == 255`.
@@ -115,11 +112,7 @@ value class Pixel
         operator fun div(factor: Float): Pixel =
             Pixel(compose((r / factor).toInt(), (g / factor).toInt(), (b / factor).toInt(), a))
 
-        /**
-         * Renders the pixel through [PixelFormatService]. The engine default is
-         * the uppercase `#RRGGBBAA` hex form; the display representation is an
-         * engine extension capability and may be replaced for the whole process.
-         */
+        /** Renders the pixel through [PixelFormatService]; the default is uppercase `#RRGGBBAA`. */
         override fun toString(): String = PixelFormatService.format(this)
 
         companion object {

@@ -4,9 +4,9 @@ import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.image.Pixel
 
 /**
- * The built-in program's vertex layout: `pos4` (4 floats), `uv2` (2 floats)
- * and one packed little-endian RGBA tint (4 bytes) — the byte offsets the VAO
- * is bound with and the writer the draws use.
+ * The built-in program's vertex layout: `pos4` (4 floats), `uv2` (2 floats) and
+ * one packed little-endian RGBA tint (4 bytes) — the byte offsets the VAO is
+ * bound with, plus the writer the draws use.
  */
 internal object VertexLayout {
     const val POSITION_COMPONENTS = 4

@@ -17,11 +17,10 @@ import io.kotest.matchers.string.shouldNotBeEmpty
 import kotlin.io.encoding.Base64
 
 /**
- * [Base64Decoder]/[Base64PngEncoder] through the [ImageService] seam. The
- * base64 payload is not a resource; the decoded intermediate buffer the
- * decoder allocates is released on success and on failure, observed
- * deterministically through [BufferService] and [ResourceWrapper.cleaned] (no
- * GC-driven leak reporter, whose wasmJs callbacks leak across tests).
+ * `Base64Decoder`/`Base64PngEncoder` through the `ImageService` seam. The
+ * base64 payload is not a resource; the intermediate buffer the decoder
+ * allocates is released on success and on failure, observed through
+ * `BufferService` and `ResourceWrapper.cleaned`.
  */
 class ImageSourceTest :
     FunSpec({

@@ -27,9 +27,9 @@ private class FailingResource(
 private fun <T : KGEResource> resourceKey(): ResourceScope.Key<T> = object : ResourceScope.Key<T> {}
 
 /**
- * The [ResourceScope] contract: typed register/get through an identity [ResourceScope.Key],
- * insertion-ordered LIFO close that keeps closing past a failure, and fail-fast
- * use after close.
+ * The [ResourceScope] contract: typed register/get through an identity
+ * [ResourceScope.Key], insertion-ordered LIFO close that keeps closing past a
+ * failure, and fail-fast use after close.
  */
 class ResourceScopeTest :
     FunSpec({

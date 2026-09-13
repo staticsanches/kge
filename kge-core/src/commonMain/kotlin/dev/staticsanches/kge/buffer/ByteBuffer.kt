@@ -3,12 +3,10 @@ package dev.staticsanches.kge.buffer
 import kotlin.math.roundToInt
 
 /**
- * Byte-addressable storage in native memory — a `java.nio.ByteBuffer` on JVM,
- * a `TypedArray` view on the web targets.
- *
- * All indices are byte offsets. Ints are little-endian. The content of a
- * freshly allocated buffer is unspecified — set every byte before reading it.
- * Access outside the buffer throws [IndexOutOfBoundsException].
+ * Byte-addressable storage in native memory: all indices are byte offsets and
+ * ints are little-endian. A fresh buffer's content is unspecified — set every
+ * byte before reading it. Access outside the buffer throws
+ * [IndexOutOfBoundsException].
  */
 expect abstract class ByteBuffer {
     /** The buffer size in bytes. */
@@ -23,7 +21,6 @@ expect abstract class ByteBuffer {
         value: Byte,
     ): ByteBuffer
 
-    /** Reads the int at [index]. */
     abstract fun getInt(index: Int): Int
 
     /** Writes [value] at [index] and returns this buffer. */
@@ -71,10 +68,8 @@ fun formatBytes(sizeInBytes: Int): String {
 }
 
 /**
- * Fills [count] consecutive int slots (4 bytes each) with [value], the first
- * at byte offset [fromByteOffset]. A [count] of zero is a no-op. The region
- * is validated and filled by the [BufferService] (whose default is the
- * portable loop and whose platform defaults add their native paths).
+ * Fills [count] ints with [value], the first at byte offset [fromByteOffset].
+ * A [count] of zero is a no-op; the range is validated by [BufferService].
  */
 fun ByteBuffer.fillInts(
     fromByteOffset: Int,
@@ -85,11 +80,9 @@ fun ByteBuffer.fillInts(
 }
 
 /**
- * Copies [count] ints from [source] at byte offset [sourceFromByteOffset] into
- * this buffer at byte offset [dstFromByteOffset]. Overlapping copies within
- * one buffer are memmove-safe. A [count] of zero is a no-op. The region is
- * validated and copied by the [BufferService] (whose default is the portable
- * memmove loop and whose platform defaults add their native paths).
+ * Copies [count] ints from [source] to this buffer, memmove-safe within one
+ * buffer. A [count] of zero is a no-op; the range is validated by
+ * [BufferService].
  */
 fun ByteBuffer.copyInts(
     dstFromByteOffset: Int,

@@ -18,14 +18,28 @@ if [ -z "$STAGED_KT" ]; then
   exit 0
 fi
 
+# Files with unstaged changes. A partially-staged file has staged and unstaged
+# hunks at once; re-staging its formatted working-tree copy would pull the
+# unstaged hunks into the commit and change the reviewed content, so it is
+# formatted on disk but its index entry is left as staged.
+UNSTAGED_KT=$(git diff --name-only -- '*.kt' || true)
+
 echo "pre-commit: ktlintFormat…"
 ./gradlew :kge-core:ktlintFormat --quiet
 
-# Re-stage the formatted Kotlin content. Restricted to staged Kotlin paths:
-# a blanket git add here would pull unstaged hunks of partially-staged files
-# into the commit.
-printf '%s\n' "$STAGED_KT" | while IFS= read -r f; do
-  git add -- "$f"
-done
+restage() {
+  local file="$1"
+  if [ -n "$UNSTAGED_KT" ] && printf '%s\n' "$UNSTAGED_KT" | grep -qxF -- "$file"; then
+    echo "pre-commit: $file is partially staged — formatted on disk; index left as staged" >&2
+  else
+    git add -- "$file"
+  fi
+}
+
+while IFS= read -r f; do
+  if [ -n "$f" ]; then
+    restage "$f"
+  fi
+done <<< "$STAGED_KT"
 
 echo "pre-commit: ktlintFormat done."

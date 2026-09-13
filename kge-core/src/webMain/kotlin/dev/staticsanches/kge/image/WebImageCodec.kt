@@ -26,14 +26,9 @@ import kotlin.js.unsafeCast
 /**
  * The browser-native codec primitive (js + wasmJs, shared in `webMain`).
  *
- * Decode: encoded bytes -> `Blob` -> `createImageBitmap` -> a detached canvas
- * -> `getImageData().data` (RGBA) -> an engine buffer wrapper that is handed to
- * `consume` (ownership transferred; closed by the consumer). Encode: a
- * [Sprite]'s RGBA -> `ImageData` -> `putImageData` -> `toDataURL` ->
- * base64-decoded bytes.
- *
- * The canvas storage is premultiplied but `getImageData`/`toDataURL` un-
- * premultiply, so an opaque or binary-alpha surface round-trips.
+ * Decode hands an RGBA engine buffer to `consume`, which owns and closes it.
+ * Canvas storage is premultiplied but `getImageData`/`toDataURL` un-premultiply,
+ * so an opaque or binary-alpha surface round-trips.
  */
 internal object WebImageCodec {
     suspend fun decode(

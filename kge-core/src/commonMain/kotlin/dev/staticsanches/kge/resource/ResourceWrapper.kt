@@ -5,9 +5,8 @@ import kotlin.concurrent.Volatile
 import kotlin.uuid.Uuid
 
 /**
- * A [KGEResource] that owns one handle: the wrapper hides the native resource
- * behind a fail-fast accessor and registers it with [KGELeakDetector], so a
- * resource that is never [close]d is caught on collection.
+ * A [KGEResource] owning one handle behind a fail-fast accessor, registered
+ * with [KGELeakDetector] so an unclosed resource is caught on collection.
  *
  * @param R the wrapped handle type — a buffer, a texture, decoded image data.
  */
@@ -69,10 +68,7 @@ private class DefaultResourceWrapper<R>(
     fun onCollectionObserved() = cleanable.onCollectionObserved()
 }
 
-/**
- * Fires the collection observation deterministically — the seam the platform
- * collection trigger funnels into. Internal: engine-owned wrappers only.
- */
+/** Deterministic test seam: fires the platform collection trigger. */
 internal fun ResourceWrapper<*>.onCollectionObserved() {
     require(this is DefaultResourceWrapper)
     this.onCollectionObserved()

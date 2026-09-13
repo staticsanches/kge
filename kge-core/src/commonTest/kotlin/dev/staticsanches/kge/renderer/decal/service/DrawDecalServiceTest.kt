@@ -13,11 +13,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [DrawDecalService]: the full-decal quad plus its `DecalPatch` form. The four
- * clip-space corners follow olc's `DrawDecal` (scale by the decal's sprite
- * size, y flipped) and the tint is uniform across the four vertices; the patch
- * form transforms the four patch coordinates into polygon vertices and feeds
- * the polygon path.
+ * [DrawDecalService]: the full-decal quad and its `DecalPatch` form. Corners
+ * follow olc's `DrawDecal` (scaled by the sprite size, y flipped) with a uniform
+ * tint; the patch form turns patch coordinates into polygon vertices.
  */
 class DrawDecalServiceTest :
     FunSpec({

@@ -8,14 +8,7 @@ import java.nio.ByteOrder
 /** On JVM the engine buffer is the platform `java.nio.ByteBuffer` itself. */
 actual typealias ByteBuffer = java.nio.ByteBuffer
 
-/**
- * JVM backend: LWJGL off-heap memory — `memAlloc` (raw, unspecified content),
- * ordered little-endian, released with `memFree` at close. Copy overrides the
- * portable loop with an `IntBuffer` bulk transfer of a `duplicate()` over the
- * region (the measured ~4-7x) whenever the regions are distinct, int-aligned
- * and writable; fill keeps the inherited loop (java.nio has no int-pattern
- * fill and the putInt loop already runs at bulk speed).
- */
+/** JVM backend: LWJGL off-heap memory, little-endian, freed at close. */
 internal actual val bufferServiceDefault: BufferService = LwjglBufferService
 
 private object LwjglBufferService : BufferService {

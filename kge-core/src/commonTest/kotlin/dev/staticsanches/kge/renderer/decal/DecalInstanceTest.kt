@@ -13,9 +13,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [DecalInstance]: the vertex count is derived from the position list, and the
- * instance snapshots the parallel per-vertex lists so the geometry can not
- * change under the renderer.
+ * [DecalInstance]: the vertex count derives from the position list, and the
+ * instance snapshots the parallel per-vertex lists so the geometry cannot change
+ * under the renderer.
  */
 class DecalInstanceTest :
     FunSpec({

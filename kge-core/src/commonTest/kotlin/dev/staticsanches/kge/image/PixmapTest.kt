@@ -4,11 +4,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The Pixmap contract — the default algorithm bodies over the raw accessors,
- * proven once on a light test double ([PixmapDouble], IntArray storage): the
+ * The `Pixmap` contract: the default algorithm bodies over the raw accessors —
  * mode-aware get policies, nearest/bilinear sampling, bounds-checked set,
- * clear, inv and the row-major Sequence. The real storage platform (Sprite
- * over native memory) is proven in SpriteTest; these tests pin the math.
+ * clear, inv and the row-major sequence. Proven on an IntArray-backed test
+ * double; the native-storage surface is proven in SpriteTest.
  */
 class PixmapTest :
     FunSpec({

@@ -9,13 +9,10 @@ import org.lwjgl.system.MemoryStack
 import java.nio.ByteOrder
 
 /**
- * JVM backend: STB with `req_comp = 4`, so every supported input format
- * (PNG/JPEG/TGA/BMP/…) comes back as row-major R,G,B,A bytes. The native buffer
- * STB allocates is wrapped as an engine buffer the decoder owns until `consume`
- * hands it over; `STBImage.stbi_image_free` is the wrapper's clean action, so
- * the consumer frees it on close. STB reads from the buffer's current position,
- * so a `duplicate().rewind()` view keeps decode independent of the caller's
- * `java.nio` position.
+ * JVM backend: STB with `req_comp = 4`, so every supported format decodes to
+ * row-major R,G,B,A. The result is handed to `consume`, which owns the buffer
+ * and frees it on close. Decoding reads a rewound duplicate, so the caller's
+ * `java.nio` position is untouched.
  */
 internal actual suspend fun decodeImageBytes(
     source: ByteBuffer,

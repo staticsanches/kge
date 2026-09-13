@@ -14,9 +14,8 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 
 /**
- * The JVM URL decoder over the classpath resource PNG (the same bytes as the
- * commonTest fixture). The blocking stream read runs on `Dispatchers.IO`
- * inside the decoder.
+ * The JVM URL decoder over the classpath resource PNG (same bytes as the
+ * commonTest fixture).
  */
 class UrlDecoderJvmTest :
     FunSpec({

@@ -16,9 +16,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The common [Renderer] default: [Renderer.createResources] builds the built-in
- * quad once, `prepareDrawing` sets the 2D frame state in order through the
- * overridable [GLService], and closing the scope releases the quad.
+ * The [Renderer] default: [Renderer.createResources] builds the built-in quad
+ * once, `prepareDrawing` sets the 2D frame state through the overridable
+ * [GLService], and closing the scope releases the quad.
  */
 class RendererTest :
     FunSpec({

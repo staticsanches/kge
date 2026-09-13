@@ -4,9 +4,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The nested decal enumerations are closed to the oracle's scope: the exact
- * value set (and order) is pinned so a silent widening or reordering is caught.
- * Mipmap filters, mirrored repeat and clamp-to-border are intentionally absent.
+ * The nested decal enumerations are closed to the oracle's scope: the exact value
+ * set and order is pinned so a silent widening/reordering is caught. Mipmap
+ * filters, mirrored repeat, and clamp-to-border are intentionally absent.
  */
 class DecalTypesTest :
     FunSpec({

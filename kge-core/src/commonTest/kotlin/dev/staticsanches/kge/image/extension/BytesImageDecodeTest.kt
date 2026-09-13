@@ -15,23 +15,13 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [BytesDecoder] through the [ImageService] seam: the engine buffer's bytes are
- * decoded on the platform backend and the decoded wrapper is adopted by the
- * returned sprite. The source wrapper is caller-owned; the decode wrapper is
- * owned by the decoder until `consume` and by the sprite afterwards.
- *
- * The successful-decode adoption/close canary is web-only
- * (`BytesImageDecodeBrowserTest`, duplicated in jsTest/wasmJsTest): the web decode wrapper is a [BufferService]
- * allocation, so its close is observed deterministically through
- * [ResourceWrapper.cleaned]. On the JVM the adopted wrapper is the STB native
- * buffer — not a [BufferService] allocation and therefore not capturable — so
- * its single `stbi_image_free` is pinned by the adoption/close behaviour, not
- * by this common suite: a platform limitation of the canary (no GC-driven leak
- * reporter either, whose wasmJs callbacks leak across tests).
- *
- * The failure canary here is deterministic on every target: a decode that fails
- * before `consume` allocates no engine buffer, so the only allocation captured
- * is the caller-owned source itself.
+ * `BytesDecoder` through the `ImageService` seam: the engine buffer's bytes are
+ * decoded by the platform backend and the decoded wrapper is adopted by the
+ * returned sprite, while the caller owns the source wrapper. The
+ * success/close canary is web-only — on the JVM the adopted wrapper is the STB
+ * native buffer, not a `BufferService` allocation and so not capturable — so
+ * the failure canary (a decode that allocates no engine buffer beyond the
+ * caller-owned source) is the deterministic one on every target.
  */
 class BytesImageDecodeTest :
     FunSpec({

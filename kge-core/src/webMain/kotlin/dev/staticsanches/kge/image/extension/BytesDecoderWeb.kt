@@ -6,8 +6,8 @@ import dev.staticsanches.kge.resource.ResourceWrapper
 
 /**
  * Web backend: the browser-native codec primitive, shared by js and wasmJs.
- * The encoded bytes are sniffed by `createImageBitmap`, so the input format is
- * auto-detected; see [WebImageCodec] for the ownership of the RGBA wrapper.
+ * The format is auto-detected by `createImageBitmap`; [WebImageCodec] owns the
+ * RGBA wrapper hand-off.
  */
 internal actual suspend fun decodeImageBytes(
     source: ByteBuffer,

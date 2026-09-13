@@ -5,9 +5,9 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 
 /**
- * Best-effort JVM wiring proof: a wrapper that goes out of scope unclosed is
+ * Best-effort JVM wiring proof: an unclosed wrapper going out of scope is
  * eventually reported by the Cleaner. GC timing is not deterministic, so the
- * test polls for up to a generous window instead of relying on one pass.
+ * test polls instead of relying on one pass.
  */
 class LeakDetectionJvmTest :
     FunSpec({
@@ -25,7 +25,7 @@ class LeakDetectionJvmTest :
                 val wrapper = ResourceWrapper("ScopeBuffer", "x", KGECleanAction { })
                 wrapper.hashCode() // ensure constructor ran
             }
-            scope() // wrapper unreachable here
+            scope()
 
             val deadline = System.currentTimeMillis() + 15_000
             while (reports.isEmpty() && System.currentTimeMillis() < deadline) {

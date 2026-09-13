@@ -12,11 +12,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * `blitRegion` and raster through a window: the region is validated against
- * the source, the raw Sprite-to-Sprite path must not diverge from the
- * per-pixel oracle (a non-raw [PixmapDouble]), flips apply inside the region,
- * `blit(window)` equals `blitRegion`, and the raster primitives clip to a
- * window's local space.
+ * `blitRegion`, `blit` and raster primitives over a window: the region is
+ * validated against the source, the raw Sprite-to-Sprite path must not diverge
+ * from the per-pixel oracle across flips, `blit(window)` equals `blitRegion`,
+ * and raster/clip stays inside a window's local space.
  */
 class BlitWindowTest :
     FunSpec({
@@ -226,8 +225,8 @@ class BlitWindowTest :
                 },
             )
 
-            // equal-width full surfaces: x == sx == 0 and w == both strides, so
-            // the whole 4x4 block is one contiguous run per side -> one copy
+            // equal-width full surfaces make the whole block one contiguous
+            // run -> one copy
             pattern(4, 4).use { s ->
                 blank(4, 4).use { t ->
                     copies = 0
@@ -242,7 +241,7 @@ class BlitWindowTest :
                 }
             }
 
-            // the same-width sprite placed at x == 1 leaves target rows partial
+            // the same-width sprite at x == 1 leaves target rows partial
             // -> one copy per row
             pattern(3, 3).use { s ->
                 blank(6, 6).use { t ->

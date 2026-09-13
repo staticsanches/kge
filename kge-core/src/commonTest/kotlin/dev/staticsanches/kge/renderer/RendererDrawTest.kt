@@ -27,10 +27,9 @@ import io.kotest.matchers.shouldBe
 private fun ByteBuffer.floatAt(byteOffset: Int): Float = Float.fromBits(getInt(byteOffset))
 
 /**
- * The renderer's draws: `drawLayerQuad` builds the full-screen strip from
- * `offset`/`scale`/`tint`, `drawDecal` maps the olc blend/primitive vocabulary
- * and uploads the instance's vertices through the reused staging buffer, one
- * bind + blend + draw per instance.
+ * `drawLayerQuad` builds the full-screen strip from `offset`/`scale`/`tint`;
+ * `drawDecal` maps the olc blend/primitive vocabulary and uploads the
+ * instance's vertices through the reused staging buffer.
  */
 class RendererDrawTest :
     FunSpec({
@@ -75,11 +74,14 @@ class RendererDrawTest :
                     listOf(
                         RecordedGLCall("disable", listOf(GL.CULL_FACE)),
                         RecordedGLCall("bindBuffer", listOf(GL.ARRAY_BUFFER, vbo)),
-                        RecordedGLCall("bufferSubData", listOf(GL.ARRAY_BUFFER, 0, recorder.bufferSubDataData())),
+                        RecordedGLCall(
+                            "bufferData",
+                            listOf(GL.ARRAY_BUFFER, recorder.bufferDataData(), 4 * VertexLayout.BYTES, GL.STREAM_DRAW),
+                        ),
                         RecordedGLCall("drawArrays", listOf(GL.TRIANGLE_STRIP, 0, 4)),
                     )
 
-                val data = recorder.bufferSubDataData()
+                val data = recorder.bufferDataData()
                 data.vertex(0) shouldBe listOf(-1f, -1f, 1f, 0f, 0.25f, 3.5f, Colors.WHITE.nativeRGBA)
                 data.vertex(1) shouldBe listOf(1f, -1f, 1f, 0f, 2.25f, 3.5f, Colors.WHITE.nativeRGBA)
                 data.vertex(2) shouldBe listOf(-1f, 1f, 1f, 0f, 0.25f, 0.5f, Colors.WHITE.nativeRGBA)
@@ -176,13 +178,18 @@ class RendererDrawTest :
                                 RecordedGLCall("bindTexture", listOf(GL.TEXTURE_2D, textureHandle)),
                                 RecordedGLCall("bindBuffer", listOf(GL.ARRAY_BUFFER, recorder.lastCreatedBuffer)),
                                 RecordedGLCall(
-                                    "bufferSubData",
-                                    listOf(GL.ARRAY_BUFFER, 0, recorder.bufferSubDataData()),
+                                    "bufferData",
+                                    listOf(
+                                        GL.ARRAY_BUFFER,
+                                        recorder.bufferDataData(),
+                                        vertices * VertexLayout.BYTES,
+                                        GL.STREAM_DRAW,
+                                    ),
                                 ),
                                 RecordedGLCall("drawArrays", listOf(GL.TRIANGLES, 0, vertices)),
                             )
 
-                        val data = recorder.bufferSubDataData()
+                        val data = recorder.bufferDataData()
                         List(vertices) { index -> data.vertex(index) } shouldBe
                             List(vertices) { index ->
                                 val position = index.toFloat()
@@ -226,13 +233,13 @@ class RendererDrawTest :
                                     "blendFunc",
                                     "bindTexture",
                                     "bindBuffer",
-                                    "bufferSubData",
+                                    "bufferData",
                                     "drawArrays",
                                     "disable",
                                     "blendFunc",
                                     "bindTexture",
                                     "bindBuffer",
-                                    "bufferSubData",
+                                    "bufferData",
                                     "drawArrays",
                                 )
                             recorder.calls.filter { it.name == "bindTexture" }.map { it.arguments[1] } shouldBe
@@ -245,7 +252,7 @@ class RendererDrawTest :
             }
         }
 
-        test("the staging buffer is created and grown once across draws") {
+        test("the staging buffer is created once and each draw uploads once") {
             val recorder = RecordingGLService()
             val renderer = renderer(recorder)
             ResourceScope().use { scope ->
@@ -260,15 +267,15 @@ class RendererDrawTest :
                         renderer.drawDecal(scope, instance(decal, Decal.Mode.NORMAL, Decal.Structure.FAN))
 
                         recorder.calls.count { it.name == "createBuffer" } shouldBe 1
-                        recorder.calls.count { it.name == "bufferData" } shouldBe 1
+                        recorder.calls.count { it.name == "bufferData" } shouldBe 3
                     }
                 }
             }
         }
     })
 
-private fun RecordingGLService.bufferSubDataData(): ByteBuffer =
-    calls.last { it.name == "bufferSubData" }.arguments[2] as ByteBuffer
+private fun RecordingGLService.bufferDataData(): ByteBuffer =
+    calls.last { it.name == "bufferData" }.arguments[1] as ByteBuffer
 
 private fun ByteBuffer.vertex(index: Int): List<Any> {
     val base = index * VertexLayout.BYTES

@@ -5,11 +5,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The extension-contract proof for the engine's first real service: the pixel
- * display format. The default is the engine-fixed HEX representation; an
- * override — such as the test-local RGBA format below — provably changes every
- * `Pixel.toString()` output. [PixelFormatService.original] is the engine
- * default, so a decorator can wrap it.
+ * The extension contract for the first real service: the default HEX format,
+ * an override changing every `toString()`, and a decorator wrapping
+ * `PixelFormatService.original`.
  */
 class PixelFormatServiceTest :
     FunSpec({
@@ -56,7 +54,7 @@ class PixelFormatServiceTest :
         }
     })
 
-/** A test-local alternate representation, never shipped: the override proof. */
+/** A test-local alternate representation used to prove the override. */
 private object RgbaPixelFormat : PixelFormatService {
     override fun format(pixel: Pixel): String = "rgba(${pixel.r}, ${pixel.g}, ${pixel.b}, ${pixel.a})"
 }

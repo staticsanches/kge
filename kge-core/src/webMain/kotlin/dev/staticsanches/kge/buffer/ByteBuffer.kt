@@ -5,11 +5,8 @@ import org.khronos.webgl.Int32Array
 import org.khronos.webgl.Uint8Array
 
 /**
- * Web buffer: an emulation of [ByteBuffer] over a `TypedArray`, shared by the
- * js and wasmJs targets.
- *
- * The DataView default is big-endian, so every int access passes the
- * little-endian flag.
+ * Web [ByteBuffer] over a `TypedArray` (js + wasmJs). The `DataView` default
+ * is big-endian, so int access passes the little-endian flag.
  */
 actual abstract class ByteBuffer(
     sizeInBytes: Int,
@@ -21,9 +18,8 @@ actual abstract class ByteBuffer(
     internal val nativeBytes: Uint8Array get() = bytes
 
     /**
-     * The storage viewed as ints, when the byte size allows it. The native
-     * bulk fill/copy routes through this view; platforms are little-endian,
-     * matching the fixed byte order of the engine.
+     * The storage as ints, or null when the size is not int-aligned. Used by
+     * the native bulk fill/copy.
      */
     internal val nativeIntView: Int32Array? =
         if (sizeInBytes % Int.SIZE_BYTES == 0 && sizeInBytes > 0) {

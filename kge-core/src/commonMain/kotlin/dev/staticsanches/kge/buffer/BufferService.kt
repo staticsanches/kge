@@ -7,26 +7,20 @@ import dev.staticsanches.kge.resource.ResourceWrapper
  * Owns the [ByteBuffer] backends: allocation and the bulk copy/fill of whole
  * int regions.
  *
- * Allocation is an extension capability of the engine: the platform default
- * allocates off-heap memory (LWJGL on JVM, a `TypedArray` on the web) and a
- * consumer may replace it for the whole process via
- * [override][KGEOverridable.Proxy.override] — e.g. an alternate backend.
+ * Allocation is process-wide overridable via
+ * [override][KGEOverridable.Proxy.override]: the platform default allocates
+ * off-heap memory (LWJGL on JVM, a `TypedArray` on the web).
  *
- * [fillInts]/[copyInts] own the whole operation, fallback included: their
- * default bodies here are the portable loop (memmove-safe overlap), and a
- * platform implementation overrides only when it has a faster native path —
- * taking it when its conditions hold and calling `super` (the fallback)
- * otherwise. The companion validates the range first, so every implementation
- * only ever sees a legal region.
+ * [fillInts]/[copyInts] default to a portable memmove-safe loop; the facade
+ * validates the range before dispatch, so an override may call `super` as its
+ * fallback.
  */
 interface BufferService : KGEOverridable {
     /**
-     * Allocates a buffer of [sizeInBytes] bytes with unspecified content,
-     * owned by the caller: close the returned wrapper to release the memory,
-     * and never use its [ResourceWrapper.resource] after close.
+     * Allocates [sizeInBytes] bytes of unspecified content, owned by the
+     * caller: close the returned wrapper to release the memory.
      *
-     * [name] identifies the allocation in the wrapper's leak/fail-fast
-     * messages — a diagnostic label, nullable for anonymous buffers.
+     * [name] labels the allocation in leak and fail-fast messages.
      */
     fun allocate(
         sizeInBytes: Int,
@@ -34,10 +28,8 @@ interface BufferService : KGEOverridable {
     ): ResourceWrapper<ByteBuffer>
 
     /**
-     * Fills [count] int slots (4 bytes each) of [target] with [value], the
-     * first at byte offset [fromByteOffset]. The default body is the portable
-     * loop; platform implementations override it with a native fill when one
-     * is available and call `super` otherwise.
+     * Fills [count] ints of [target] with [value], the first at byte offset
+     * [fromByteOffset].
      */
     fun fillInts(
         target: ByteBuffer,
@@ -51,11 +43,8 @@ interface BufferService : KGEOverridable {
     }
 
     /**
-     * Copies [count] ints from [source] at byte offset [sourceFromByteOffset]
-     * into [dst] at byte offset [dstFromByteOffset], memmove-safe for
-     * overlapping regions of one buffer. The default body is the portable
-     * memmove loop; platform implementations override it with a native copy
-     * when one is available and call `super` otherwise.
+     * Copies [count] ints from [source] to [dst], memmove-safe for overlapping
+     * regions of one buffer. Byte offsets apply to [source] and [dst].
      */
     fun copyInts(
         dst: ByteBuffer,

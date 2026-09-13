@@ -13,20 +13,16 @@ jobs:
       - uses: actions/setup-java@v6
         with: { distribution: zulu, java-version: "21" }
       - uses: gradle/actions/setup-gradle@v6
-      # The JVM GL smoke test uses the production GLFW path, headless. Linux
+      # The JVM GL smoke test uses the production GLFW path headless. Linux
       # needs a display (Xvfb) plus Mesa's software driver; Windows gets Mesa
-      # from setup-mesa-dist-win; the macOS runner cannot create a GL context,
-      # so the probe skips there.
+      # from setup-mesa-dist-win; macOS cannot create a GL context, so it skips.
       - if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
       - if: matrix.os == 'windows-latest'
         uses: ssciwr/setup-mesa-dist-win@v3
-      # `build` = check (ktlint + all tests on jvm + js browser + wasmJs
-      # browser) + assemble — the webMain metadata compilation is exercised
-      # only by `assemble`, so `allTests`-style runs cannot stay the gate.
-      # ktlint needs no explicit call: its source-set checks are wired into
-      # `check` (decisions log #32). All three OSes run the full suite now
-      # (the old macOS exclusion rested on an unverified "no Chrome" claim).
+      # `build` = check + assemble; only `assemble` exercises the webMain
+      # metadata compilation, so `allTests` cannot be the gate. ktlint's
+      # source-set checks are wired into `check`.
       - if: matrix.os == 'ubuntu-latest'
         run: xvfb-run -a ./gradlew build --rerun-tasks --stacktrace
       - if: matrix.os != 'ubuntu-latest'

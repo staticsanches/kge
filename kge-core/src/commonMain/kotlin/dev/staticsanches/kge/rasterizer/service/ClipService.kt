@@ -5,13 +5,10 @@ import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.rasterizer.Viewport
 
 /**
- * The clip seam: the line clip every [OutlineService.drawLine] resolves
- * before it walks. The default reproduces olc v2.30 `ClipLineToDrawTarget`,
- * an integer Cohen–Sutherland whose boundary is inclusive at the viewport's
- * exclusive upper bound, with truncating division and a trivial reject on
- * `s1 & s2`. The [Viewport] carries the region data only; this service owns
- * the algorithm, so a decorator override is observed by
- * [OutlineService.drawLine].
+ * The clip seam: the line clip every [OutlineService.drawLine] resolves before
+ * it walks. The default is integer Cohen–Sutherland (olc v2.30
+ * `ClipLineToDrawTarget`), inclusive at the viewport's upper bound, with
+ * truncating division. [Viewport] carries the region data only.
  */
 interface ClipService : KGEOverridable {
     /**
@@ -36,7 +33,7 @@ interface ClipService : KGEOverridable {
     }
 }
 
-/** The platform-independent default — pure integer Cohen–Sutherland over [Viewport]s. */
+/** The platform-independent default. */
 private object ClipServiceDefault : ClipService {
     private const val SEG_L = 0b0001
     private const val SEG_R = 0b0010

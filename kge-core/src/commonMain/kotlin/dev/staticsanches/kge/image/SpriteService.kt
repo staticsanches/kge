@@ -8,10 +8,10 @@ import dev.staticsanches.kge.resource.letClosingIfFailed
 /**
  * Creates and duplicates [Sprite]s.
  *
- * Creation is an extension capability of the engine with a platform-
- * independent default: the surface storage goes through the current
- * [BufferService], so an allocator override covers surfaces too.
- * Image loading/encoding is a separate capability, [ImageService].
+ * Creation is an extension capability with a platform-independent default: the
+ * storage goes through the current [BufferService], so an allocator override
+ * covers surfaces too. Image loading/encoding is a separate capability,
+ * [ImageService].
  */
 interface SpriteService : KGEOverridable {
     /**
@@ -58,8 +58,7 @@ private object SpriteServiceDefault : SpriteService {
         name: String?,
     ): Sprite {
         require(width > 0 && height > 0) { "width and height must be positive: ${width}x$height" }
-        // the buffer transfers to the Sprite; a failed construction must
-        // not leak it (letClosingIfFailed — the resource guard)
+        // the buffer transfers to the Sprite; a failed construction must not leak it
         return BufferService
             .allocate(width * height * Int.SIZE_BYTES, name)
             .letClosingIfFailed { buffer -> Sprite(width, height, buffer, sampleMode, name) }

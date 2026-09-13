@@ -12,9 +12,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [DrawPartialDecalService]: the sub-rectangle quad. The screen corners are
- * quantised to the pixel grid (olc's `floor(+0.5)`/`ceil(±0.5)`) and the UVs
- * carry the `0.0001` epsilon and the sprite-size UV scale.
+ * [DrawPartialDecalService]: the sub-rectangle quad. Corners quantise to the
+ * pixel grid (olc's `floor(+0.5)`/`ceil(±0.5)`); UVs carry the `0.0001` epsilon
+ * and the sprite-size UV scale.
  */
 class DrawPartialDecalServiceTest :
     FunSpec({

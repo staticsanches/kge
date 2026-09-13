@@ -11,16 +11,15 @@ import web.html.HTMLCanvasElement
 import kotlin.js.ExperimentalWasmJsInterop
 
 /**
- * A shared, headless WebGL2 context used only to fabricate real DOM handles
- * for the recording backend. On Kotlin/Wasm a DOM object cannot be forged (the
- * runtime checks the cast to `WebGLTexture` and friends), so a context-free
- * dummy object is impossible while the web handles are the DOM type aliases.
+ * A shared, headless WebGL2 context used only to fabricate real DOM handles for
+ * the recording backend. On Kotlin/Wasm a DOM object cannot be forged (the cast
+ * to `WebGLTexture` and friends is runtime-checked), so a context-free dummy is
+ * impossible while the web handles are the DOM type aliases.
  *
- * Every kind is fabricated once and reused: the fabricated handles are
- * transported, never deleted by the recording backend, so caching bounds the
- * real context's object count to one per kind instead of one per call. The
- * throwaway program behind [uniformLocationHandle] is deleted as soon as its
- * location is obtained.
+ * Every kind is fabricated once and reused: the handles are transported, never
+ * deleted by the recording backend, so caching bounds the real context to one
+ * object per kind. The throwaway program behind [uniformLocationHandle] is
+ * deleted once its location is obtained.
  */
 private val handleContext: WebGL2RenderingContext by lazy {
     val canvas = document.createElement("canvas") as HTMLCanvasElement

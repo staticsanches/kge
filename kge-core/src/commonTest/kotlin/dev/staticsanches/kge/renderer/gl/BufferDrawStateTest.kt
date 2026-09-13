@@ -10,10 +10,9 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The remaining raw command seam — buffer, vertex array, attribute, draw and
- * state — plus the `GL` namespace forwarding. The real-backend concerns (FBOs,
- * `multiDrawArrays`, `getError`) are out of scope; only the raw calls the
- * renderer will issue are pinned here.
+ * The raw buffer, vertex-array, attribute, draw and state command seam, plus
+ * the `GL` namespace forwarding. FBOs, `multiDrawArrays` and `getError` are
+ * out of scope.
  */
 class BufferDrawStateTest :
     FunSpec({
@@ -29,7 +28,7 @@ class BufferDrawStateTest :
             BufferService.allocate(16, "vbo").use { storage ->
                 val buffer = GLService.createBuffer()
                 GLService.bindBuffer(GL.ARRAY_BUFFER, buffer)
-                GLService.bufferData(GL.ARRAY_BUFFER, storage.resource, GL.STATIC_DRAW)
+                GLService.bufferData(GL.ARRAY_BUFFER, storage.resource, 16, GL.STATIC_DRAW)
                 GLService.bufferData(GL.ARRAY_BUFFER, 64, GL.DYNAMIC_DRAW)
                 GLService.bufferSubData(GL.ARRAY_BUFFER, 4, storage.resource)
                 GLService.bindBuffer(GL.ARRAY_BUFFER, null)
@@ -40,7 +39,7 @@ class BufferDrawStateTest :
                     listOf(
                         RecordedGLCall("createBuffer", emptyList()),
                         RecordedGLCall("bindBuffer", listOf(GL.ARRAY_BUFFER, buffer)),
-                        RecordedGLCall("bufferData", listOf(GL.ARRAY_BUFFER, storage.resource, GL.STATIC_DRAW)),
+                        RecordedGLCall("bufferData", listOf(GL.ARRAY_BUFFER, storage.resource, 16, GL.STATIC_DRAW)),
                         RecordedGLCall("bufferData", listOf(GL.ARRAY_BUFFER, 64, GL.DYNAMIC_DRAW)),
                         RecordedGLCall("bufferSubData", listOf(GL.ARRAY_BUFFER, 4, storage.resource)),
                         RecordedGLCall("bindBuffer", listOf(GL.ARRAY_BUFFER, null)),
