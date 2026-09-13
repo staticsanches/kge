@@ -72,7 +72,7 @@ user-facing surface do not exist.
    `Duration` is used as *another* type (nullable, `Any`, a generic type
    argument, or a supertype it implements); a method whose declared type is
    `Duration` (e.g. the `TimeService` method) stays unboxed — verified by
-   compiling `interface TimeService { fun now(): Duration }`, which emits
+   compiling `interface TimeService { fun elapsed(): Duration }`, which emits
    `long now-...()` on the JVM.
 3. **FPS is computed by the loop and held in a focused, read-only state holder**
    (owner, 2026-09-13). `TimeService` is a pure time seam — no FPS callback; the

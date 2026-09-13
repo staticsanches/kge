@@ -58,7 +58,11 @@ divergence). The web targets are now **browser-only** (node dropped) and the
 browser suites run in CI. `C9` (renderer/GL/decals) closed 2026-09-12 (log
 #22): the GL layer, the renderer/pipeline and the decal exist. `C10` splits at
 the 2026-09-13 touch-point into `C10a` (loop/window/time) → `C10b` (input) →
-`C10c` (addons); `C10a` is next — no engine loop yet.
+`C10c` (addons); **`C10a` closed 2026-09-13 (log #24)**: the `Driver`/`DriverService`
+seam (JVM GLFW + web canvas/WebGL2), `TimeService`/`FrameAccumulator`,
+`WindowConfig`, the abstract `Engine` loop with suspend callbacks, the
+fractional letterbox and the clear/present render step run on JVM and web.
+`C10b` (input) is next.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the

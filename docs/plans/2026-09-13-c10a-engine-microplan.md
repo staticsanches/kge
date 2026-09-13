@@ -22,7 +22,7 @@ and layer/content drawing are `C10b`/`C10c`.
 
 ## Contract
 
-- **`TimeService : KGEOverridable`** — `fun now(): Duration`, monotonic, one
+- **`TimeService : KGEOverridable`** — `fun elapsed(): Duration`, monotonic, one
   unit (the stdlib `Duration`). Default is a **common** implementation over
   `TimeSource.Monotonic` (no `expect`/`actual`: the stdlib is multiplatform and
   already monotonic on every target). Overridable process-wide for a virtual
@@ -61,7 +61,7 @@ start():  driver = DriverService.create(config) ; driver.makeCurrent() ; scope =
           active = true
           while (active):
               while (active && !stopRequested && !driver.isClosing()):
-                  elapsed = accumulator.tick(Time.now())
+                  elapsed = accumulator.tick(Time.elapsed())
                   driver.pollEvents()
                   if (!onUserUpdate(elapsed)) active = false
                   renderFrame(scope, driver)
@@ -97,7 +97,7 @@ publish `fps = frameCount` then subtract `1.seconds` (drift carry, not reset).
 
 - **Tests:** `RecordingDriver` records `makeCurrent`/`pollEvents`/`present`/
   `awaitNextFrame` and reports a scripted `isClosing`; `FakeTimeService`
-  advances by a fixed `Duration` per `now()`.
+  advances by a fixed `Duration` per `elapsed()`.
 - **Decided:** `DriverService : KGEOverridable` creates the driver (no
   constructor factory); the callbacks are open methods on an abstract `Engine`;
   layers/content are `C10c`.
@@ -105,7 +105,7 @@ publish `fps = frameCount` then subtract `1.seconds` (drift carry, not reset).
 ### 1. `TimeService`
 
 - **Tests:** the default is monotonic across calls; an override (virtual clock)
-  changes `Time.now()` process-wide and resets after the test (module kotest
+  changes `Time.elapsed()` process-wide and resets after the test (module kotest
   config already resets overrides).
 - **Files:** `commonMain/.../time/TimeService.kt` (+ default).
 - **Decided:** one unit (`Duration`); FPS is NOT computed here (loop owns it) —

@@ -605,3 +605,13 @@ nested `Key` marker (T1): `createResources(device, scope)` builds the quad in it
 the draws take the scope, and `BuiltInQuad` makes the context current before
 release (log #22, Correction). Next concept: `C10` (engine: E1 loop/window + E2
 addons + E3 state + E4 KeyCode/InputAction).
+
+**2026-09-13 — C10a (loop/window/time) closed (decisions-log #24).** The first
+of the three `C10` sessions: the `Driver : GpuDevice` seam + `DriverService`
+(JVM GLFW — `glfw_async` on macOS, GL 3.3 core; web canvas/WebGL2 + rAF, with a
+public `WebDriverService(canvas)`), `TimeService` (common `TimeSource.Monotonic`
+default, one `Duration` unit) + the olc FPS `FrameAccumulator`, the immutable
+`WindowConfig`, the abstract `Engine` loop with suspend callbacks (mode-1
+confinement, atomic `stop()`, olc `bAtomActive` restart), the fractional
+letterbox and the clear/present render step. A review fix round corrected a
+loop exit bug and the web HiDPI canvas. Next session: `C10b` (input).
