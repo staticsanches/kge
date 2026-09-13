@@ -10,7 +10,7 @@ targeting JVM (LWJGL/GLFW/OpenGL) and web (WebGL2 via kotlin-wrappers).
 
 **Current state:** greenfield restructure in progress on the work branch. The
 engine is being rebuilt concept by concept; the old engine lives in the git
-history of `main` (reference/inspiration only: `git show main:<path>`). So far:
+history of `main` (evidence, not a mandate: `git show main:<path>`). So far:
 `kge-core` KMP module (jvm/js/wasmJs) with scaffold smoke tests on all targets,
 the CI workflow, C4 (Pixel) closed (log #24), the extension mechanism closed
 then **redesigned** at the T2 touch-point (log #28) — `KGEOverridable`
@@ -55,8 +55,10 @@ cell of the clipped walk — `Filled` is the untouched pre-change behavior. **Im
 `ImageService` (generic `Decoder<T>`/`Encoder<T>`, suspend `load`/`save`,
 `Sprite` RGBA-only, `PNG`/`JPEG` uniform encode, documented per-platform decode
 divergence). The web targets are now **browser-only** (node dropped) and the
-browser suites run in CI. Next: `C9` (renderer/GL/decals; `C8` state was
-dissolved into `C10`, log #20). No renderer or engine loop yet.
+browser suites run in CI. `C9` (renderer/GL/decals) closed 2026-09-12 (log
+#22): the GL layer, the renderer/pipeline and the decal exist. `C10` splits at
+the 2026-09-13 touch-point into `C10a` (loop/window/time) → `C10b` (input) →
+`C10c` (addons); `C10a` is next — no engine loop yet.
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the
@@ -88,12 +90,14 @@ These two are the only active documents; older plans/specs were deleted
   `.opencode/agent/review-spec.md`) when configured, or — when they are not —
   through two fresh general sub-agents run in parallel, one per axis (never a
   self-review by the working model that produced the diff). The Spec axis
-  carries a mandatory **behavior-parity** check against the olcPixelGameEngine
-  v2.30 reference (`~/workspace/olcPixelGameEngine/olcPixelGameEngine.h`, the
-  upstream checkout), because a plan-conformance review does not catch a defect
-  of the plan itself: a divergence from olc is a finding unless a rationale is
-  recorded in the decisions log, the micro-plan, or KDoc, and recorded
-  divergences are listed as accepted rather than suppressed.
+  carries mandatory checks against the **three sources of truth** (olc behavior
+  parity, no unjustified regression against `main`, Kotlin realization), because
+  a plan-conformance review does not catch a defect of the plan itself: a
+  divergence from olc, or a regression against a `main` solution, is a finding
+  unless a rationale is recorded in the decisions log, the micro-plan, or KDoc,
+  and recorded divergences are listed as accepted rather than suppressed. The
+  olc reference is `~/workspace/olcPixelGameEngine/olcPixelGameEngine.h` (the
+  upstream checkout); `main` is read via `git show main:<path>`.
   The review writes its report to
   `.opencode/reviews/<name>.md` (gitignored local state) and the marker
   `.opencode/review-passed`; the commit gate is enforced by the opencode
@@ -103,8 +107,11 @@ These two are the only active documents; older plans/specs were deleted
   marker before the command runs).
 - **Concept flow**: touch-point (design confirmation, open items decided) →
   micro-plan (1-2 pages, TDD steps, just-in-time) → implement → gate → log
-  entry. Never a slice of a concept; never a provisional API a later concept
-  must break ("no throwaway commits" — restructure at the concept checkpoint).
+  entry. The touch-point and the micro-plan consult olc (behavior), the `main`
+  implementation (its Kotlin-level solutions, not discarded) and the Kotlin
+  constraints/facilities, and record why each divergence is taken. Never a slice
+  of a concept; never a provisional API a later concept must break ("no
+  throwaway commits" — restructure at the concept checkpoint).
 - **TDD**: failing test → run (red) → implement → run (green), per feature; the
   micro-plan's test code is the contract. When dispatched, implementation runs
   through the project `tdd-developer` subagent
@@ -119,6 +126,13 @@ These two are the only active documents; older plans/specs were deleted
   pinned by a test. The concept review audits parameters too (the micro-plan
   can record a wrong "detail" — a plan-conformance review does not catch a
   defect of the plan itself).
+- **Scope discipline**: prefer the narrowest visibility that compiles — a
+  `private` top-level/class member over `internal`, and `internal` over
+  `public`; a concrete implementation shared across files is a `private` type
+  behind an `internal` factory, not an `internal` type. Public API exists on
+  purpose — KGE is an **extensible engine**, so services, facades, role
+  interfaces and the types an extender must name are legitimately public; the
+  defect is *accidental* widening. The concept review audits visibility too.
 - **KDoc discipline**: a KDoc never references the docs tree (`docs/...`) —
   rationale lives in the decisions log/plan, not in the code — and the KDoc of
   public API never names `internal`/`private` concepts, methods, or classes.
@@ -143,9 +157,20 @@ These two are the only active documents; older plans/specs were deleted
   log item 15). Only force-executed green counts. JVM, JS (browser) and wasmJs
   (browser) run the same commonTest suite (the web targets are browser-only —
   node was dropped at S6, log #19).
-- **Behavior reference**: olcPixelGameEngine v2.30 semantics + exact pixel math;
-  old tests are not ported, evidence of `main` is not a mandate (see the
-  roadmap's three lenses).
+- **Sources of truth — three roles**: **(1) olcPixelGameEngine v2.30** is the
+  *behavior* reference (semantics, exact pixel math): this is a port, so a
+  divergence from olc is a finding unless a rationale is recorded. **(2) `main`**
+  is the previous Kotlin implementation — not a mandate (we are rewriting the
+  port, its old tests are not ported) but **evidence that must not be discarded**:
+  its Kotlin-level solutions (allocation, boxing, buffer strategy, structure,
+  seam shape) are candidates, and **a regression against a `main` solution is a
+  finding unless a recorded rationale justifies it**. **(3) Kotlin/KMP** is the
+  realization medium: respect its constraints (value-class boxing in
+  generic/nullable/supertype positions, web `Long` emulation, `expect`/`actual`,
+  browser single-threading) and use its facilities — write idiomatic Kotlin, not
+  a C++ re-enactment; olc parity is behavioral, the Kotlin form is ours to
+  choose. All three are consulted at every touch-point and micro-plan, not only
+  in review. (See the roadmap's three lenses.)
 - **Dependencies**: at add-time always use the current release unless a known
   problem exists; record non-obvious findings in the decisions log.
 - **Docs and commit messages in English**; committed documents carry no personal

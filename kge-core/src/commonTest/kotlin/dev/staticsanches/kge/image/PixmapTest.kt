@@ -166,12 +166,16 @@ class PixmapTest :
             p.uncheckedGet(1, 0) shouldBe Pixel.rgba(0, 255, 255, 255)
         }
 
-        test("the sequence iterates row-major with distinct pixels") {
+        test("asSequence iterates row-major with distinct pixels") {
             val p = pattern(3, 2)
 
-            p.toList() shouldBe
+            p.asSequence().toList() shouldBe
                 (0 until 2).flatMap { y -> (0 until 3).map { x -> p.uncheckedGet(x, y) } }
-            p.toList().distinct().size shouldBe 6
+            p
+                .asSequence()
+                .toList()
+                .distinct()
+                .size shouldBe 6
         }
     })
 

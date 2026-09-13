@@ -141,3 +141,18 @@ identically.
   transparent blend) and the still-out-of-range corner at `u = ±10` through the
   `get` path (the unfolded read was out of bounds).
 
+### Correction (2026-09-13) — `Pixmap` drops its `Sequence<Pixel>` supertype
+
+C5 kept `Pixmap : Sequence<Pixel>` (a row-major iterator), but a value class in
+a generic type argument is boxed on every element — the same non-optimized path
+removed from the decal geometry (log #22 correction) — and no engine consumer
+iterates a surface as a `Sequence` (the bulk operations and the tests read
+explicit `get`/`uncheckedGet` loops). The supertype and its iterator are
+removed; production reads through `get`/`uncheckedGet`, and the tests use a
+test-only `asSequence` extension.
+
+- **Supersedes** the C5 touch-point's "`Sequence<Pixel>` kept" decision (and the
+  matching roadmap S3 line). An extender that iterated a surface uses an
+  explicit `width`/`height` loop; a `Sequence<Pixel>` view stays one extension
+  function away if a real consumer appears.
+

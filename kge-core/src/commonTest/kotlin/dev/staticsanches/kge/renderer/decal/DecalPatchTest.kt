@@ -6,7 +6,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * [DecalPatch]: the decal plus four normalized texture coordinates ordered
+ * [DecalPatch]: the decal plus the four named normalized texture coordinates
  * bottom-left, top-left, top-right, bottom-right (olc's `DecalPatch`); both
  * `Decal.patch` factories build that order.
  */
@@ -17,17 +17,14 @@ class DecalPatchTest :
                 val patch = decal.patch(Int2D(2, 1), Int2D(4, 2))
 
                 patch.decal shouldBe decal
-                patch.coords shouldBe
-                    listOf(
-                        Float2D(0.25f, 0.75f),
-                        Float2D(0.25f, 0.25f),
-                        Float2D(0.75f, 0.25f),
-                        Float2D(0.75f, 0.75f),
-                    )
+                patch.bl shouldBe Float2D(0.25f, 0.75f)
+                patch.tl shouldBe Float2D(0.25f, 0.25f)
+                patch.tr shouldBe Float2D(0.75f, 0.25f)
+                patch.br shouldBe Float2D(0.75f, 0.75f)
             }
         }
 
-        test("patch(bl, tl, tr, br) stores the explicit coordinates in order") {
+        test("patch(bl, tl, tr, br) stores the explicit coordinates") {
             withTestDecal { decal ->
                 val bl = Float2D(0.1f, 0.2f)
                 val tl = Float2D(0.1f, 0.3f)
@@ -37,7 +34,10 @@ class DecalPatchTest :
                 val patch = decal.patch(bl, tl, tr, br)
 
                 patch.decal shouldBe decal
-                patch.coords shouldBe listOf(bl, tl, tr, br)
+                patch.bl shouldBe bl
+                patch.tl shouldBe tl
+                patch.tr shouldBe tr
+                patch.br shouldBe br
             }
         }
     })

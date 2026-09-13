@@ -112,7 +112,7 @@ interface BufferService : KGEOverridable {
 internal expect val bufferServiceDefault: BufferService
 
 /** Throws [IndexOutOfBoundsException] unless [count] ints fit at [fromByteOffset] of [buffer]. */
-internal fun ByteBuffer.requireRange(
+private fun ByteBuffer.requireRange(
     fromByteOffset: Int,
     count: Int,
 ) {

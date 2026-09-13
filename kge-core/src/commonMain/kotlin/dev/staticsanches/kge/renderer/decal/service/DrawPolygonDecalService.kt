@@ -6,6 +6,7 @@ import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
+import dev.staticsanches.kge.renderer.decal.VerticesInfo
 
 /**
  * The arbitrary textured-polygon geometry seam: [drawPolygonDecal] turns a
@@ -49,6 +50,28 @@ interface DrawPolygonDecalService : KGEOverridable {
     }
 }
 
+/**
+ * The polygon geometry in primitive, construction-copied storage: one
+ * interleaved `x, y, u, v` float per vertex plus little-endian RGBA tints.
+ */
+private fun polygonVertices(
+    vertices: FloatArray,
+    tints: IntArray,
+): VerticesInfo =
+    object : VerticesInfo {
+        override val vertexCount: Int get() = vertices.size / 4
+
+        override fun x(index: Int): Float = vertices[index * 4]
+
+        override fun y(index: Int): Float = vertices[index * 4 + 1]
+
+        override fun u(index: Int): Float = vertices[index * 4 + 2]
+
+        override fun v(index: Int): Float = vertices[index * 4 + 3]
+
+        override fun tint(index: Int): Pixel = Pixel.fromNativeRGBA(tints[index])
+    }
+
 /** The platform-independent default — olc `DrawPolygonDecal` clip-space math. */
 private object DrawPolygonDecalServiceDefault : DrawPolygonDecalService {
     override fun drawPolygonDecal(
@@ -60,20 +83,27 @@ private object DrawPolygonDecalServiceDefault : DrawPolygonDecalService {
         structure: Decal.Structure,
         viewport: Int2D,
     ): DecalInstance {
+        require(pos.size == uv.size && pos.size == tint.size) {
+            "pos, uv and tint must have the same size: ${pos.size}, ${uv.size}, ${tint.size}"
+        }
         val inverse = Float2D(1f / viewport.x, 1f / viewport.y)
+        val vertices = FloatArray(pos.size * 4)
+        for (index in 0 until pos.size) {
+            val offset = index * 4
+            vertices[offset] = pos[index].x * inverse.x * 2f - 1f
+            vertices[offset + 1] = -(pos[index].y * inverse.y * 2f - 1f)
+            vertices[offset + 2] = uv[index].x
+            vertices[offset + 3] = uv[index].y
+        }
         return DecalInstance(
             decal = decal,
-            pos =
-                List(pos.size) { index ->
-                    Float2D(
-                        pos[index].x * inverse.x * 2f - 1f,
-                        -(pos[index].y * inverse.y * 2f - 1f),
-                    )
-                },
-            uv = uv,
-            tint = tint,
             mode = mode,
             structure = structure,
+            vertices =
+                polygonVertices(
+                    vertices = vertices,
+                    tints = IntArray(tint.size) { index -> tint[index].nativeRGBA },
+                ),
         )
     }
 }

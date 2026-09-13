@@ -12,6 +12,7 @@ import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
+import dev.staticsanches.kge.renderer.decal.verticesOf
 import dev.staticsanches.kge.renderer.device.RecordingGpuDevice
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.RecordedGLCall
@@ -81,11 +82,14 @@ class RendererSurfaceTest :
                         val instance =
                             DecalInstance(
                                 decal = decal,
-                                pos = List(4) { Float2D(0f, 0f) },
-                                uv = List(4) { Float2D(0f, 0f) },
-                                tint = List(4) { Colors.WHITE },
                                 mode = Decal.Mode.NORMAL,
                                 structure = Decal.Structure.FAN,
+                                vertices =
+                                    verticesOf(
+                                        pos = List(4) { Float2D(0f, 0f) },
+                                        uv = List(4) { Float2D(0f, 0f) },
+                                        tint = List(4) { Colors.WHITE },
+                                    ),
                             )
 
                         renderer.updateTexture(texture, sprite)

@@ -5,8 +5,12 @@ import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
+import dev.staticsanches.kge.renderer.decal.assertTints
+import dev.staticsanches.kge.renderer.decal.assertUvsCloseTo
 import dev.staticsanches.kge.renderer.decal.assertVerticesCloseTo
+import dev.staticsanches.kge.renderer.decal.emptyVertices
 import dev.staticsanches.kge.renderer.decal.withTestDecal
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -37,11 +41,69 @@ class DrawPolygonDecalServiceTest :
                 instance.decal shouldBe decal
                 instance.vertexCount shouldBe 3
                 assertVerticesCloseTo(
-                    instance.pos,
+                    instance.vertices,
                     listOf(Float2D(-1f, 1f), Float2D(1f, 1f), Float2D(0f, -1f)),
                 )
-                instance.uv shouldBe uvs
-                instance.tint shouldBe tints
+                assertUvsCloseTo(instance.vertices, uvs)
+                assertTints(instance.vertices, tints)
+            }
+        }
+
+        test("snapshots the caller's vertices so a later mutation cannot change the instance") {
+            withTestDecal { decal ->
+                val verts = mutableListOf(Float2D(0f, 0f), Float2D(64f, 0f), Float2D(32f, 32f))
+                val uvs = mutableListOf(Float2D(0f, 0f), Float2D(1f, 0f), Float2D(0.5f, 1f))
+                val tints =
+                    mutableListOf(
+                        Pixel.rgba(255, 0, 0),
+                        Pixel.rgba(0, 255, 0),
+                        Pixel.rgba(0, 0, 255),
+                    )
+
+                val instance =
+                    DrawPolygonDecalService.drawPolygonDecal(
+                        decal = decal,
+                        pos = verts,
+                        uv = uvs,
+                        tint = tints,
+                        mode = Decal.Mode.NORMAL,
+                        structure = Decal.Structure.LIST,
+                        viewport = Int2D(64, 32),
+                    )
+
+                verts[0] = Float2D(9f, 9f)
+                uvs.clear()
+                tints.clear()
+
+                instance.vertexCount shouldBe 3
+                assertVerticesCloseTo(
+                    instance.vertices,
+                    listOf(Float2D(-1f, 1f), Float2D(1f, 1f), Float2D(0f, -1f)),
+                )
+                assertUvsCloseTo(
+                    instance.vertices,
+                    listOf(Float2D(0f, 0f), Float2D(1f, 0f), Float2D(0.5f, 1f)),
+                )
+                assertTints(
+                    instance.vertices,
+                    listOf(Pixel.rgba(255, 0, 0), Pixel.rgba(0, 255, 0), Pixel.rgba(0, 0, 255)),
+                )
+            }
+        }
+
+        test("non-parallel pos/uv/tint sizes are rejected at construction") {
+            withTestDecal { decal ->
+                shouldThrow<IllegalArgumentException> {
+                    DrawPolygonDecalService.drawPolygonDecal(
+                        decal = decal,
+                        pos = listOf(Float2D(0f, 0f), Float2D(64f, 0f)),
+                        uv = listOf(Float2D(0f, 0f)),
+                        tint = List(2) { Pixel.rgba(255, 255, 255) },
+                        mode = Decal.Mode.NORMAL,
+                        structure = Decal.Structure.LIST,
+                        viewport = Int2D(64, 32),
+                    )
+                }
             }
         }
 
@@ -83,15 +145,7 @@ class DrawPolygonDecalServiceTest :
                             mode: Decal.Mode,
                             structure: Decal.Structure,
                             viewport: Int2D,
-                        ): DecalInstance =
-                            DecalInstance(
-                                decal,
-                                emptyList(),
-                                emptyList(),
-                                emptyList(),
-                                mode,
-                                structure,
-                            )
+                        ): DecalInstance = DecalInstance(decal, mode, structure, emptyVertices())
                     },
                 )
 

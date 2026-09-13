@@ -14,9 +14,7 @@ import kotlin.math.min
  * outside the surface do not throw: [get], [sample] and [sampleBL] resolve
  * their reads through the [sampleMode] policy.
  */
-interface Pixmap :
-    Sequence<Pixel>,
-    Viewport.Bounded {
+interface Pixmap : Viewport.Bounded {
     /**
      * The out-of-bounds policy of the surface: NORMAL reads transparent,
      * PERIODIC wraps by `abs(coord % dimension)`, CLAMP snaps to the nearest
@@ -159,9 +157,6 @@ interface Pixmap :
         return Pixel.rgba(r.toInt(), g.toInt(), b.toInt(), 0xFF)
     }
 
-    /** Row-major: `y * width + x`, pixels enumerated in storage order. */
-    override fun iterator(): Iterator<Pixel> = PixmapRowMajorIterator(this)
-
     /**
      * A [Pixmap] with writable pixels; the concrete surface supplies
      * [uncheckedSet] and may override [clear] to fill native storage directly.
@@ -301,17 +296,4 @@ private fun requireValidWindow(
     require(origin.x + size.x <= source.width && origin.y + size.y <= source.height) {
         "window origin $origin size $size is outside ${source.width}x${source.height}"
     }
-}
-
-private class PixmapRowMajorIterator(
-    private val pixmap: Pixmap,
-) : Iterator<Pixel> {
-    private var index = 0
-
-    override fun hasNext(): Boolean = index < pixmap.width * pixmap.height
-
-    override fun next(): Pixel =
-        pixmap
-            .uncheckedGet(index % pixmap.width, index / pixmap.width)
-            .also { index++ }
 }

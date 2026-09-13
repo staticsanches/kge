@@ -88,25 +88,24 @@ internal class DefaultRenderer : Renderer {
         GL.blendFunc(source, destination)
         instance.decal.texture.apply()
 
-        val vertices = instance.vertexCount
-        val data = quad.staging.ensureCapacity(VertexLayout.BYTES * vertices)
-        for (index in 0 until vertices) {
-            val position = instance.pos[index]
-            val uv = instance.uv[index]
+        val vertices = instance.vertices
+        val count = vertices.vertexCount
+        val data = quad.staging.ensureCapacity(VertexLayout.BYTES * count)
+        for (index in 0 until count) {
             data.resource.putVertex(
                 index * VertexLayout.BYTES,
-                position.x,
-                position.y,
+                vertices.x(index),
+                vertices.y(index),
                 1f,
                 0f,
-                uv.x,
-                uv.y,
-                instance.tint[index],
+                vertices.u(index),
+                vertices.v(index),
+                vertices.tint(index),
             )
         }
 
-        quad.staging.upload(VertexLayout.BYTES * vertices)
-        GL.drawArrays(instance.structure.toGLPrimitive(instance.mode), 0, vertices)
+        quad.staging.upload(VertexLayout.BYTES * count)
+        GL.drawArrays(instance.structure.toGLPrimitive(instance.mode), 0, count)
     }
 
     override fun clearBuffer(

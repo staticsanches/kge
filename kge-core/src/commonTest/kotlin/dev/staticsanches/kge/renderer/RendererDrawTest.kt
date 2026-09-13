@@ -12,6 +12,7 @@ import dev.staticsanches.kge.image.SpriteService
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
+import dev.staticsanches.kge.renderer.decal.verticesOf
 import dev.staticsanches.kge.renderer.device.RecordingGpuDevice
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.RecordedGLCall
@@ -48,11 +49,14 @@ class RendererDrawTest :
         ): DecalInstance =
             DecalInstance(
                 decal = decal,
-                pos = List(vertices) { Float2D(it.toFloat(), -it.toFloat()) },
-                uv = List(vertices) { Float2D(it.toFloat() * 0.5f, it.toFloat() * 0.25f) },
-                tint = List(vertices) { Colors.WHITE },
                 mode = mode,
                 structure = structure,
+                vertices =
+                    verticesOf(
+                        pos = List(vertices) { Float2D(it.toFloat(), -it.toFloat()) },
+                        uv = List(vertices) { Float2D(it.toFloat() * 0.5f, it.toFloat() * 0.25f) },
+                        tint = List(vertices) { Colors.WHITE },
+                    ),
             )
 
         test("drawLayerQuad records the strip with the offset/scale UVs and the tint") {

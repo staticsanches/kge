@@ -66,13 +66,10 @@ class Decal
             val spriteSize = Float2D(sprite.width.toFloat(), sprite.height.toFloat())
             return DecalPatch(
                 decal = this,
-                coords =
-                    listOf(
-                        Float2D(pos.x.toFloat(), (pos.y + size.y).toFloat()) / spriteSize,
-                        Float2D(pos.x.toFloat(), pos.y.toFloat()) / spriteSize,
-                        Float2D((pos.x + size.x).toFloat(), pos.y.toFloat()) / spriteSize,
-                        Float2D((pos.x + size.x).toFloat(), (pos.y + size.y).toFloat()) / spriteSize,
-                    ),
+                bl = Float2D(pos.x.toFloat(), (pos.y + size.y).toFloat()) / spriteSize,
+                tl = Float2D(pos.x.toFloat(), pos.y.toFloat()) / spriteSize,
+                tr = Float2D((pos.x + size.x).toFloat(), pos.y.toFloat()) / spriteSize,
+                br = Float2D((pos.x + size.x).toFloat(), (pos.y + size.y).toFloat()) / spriteSize,
             )
         }
 
@@ -82,7 +79,7 @@ class Decal
             tl: Float2D,
             tr: Float2D,
             br: Float2D,
-        ): DecalPatch = DecalPatch(this, listOf(bl, tl, tr, br))
+        ): DecalPatch = DecalPatch(this, bl, tl, tr, br)
 
         /** Deletes the owned texture exactly once; every use afterwards fails fast (T1). */
         override fun close() = texture.close()

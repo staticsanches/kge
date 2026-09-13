@@ -6,6 +6,8 @@ import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
+import dev.staticsanches.kge.renderer.decal.VerticesInfo
+import dev.staticsanches.kge.renderer.decal.quad
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -98,23 +100,20 @@ private object DrawPartialDecalServiceDefault : DrawPartialDecalService {
 
         return DecalInstance(
             decal = decal,
-            pos =
-                listOf(
-                    Float2D(quantisedPosX, quantisedPosY),
-                    Float2D(quantisedPosX, quantisedDimY),
-                    Float2D(quantisedDimX, quantisedDimY),
-                    Float2D(quantisedDimX, quantisedPosY),
-                ),
-            uv =
-                listOf(
-                    Float2D(uvtlX, uvtlY),
-                    Float2D(uvtlX, uvbrY),
-                    Float2D(uvbrX, uvbrY),
-                    Float2D(uvbrX, uvtlY),
-                ),
-            tint = List(4) { tint },
             mode = mode,
             structure = structure,
+            vertices =
+                VerticesInfo.quad(
+                    quantisedPosX,
+                    quantisedPosY,
+                    quantisedDimX,
+                    quantisedDimY,
+                    uvtlX,
+                    uvtlY,
+                    uvbrX,
+                    uvbrY,
+                    tint,
+                ),
         )
     }
 }

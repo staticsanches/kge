@@ -6,7 +6,10 @@ import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
+import dev.staticsanches.kge.renderer.decal.assertTints
+import dev.staticsanches.kge.renderer.decal.assertUvsCloseTo
 import dev.staticsanches.kge.renderer.decal.assertVerticesCloseTo
+import dev.staticsanches.kge.renderer.decal.emptyVertices
 import dev.staticsanches.kge.renderer.decal.withTestDecal
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -36,7 +39,7 @@ class DrawPartialDecalServiceTest :
                 instance.decal shouldBe decal
                 instance.vertexCount shouldBe 4
                 assertVerticesCloseTo(
-                    instance.pos,
+                    instance.vertices,
                     listOf(
                         Float2D(-0.5f, 0.5f),
                         Float2D(-0.5f, 0.375f),
@@ -44,8 +47,8 @@ class DrawPartialDecalServiceTest :
                         Float2D(-0.359375f, 0.5f),
                     ),
                 )
-                assertVerticesCloseTo(
-                    instance.uv,
+                assertUvsCloseTo(
+                    instance.vertices,
                     listOf(
                         Float2D(0.1250125f, 0.250025f),
                         Float2D(0.1250125f, 0.749975f),
@@ -53,7 +56,7 @@ class DrawPartialDecalServiceTest :
                         Float2D(0.6249875f, 0.250025f),
                     ),
                 )
-                instance.tint shouldBe List(4) { Colors.WHITE }
+                assertTints(instance.vertices, List(4) { Colors.WHITE })
             }
         }
 
@@ -95,15 +98,7 @@ class DrawPartialDecalServiceTest :
                             mode: Decal.Mode,
                             structure: Decal.Structure,
                             viewport: Int2D,
-                        ): DecalInstance =
-                            DecalInstance(
-                                decal,
-                                emptyList(),
-                                emptyList(),
-                                emptyList(),
-                                mode,
-                                structure,
-                            )
+                        ): DecalInstance = DecalInstance(decal, mode, structure, emptyVertices())
                     },
                 )
 

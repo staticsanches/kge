@@ -160,7 +160,8 @@ internal helper.
   row-major) over native memory. Decided at the C5 touch-point (2026-09-05):
   `Pixmap`/`MutablePixmap` (+ `Sprite` as the single concrete surface);
   the engine's OOB semantics (mode-aware `get`, never throws; `set` returns
-  Boolean); `Sequence<Pixel>` kept; `Viewport.Bounded` deferred to R2;
+  Boolean); `Sequence<Pixel>` kept then dropped 2026-09-13 (value-class boxing;
+  C5 correction in the log); `Viewport.Bounded` deferred to R2;
   `Flip` deferred to C6. Closed (log #33). R2 added `Viewport.Bounded` (the
   full-surface case, lower bound `(0,0)`); the **window/view** — a delegating
   view with a local `0..size` space and an `origin` offset into the source — is
@@ -359,7 +360,9 @@ at its touch-point)
 → `S6` image service (generalizes `S5` — closed 2026-09-11)
 → `C9` renderer/GL/decals (R5 → R4 → R3)
 → `C10` engine (E1 loop/window + E2 addons + E3 state + E4 KeyCode/InputAction;
-`C8` state dissolved into it — decisions-log #20)
+`C8` state dissolved into it — decisions-log #20 — and split at the 2026-09-13
+touch-point into `C10a` loop/window/time → `C10b` input → `C10c` addons; see
+`docs/plans/2026-09-13-c10-engine-touchpoint.md`)
 → `R6` elaborate text (shaping + rasterization + atlas + blit — the final
 concept; see the catalog; not the `main` bitmap font).
 

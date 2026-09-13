@@ -8,6 +8,8 @@ import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
 import dev.staticsanches.kge.renderer.decal.DecalPatch
+import dev.staticsanches.kge.renderer.decal.VerticesInfo
+import dev.staticsanches.kge.renderer.decal.quad
 
 /**
  * The full-decal geometry seam: [drawDecal] turns a screen-space position,
@@ -94,23 +96,20 @@ private object DrawDecalServiceDefault : DrawDecalService {
 
         return DecalInstance(
             decal = decal,
-            pos =
-                listOf(
-                    Float2D(screenSpacePosX, screenSpacePosY),
-                    Float2D(screenSpacePosX, screenSpaceDimY),
-                    Float2D(screenSpaceDimX, screenSpaceDimY),
-                    Float2D(screenSpaceDimX, screenSpacePosY),
-                ),
-            uv =
-                listOf(
-                    Float2D(0f, 0f),
-                    Float2D(0f, 1f),
-                    Float2D(1f, 1f),
-                    Float2D(1f, 0f),
-                ),
-            tint = List(4) { tint },
             mode = mode,
             structure = structure,
+            vertices =
+                VerticesInfo.quad(
+                    screenSpacePosX,
+                    screenSpacePosY,
+                    screenSpaceDimX,
+                    screenSpaceDimY,
+                    0f,
+                    0f,
+                    1f,
+                    1f,
+                    tint,
+                ),
         )
     }
 
@@ -132,7 +131,7 @@ private object DrawDecalServiceDefault : DrawDecalService {
         return DrawPolygonDecalService.drawPolygonDecal(
             decal = patch.decal,
             pos = vertices,
-            uv = patch.coords,
+            uv = listOf(patch.bl, patch.tl, patch.tr, patch.br),
             tint = List(4) { Colors.WHITE },
             mode = mode,
             structure = structure,

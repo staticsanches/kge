@@ -170,11 +170,11 @@ class PixmapWindowTest :
             }
         }
 
-        test("the sequence iterates the window pixels row-major in local order") {
+        test("the window reads through row-major in local order") {
             sprite().use { s ->
                 val w = s.window(Int2D(1, 1), Int2D(3, 3))
 
-                w.toList() shouldBe
+                w.asSequence().toList() shouldBe
                     (0 until 3).flatMap { y -> (0 until 3).map { x -> s.get(x + 1, y + 1) } }
             }
         }

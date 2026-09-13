@@ -7,7 +7,10 @@ import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
 import dev.staticsanches.kge.renderer.decal.DecalPatch
+import dev.staticsanches.kge.renderer.decal.assertTints
+import dev.staticsanches.kge.renderer.decal.assertUvsCloseTo
 import dev.staticsanches.kge.renderer.decal.assertVerticesCloseTo
+import dev.staticsanches.kge.renderer.decal.emptyVertices
 import dev.staticsanches.kge.renderer.decal.withTestDecal
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -35,7 +38,7 @@ class DrawDecalServiceTest :
                 instance.decal shouldBe decal
                 instance.vertexCount shouldBe 4
                 assertVerticesCloseTo(
-                    instance.pos,
+                    instance.vertices,
                     listOf(
                         Float2D(-0.5f, 0.5f),
                         Float2D(-0.5f, -0.25f),
@@ -43,9 +46,11 @@ class DrawDecalServiceTest :
                         Float2D(0f, 0.5f),
                     ),
                 )
-                instance.uv shouldBe
-                    listOf(Float2D(0f, 0f), Float2D(0f, 1f), Float2D(1f, 1f), Float2D(1f, 0f))
-                instance.tint shouldBe List(4) { Colors.WHITE }
+                assertUvsCloseTo(
+                    instance.vertices,
+                    listOf(Float2D(0f, 0f), Float2D(0f, 1f), Float2D(1f, 1f), Float2D(1f, 0f)),
+                )
+                assertTints(instance.vertices, List(4) { Colors.WHITE })
             }
         }
 
@@ -88,7 +93,7 @@ class DrawDecalServiceTest :
                 instance.decal shouldBe decal
                 instance.vertexCount shouldBe 4
                 assertVerticesCloseTo(
-                    instance.pos,
+                    instance.vertices,
                     listOf(
                         Float2D(-0.5f, 0.4375f),
                         Float2D(-0.5f, 0.5f),
@@ -96,8 +101,8 @@ class DrawDecalServiceTest :
                         Float2D(-0.4375f, 0.4375f),
                     ),
                 )
-                assertVerticesCloseTo(
-                    instance.uv,
+                assertUvsCloseTo(
+                    instance.vertices,
                     listOf(
                         Float2D(0.25f, 0.75f),
                         Float2D(0.25f, 0.25f),
@@ -105,7 +110,7 @@ class DrawDecalServiceTest :
                         Float2D(0.75f, 0.75f),
                     ),
                 )
-                instance.tint shouldBe List(4) { Colors.WHITE }
+                assertTints(instance.vertices, List(4) { Colors.WHITE })
             }
         }
 
@@ -144,15 +149,7 @@ class DrawDecalServiceTest :
                             mode: Decal.Mode,
                             structure: Decal.Structure,
                             viewport: Int2D,
-                        ): DecalInstance =
-                            DecalInstance(
-                                decal,
-                                emptyList(),
-                                emptyList(),
-                                emptyList(),
-                                mode,
-                                structure,
-                            )
+                        ): DecalInstance = DecalInstance(decal, mode, structure, emptyVertices())
 
                         override fun drawDecal(
                             position: Float2D,
@@ -161,15 +158,7 @@ class DrawDecalServiceTest :
                             mode: Decal.Mode,
                             structure: Decal.Structure,
                             viewport: Int2D,
-                        ): DecalInstance =
-                            DecalInstance(
-                                patch.decal,
-                                emptyList(),
-                                emptyList(),
-                                emptyList(),
-                                mode,
-                                structure,
-                            )
+                        ): DecalInstance = DecalInstance(patch.decal, mode, structure, emptyVertices())
                     },
                 )
 

@@ -223,3 +223,34 @@ texture upload and the decal vertex above).
   screen-scale coordinates, as olc's screen-space scanline also does. No
   change: the per-pixel test is the hot path and switching to `Long` (emulated
   on web) is a measured-performance risk without a benchmark.
+
+### Correction (2026-09-13) — decal vertex storage is a pull contract
+
+`DecalInstance` shipped with parallel `List<Float2D>`/`List<Pixel>` vertex
+collections. A `Pixel` in a generic position is boxed — the same value-class
+non-optimized path removed from `Pixmap` on 2026-09-13 — and every vertex
+materialized two `Float2D` objects, while `main`'s `DecalInstance` held a
+`VerticesInfo` pull contract with no per-vertex collections: a regression
+against a `main` Kotlin-level solution, corrected here.
+
+- **`VerticesInfo`** (public, `renderer/decal`): `vertexCount` plus per-index
+  `x`/`y`/`u`/`v`/`tint` pulls. `DecalInstance(decal, mode, structure,
+  vertices)` holds it and delegates `vertexCount`; the parallel lists and the
+  instance-level size validation go. The renderer pulls one vertex at a time
+  and writes the same bytes in the same order, so no geometry, vertex order or
+  GL call changed (the recording expectations moved only to the new API).
+- **Implementations are anonymous, behind factory functions.**
+  `VerticesInfo.quad(...)` (an `internal` extension on the interface's
+  companion) returns an anonymous primitive-backed quad in olc order TL, BL,
+  BR, TR; the polygon path builds anonymous interleaved geometry (one
+  `FloatArray` of `x, y, u, v` per vertex plus an `IntArray` of `nativeRGBA`
+  tints) copied at construction, and its
+  public list boundary keeps the fail-fast on non-parallel sizes that
+  `DecalInstance` used to own.
+- **`DecalPatch`** carries four named coordinates (`bl`/`tl`/`tr`/`br`)
+  instead of a `List`; both `Decal.patch` factories keep their behavior.
+- **Accepted divergences.** `main`'s `VerticesInfo` also exposed `z`/`w` and a
+  `putAll(buffer)`; KGE drops both — the 2D instance has no depth (#22) and
+  `putAll` couples geometry to the byte layout the renderer owns. The polygon
+  boundary still takes `List<Float2D>`/`List<Pixel>`; an array overload can
+  follow if the boundary allocation matters.

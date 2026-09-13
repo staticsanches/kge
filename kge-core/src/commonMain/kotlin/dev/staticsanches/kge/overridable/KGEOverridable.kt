@@ -43,7 +43,7 @@ interface KGEOverridable {
         @KGESensitiveAPI
         fun override(impl: O): Unit = current.store(impl)
 
-        internal fun clearOverride() = current.store(original)
+        private fun clearOverride() = current.store(original)
 
         init {
             register(this)
