@@ -1,25 +1,55 @@
 package dev.staticsanches.kge.engine
 
+import dev.staticsanches.kge.engine.input.KeyboardKey
+import dev.staticsanches.kge.engine.input.Modifiers
+import dev.staticsanches.kge.engine.input.MouseButton
+import dev.staticsanches.kge.engine.input.RawInput
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.device.WebGpuDevice
 import dev.staticsanches.kge.renderer.gl.updateGLContext
 import dev.staticsanches.kge.resource.letClosingIfFailed
-import kotlinx.browser.window
 import kotlinx.coroutines.suspendCancellableCoroutine
 import web.dom.document
+import web.events.Event
+import web.events.EventTargetLike
+import web.events.EventType
+import web.events.RESIZE
+import web.events.addEventListener
+import web.events.removeEventListener
+import web.focus.BLUR
+import web.focus.FOCUS
+import web.focus.FocusEvent
 import web.gl.ID
 import web.gl.WebGL2RenderingContext
 import web.html.HTMLCanvasElement
+import web.keyboard.CapsLock
+import web.keyboard.KEY_DOWN
+import web.keyboard.KEY_UP
+import web.keyboard.KeyboardEvent
+import web.keyboard.ModifierKeyCode
+import web.keyboard.NumLock
+import web.mouse.AUXILIARY
+import web.mouse.MAIN
+import web.mouse.MOUSE_DOWN
+import web.mouse.MOUSE_MOVE
+import web.mouse.MOUSE_UP
+import web.mouse.MouseEvent
+import web.mouse.SECONDARY
+import web.mouse.WHEEL
+import web.mouse.WheelEvent
 import kotlin.coroutines.resume
+import kotlinx.browser.window as animationWindow
+import web.mouse.MouseButton as DomMouseButton
+import web.window.window as eventWindow
 
 internal actual val driverServiceDefault: DriverService = DefaultWebDriverService
 
 /**
  * The web [DriverService] bound to a caller-owned [canvas].
  *
- * The driver uses the canvas' WebGL2 context and resizes the canvas backing
- * store to the physical device pixels; closing it never removes the caller's
- * canvas.
+ * The driver uses the canvas' WebGL2 context, follows the canvas' CSS size on
+ * resize and scales its backing store to the device pixels; closing it never
+ * removes the caller's canvas.
  */
 class WebDriverService(
     private val canvas: HTMLCanvasElement,
@@ -40,20 +70,26 @@ private fun webDriver(
     config: WindowConfig,
     ownsCanvas: Boolean,
 ): WebDriver =
-    WebDriver(canvas, config, ownsCanvas).letClosingIfFailed { driver ->
+    WebDriver(
+        canvas = canvas,
+        desiredSize = Int2D(config.screenWidth * config.pixelWidth, config.screenHeight * config.pixelHeight),
+        ownsCanvas = ownsCanvas,
+    ).letClosingIfFailed { driver ->
         driver.initialize()
         driver
     }
 
 private class WebDriver(
     private val canvas: HTMLCanvasElement,
-    config: WindowConfig,
+    private val desiredSize: Int2D,
     private val ownsCanvas: Boolean,
 ) : Driver {
-    private val windowSize =
-        Int2D(config.screenWidth * config.pixelWidth, config.screenHeight * config.pixelHeight)
-    private lateinit var device: WebGpuDevice
+    override val input = RawInput()
+
+    private var windowSize = desiredSize
     private var closed = false
+    private lateinit var device: WebGpuDevice
+    private val disposers = mutableListOf<() -> Unit>()
 
     fun initialize() {
         device =
@@ -62,12 +98,65 @@ private class WebDriver(
                     "WebGL2 context unavailable"
                 },
             )
-        canvas.width = (windowSize.x * window.devicePixelRatio).toInt()
-        canvas.height = (windowSize.y * window.devicePixelRatio).toInt()
+        applySize(desiredSize)
+        registerInput()
+    }
+
+    private fun applySize(size: Int2D) {
+        windowSize = size
         // The backing store is DPR-scaled; the CSS size stays logical so the
         // element is not displayed DPR-times too large.
-        canvas.style.width = "${windowSize.x}px"
-        canvas.style.height = "${windowSize.y}px"
+        canvas.style.width = "${size.x}px"
+        canvas.style.height = "${size.y}px"
+        canvas.width = (size.x * animationWindow.devicePixelRatio).toInt()
+        canvas.height = (size.y * animationWindow.devicePixelRatio).toInt()
+    }
+
+    private fun registerInput() {
+        disposers += eventWindow.on(KeyboardEvent.KEY_DOWN) { onKey(it, down = true) }
+        disposers += eventWindow.on(KeyboardEvent.KEY_UP) { onKey(it, down = false) }
+        disposers += canvas.on(MouseEvent.MOUSE_DOWN) { onMouseButton(it, down = true) }
+        disposers += canvas.on(MouseEvent.MOUSE_UP) { onMouseButton(it, down = false) }
+        disposers +=
+            canvas.on(MouseEvent.MOUSE_MOVE) {
+                input.applyMouseMove(it.offsetX, it.offsetY)
+            }
+        disposers += canvas.on(WheelEvent.WHEEL) { input.applyScroll(it.deltaY) }
+        disposers += eventWindow.on(FocusEvent.BLUR) { onFocus(false) }
+        disposers += eventWindow.on(FocusEvent.FOCUS) { onFocus(true) }
+        disposers += eventWindow.on(Event.RESIZE) { onResize() }
+    }
+
+    private fun onKey(
+        event: KeyboardEvent,
+        down: Boolean,
+    ) {
+        input.applyKey(event.code.toString(), event.webModifiers(), down)
+    }
+
+    private fun onMouseButton(
+        event: MouseEvent,
+        down: Boolean,
+    ) {
+        input.applyMouseButton(event.button, down)
+    }
+
+    private fun onFocus(focused: Boolean) {
+        input.applyFocus(focused)
+    }
+
+    private fun onResize() {
+        if (ownsCanvas) {
+            applySize(fitCanvasSize(desiredSize, Int2D(eventWindow.innerWidth, eventWindow.innerHeight)))
+        } else {
+            val width = canvas.clientWidth
+            val height = canvas.clientHeight
+            if (width > 0 && height > 0) {
+                windowSize = Int2D(width, height)
+                canvas.width = (width * animationWindow.devicePixelRatio).toInt()
+                canvas.height = (height * animationWindow.devicePixelRatio).toInt()
+            }
+        }
     }
 
     override fun makeCurrent() = device.makeCurrent()
@@ -78,8 +167,8 @@ private class WebDriver(
 
     override suspend fun awaitNextFrame() {
         suspendCancellableCoroutine { continuation ->
-            val handle = window.requestAnimationFrame { continuation.resume(Unit) }
-            continuation.invokeOnCancellation { window.cancelAnimationFrame(handle) }
+            val handle = animationWindow.requestAnimationFrame { continuation.resume(Unit) }
+            continuation.invokeOnCancellation { animationWindow.cancelAnimationFrame(handle) }
         }
     }
 
@@ -94,7 +183,94 @@ private class WebDriver(
     override fun close() {
         if (closed) return
         closed = true
+        disposers.forEach { it() }
+        disposers.clear()
         updateGLContext(null)
         if (ownsCanvas) canvas.remove()
     }
+}
+
+/** Registers [handler] for [type]; the returned action removes it. */
+private fun <E : Event> EventTargetLike.on(
+    type: EventType<E>,
+    handler: (E) -> Unit,
+): () -> Unit {
+    addEventListener(type, handler)
+    return { removeEventListener(type, handler) }
+}
+
+/** Applies a keyboard event's code and modifiers to the raw input. */
+internal fun RawInput.applyKey(
+    code: String,
+    modifiers: Modifiers,
+    down: Boolean,
+) {
+    this.modifiers = modifiers
+    setKeyDown(KeyboardKey[code], down)
+}
+
+/** Applies a DOM mouse button event to the raw input; an unknown button is ignored. */
+internal fun RawInput.applyMouseButton(
+    button: web.mouse.MouseButton,
+    down: Boolean,
+) {
+    val mapped =
+        when (button) {
+            DomMouseButton.MAIN -> MouseButton.LEFT
+            DomMouseButton.AUXILIARY -> MouseButton.MIDDLE
+            DomMouseButton.SECONDARY -> MouseButton.RIGHT
+            else -> return
+        }
+    setMouseButtonDown(mapped, down)
+}
+
+/** Applies a DOM cursor position, in window points. */
+internal fun RawInput.applyMouseMove(
+    x: Double,
+    y: Double,
+) {
+    mousePosition = Int2D(x.toInt(), y.toInt())
+}
+
+/**
+ * Applies a DOM wheel delta; the DOM reports positive down, the engine (like
+ * olc's emscripten backend) positive up.
+ */
+internal fun RawInput.applyScroll(deltaY: Double) {
+    wheelDelta -= deltaY.toInt()
+}
+
+/** Applies a focus change; losing focus releases every held key and mouse button. */
+internal fun RawInput.applyFocus(focused: Boolean) {
+    this.focused = focused
+    if (!focused) {
+        clearKeys()
+        clearMouseButtons()
+    }
+}
+
+private fun KeyboardEvent.webModifiers(): Modifiers =
+    Modifiers.of(
+        shift = shiftKey,
+        ctrl = ctrlKey,
+        alt = altKey,
+        superKey = metaKey,
+        capsLock = getModifierState(ModifierKeyCode.CapsLock),
+        numLock = getModifierState(ModifierKeyCode.NumLock),
+    )
+
+/**
+ * Fits [desired] into [available] preserving its aspect ratio; a non-positive
+ * available axis leaves the desired size unchanged.
+ */
+internal fun fitCanvasSize(
+    desired: Int2D,
+    available: Int2D,
+): Int2D {
+    if (available.x <= 0 || available.y <= 0) return desired
+    val scale = minOf(available.x.toDouble() / desired.x, available.y.toDouble() / desired.y)
+    return Int2D(
+        (desired.x * scale).toInt().coerceAtLeast(1),
+        (desired.y * scale).toInt().coerceAtLeast(1),
+    )
 }

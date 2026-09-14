@@ -186,11 +186,12 @@ These two are the only active documents; older plans/specs were deleted
   gate history, no test counts, no review narratives, no change-by-change recap
   (that is what the diff shows), no doc/location pointers. Long-form context
   lives in the decisions log and KDocs, never in the commit body.
-- **One commit per round**: the round's work is delivered as a single commit —
-  never stack commits; squash before hand-off. The owner pushes that commit,
-  and only then does the next round begin.
-- **Delivery**: commit-ready work; the owner reviews, pushes, and may implement
-  parts personally. Do not push.
+- **One commit per round**: the round's work is committed as a single commit —
+  never stack commits; squash before hand-off. The owner reviews and pushes;
+  only then does the next round begin.
+- **Delivery**: the agent commits the round's work (tests, gate and review
+  green) and never pushes; the owner reviews, pushes, and may implement parts
+  personally.
 
 ## Commands
 

@@ -1,5 +1,7 @@
 package dev.staticsanches.kge.engine
 
+import dev.staticsanches.kge.engine.input.InputState
+import dev.staticsanches.kge.engine.input.InputTracker
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
@@ -28,6 +30,9 @@ abstract class Engine(
 ) {
     private val active = AtomicBoolean(false)
     private val accumulator = FrameAccumulator()
+    private val inputTracker = InputTracker()
+    private val screenSize = Int2D(config.screenWidth, config.screenHeight)
+    private val pixelSize = Int2D(config.pixelWidth, config.pixelHeight)
 
     private var engineDispatcher: CoroutineDispatcher? = null
     private var engineThreadId: Long? = null
@@ -38,6 +43,10 @@ abstract class Engine(
     /** The snapshot of the last rendered frame; zero before [start]. */
     var frame: FrameInfo = FrameInfo(Duration.ZERO, 0, 0)
         private set
+
+    /** The input snapshot of the current frame; it refreshes before each [onUserUpdate]. */
+    val input: InputState
+        get() = inputTracker.state
 
     /**
      * The dispatcher confined to the thread that called [start]; every callback
@@ -112,8 +121,15 @@ abstract class Engine(
             while (active.load() && !driver.isClosing()) {
                 val elapsed = accumulator.tick(Time.elapsed())
                 driver.pollEvents()
+                val framebufferSize = driver.framebufferSize()
+                if (framebufferSize != lastFramebufferSize) {
+                    lastFramebufferSize = framebufferSize
+                    viewportFit = fitViewport(screenSize, pixelSize, framebufferSize, config.cohesion)
+                }
+                val fit = checkNotNull(viewportFit)
+                inputTracker.latch(driver.input, screenSize, fit, driver.windowSize(), framebufferSize)
                 if (!onUserUpdate(elapsed)) active.store(false)
-                renderFrame(scope, driver)
+                renderFrame(scope, driver, fit)
                 frame = FrameInfo(elapsed, accumulator.fps, accumulator.frameCount)
             }
             val closing = driver.isClosing()
@@ -127,19 +143,8 @@ abstract class Engine(
     private suspend fun renderFrame(
         scope: ResourceScope,
         driver: Driver,
+        fit: ViewportFit,
     ) {
-        val framebufferSize = driver.framebufferSize()
-        if (framebufferSize != lastFramebufferSize) {
-            lastFramebufferSize = framebufferSize
-            viewportFit =
-                fitViewport(
-                    screenSize = Int2D(config.screenWidth, config.screenHeight),
-                    pixelSize = Int2D(config.pixelWidth, config.pixelHeight),
-                    framebufferSize = framebufferSize,
-                    cohesion = config.cohesion,
-                )
-        }
-        val fit = checkNotNull(viewportFit)
         Renderer.updateViewport(fit.position, fit.size)
         Renderer.clearBuffer(Colors.BLACK, depth = true)
         Renderer.prepareDrawing(scope)

@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.engine
 
+import dev.staticsanches.kge.engine.input.RawInput
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.device.GpuDevice
 
@@ -12,6 +13,9 @@ import dev.staticsanches.kge.renderer.device.GpuDevice
 interface Driver :
     GpuDevice,
     AutoCloseable {
+    /** The raw input state the platform callbacks fill; the engine latches it each frame. */
+    val input: RawInput
+
     /** Dispenses the platform events of the current frame. */
     fun pollEvents()
 
