@@ -13,9 +13,12 @@ class WindowConfigTest :
             config.pixelHeight shouldBe 1
             config.title shouldBe ""
             config.resizable shouldBe true
+            config.keepAspectRatio shouldBe false
             config.vsync shouldBe false
             config.fullScreen shouldBe false
+            config.decorated shouldBe true
             config.cohesion shouldBe false
+            config.highDpi shouldBe false
         }
 
         test("non-positive screen sizes are rejected") {

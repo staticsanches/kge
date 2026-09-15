@@ -41,7 +41,7 @@ abstract class Engine(
     private var viewportFit: ViewportFit? = null
 
     /** The snapshot of the last rendered frame; zero before [start]. */
-    var frame: FrameInfo = FrameInfo(Duration.ZERO, 0, 0)
+    var frame: FrameInfo = FrameInfo(Duration.ZERO, 0, 0, Int2D(0, 0))
         private set
 
     /** The input snapshot of the current frame; it refreshes before each [onUserUpdate]. */
@@ -130,7 +130,7 @@ abstract class Engine(
                 inputTracker.latch(driver.input, screenSize, fit, driver.windowSize(), framebufferSize)
                 if (!onUserUpdate(elapsed)) active.store(false)
                 renderFrame(scope, driver, fit)
-                frame = FrameInfo(elapsed, accumulator.fps, accumulator.frameCount)
+                frame = FrameInfo(elapsed, accumulator.fps, accumulator.frameCount, framebufferSize)
             }
             val closing = driver.isClosing()
             val destroyed = onUserDestroy()

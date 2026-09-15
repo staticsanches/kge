@@ -9,13 +9,19 @@ import web.html.HTMLCanvasElement
 
 class WebDriverServiceTest :
     FunSpec({
-        test("the canvas-bound service reports the configured sizes and closes idempotently") {
+        test("drawable ratio honors the device pixel ratio only when highDpi is on") {
+            drawablePixelRatio(highDpi = true, devicePixelRatio = 2.0) shouldBe 2.0
+            drawablePixelRatio(highDpi = false, devicePixelRatio = 2.0) shouldBe 1.0
+        }
+
+        test("highDpi on scales the backing store by the device pixel ratio and reports the logical size") {
             val config =
                 WindowConfig(
                     screenWidth = 320,
                     screenHeight = 240,
                     pixelWidth = 2,
                     pixelHeight = 3,
+                    highDpi = true,
                 )
             val logical = Int2D(640, 720)
             val physical =
@@ -39,6 +45,19 @@ class WebDriverServiceTest :
             driver.pollEvents()
 
             driver.close()
+            driver.close()
+        }
+
+        test("highDpi off, the default, keeps the backing store at the logical size") {
+            val config = WindowConfig(screenWidth = 320, screenHeight = 240)
+            val canvas = document.createElement("canvas") as HTMLCanvasElement
+
+            val driver = WebDriverService(canvas).create(config)
+
+            driver.framebufferSize() shouldBe Int2D(320, 240)
+            canvas.width shouldBe 320
+            canvas.height shouldBe 240
+
             driver.close()
         }
 

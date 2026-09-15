@@ -40,11 +40,16 @@ internal object GlfwDriverService : DriverService {
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE)
         GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, if (config.resizable) GLFW.GLFW_TRUE else GLFW.GLFW_FALSE)
+        GLFW.glfwWindowHint(GLFW.GLFW_DECORATED, if (config.decorated) GLFW.GLFW_TRUE else GLFW.GLFW_FALSE)
+        // No-op outside macOS: GLFW only reads this hint for Cocoa.
+        GLFW.glfwWindowHint(GLFW.GLFW_COCOA_RETINA_FRAMEBUFFER, if (config.highDpi) GLFW.GLFW_TRUE else GLFW.GLFW_FALSE)
 
+        val windowWidth = config.screenWidth * config.pixelWidth
+        val windowHeight = config.screenHeight * config.pixelHeight
         val window =
             GLFW.glfwCreateWindow(
-                config.screenWidth * config.pixelWidth,
-                config.screenHeight * config.pixelHeight,
+                windowWidth,
+                windowHeight,
                 config.title,
                 if (config.fullScreen) GLFW.glfwGetPrimaryMonitor() else MemoryUtil.NULL,
                 MemoryUtil.NULL,
@@ -53,6 +58,7 @@ internal object GlfwDriverService : DriverService {
             GLFW.glfwTerminate()
             error("Failed to create the GLFW window")
         }
+        if (config.keepAspectRatio) GLFW.glfwSetWindowAspectRatio(window, windowWidth, windowHeight)
 
         return GlfwDriver(window).letClosingIfFailed { driver ->
             driver.installCallbacks()

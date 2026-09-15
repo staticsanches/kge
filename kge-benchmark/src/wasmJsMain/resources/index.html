@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>KGE benchmark</title>
+    <style>
+        body { font-family: monospace; margin: 1rem; }
+        canvas { border: 1px solid #888; display: block; }
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 0 0.5rem; text-align: right; }
+        th { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+<h1>KGE FPS benchmark (wasmJs)</h1>
+<p>The sweep runs one resolution at a time, paced by <code>requestAnimationFrame</code>.</p>
+<div id="output">Running…</div>
+<script src="kge-benchmark.js"></script>
+</body>
+</html>

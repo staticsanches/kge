@@ -47,9 +47,10 @@ internal actual val driverServiceDefault: DriverService = DefaultWebDriverServic
 /**
  * The web [DriverService] bound to a caller-owned [canvas].
  *
- * The driver uses the canvas' WebGL2 context, follows the canvas' CSS size on
- * resize and scales its backing store to the device pixels; closing it never
- * removes the caller's canvas.
+ * The driver uses the canvas' WebGL2 context and follows its CSS size on resize.
+ * The backing store matches the logical size by default and is scaled by the
+ * device pixel ratio when [WindowConfig.highDpi] is set; closing never removes
+ * the caller's canvas.
  */
 class WebDriverService(
     private val canvas: HTMLCanvasElement,
@@ -74,6 +75,7 @@ private fun webDriver(
         canvas = canvas,
         desiredSize = Int2D(config.screenWidth * config.pixelWidth, config.screenHeight * config.pixelHeight),
         ownsCanvas = ownsCanvas,
+        highDpi = config.highDpi,
     ).letClosingIfFailed { driver ->
         driver.initialize()
         driver
@@ -83,6 +85,7 @@ private class WebDriver(
     private val canvas: HTMLCanvasElement,
     private val desiredSize: Int2D,
     private val ownsCanvas: Boolean,
+    private val highDpi: Boolean,
 ) : Driver {
     override val input = RawInput()
 
@@ -104,13 +107,18 @@ private class WebDriver(
 
     private fun applySize(size: Int2D) {
         windowSize = size
-        // The backing store is DPR-scaled; the CSS size stays logical so the
-        // element is not displayed DPR-times too large.
+        // The backing store is DPR-scaled when the config honors HiDPI;
+        // the CSS size stays logical so the element is not displayed DPR-times
+        // too large.
         canvas.style.width = "${size.x}px"
         canvas.style.height = "${size.y}px"
-        canvas.width = (size.x * animationWindow.devicePixelRatio).toInt()
-        canvas.height = (size.y * animationWindow.devicePixelRatio).toInt()
+        canvas.width = (size.x * pixelRatio).toInt()
+        canvas.height = (size.y * pixelRatio).toInt()
     }
+
+    /** The drawable/logical ratio, [drawablePixelRatio] of the display's DPR. */
+    private val pixelRatio: Double
+        get() = drawablePixelRatio(highDpi, animationWindow.devicePixelRatio)
 
     private fun registerInput() {
         disposers += eventWindow.on(KeyboardEvent.KEY_DOWN) { onKey(it, down = true) }
@@ -153,8 +161,8 @@ private class WebDriver(
             val height = canvas.clientHeight
             if (width > 0 && height > 0) {
                 windowSize = Int2D(width, height)
-                canvas.width = (width * animationWindow.devicePixelRatio).toInt()
-                canvas.height = (height * animationWindow.devicePixelRatio).toInt()
+                canvas.width = (width * pixelRatio).toInt()
+                canvas.height = (height * pixelRatio).toInt()
             }
         }
     }
@@ -274,3 +282,9 @@ internal fun fitCanvasSize(
         (desired.y * scale).toInt().coerceAtLeast(1),
     )
 }
+
+/** The drawable/logical ratio: the display's [devicePixelRatio] when [highDpi], else 1. */
+internal fun drawablePixelRatio(
+    highDpi: Boolean,
+    devicePixelRatio: Double,
+): Double = if (highDpi) devicePixelRatio else 1.0

@@ -86,6 +86,7 @@ class EngineFrameTest :
 
             engine.frame.elapsed shouldBe 16.milliseconds
             engine.frame.frameCount shouldBe 3
+            engine.frame.framebufferSize shouldBe Int2D(320, 240)
         }
 
         test("fps stays zero until a full one-second window completes") {
@@ -134,7 +135,7 @@ class EngineFrameTest :
         test("frame is a zero snapshot before start") {
             val engine = ScriptedEngine()
 
-            engine.frame shouldBe FrameInfo(Duration.ZERO, 0, 0)
+            engine.frame shouldBe FrameInfo(Duration.ZERO, 0, 0, Int2D(0, 0))
         }
     })
 

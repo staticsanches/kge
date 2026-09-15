@@ -8,3 +8,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "kge"
 include("kge-core")
+include("kge-benchmark")
