@@ -43,7 +43,7 @@ class EngineSmokeTest :
     })
 
 /** Hands out the production driver with a hidden window and records its close. */
-private class HiddenGlfwDriverService : DriverService {
+internal class HiddenGlfwDriverService : DriverService {
     var closed = false
         private set
 

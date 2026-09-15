@@ -19,4 +19,28 @@ class EngineThreadTest :
 
             thrown shouldBe true
         }
+
+        test("setDrawTarget and drawTarget fail fast off the engine thread") {
+            installDriver(RecordingDriver())
+            installGl()
+            var guarded = false
+            val engine =
+                ScriptedEngine(
+                    onUpdate = { e, _ ->
+                        val other =
+                            Thread {
+                                val setGuard = runCatching { e.setDrawTarget(0) }.exceptionOrNull()
+                                val assignGuard = runCatching { e.drawTarget = null }.exceptionOrNull()
+                                guarded = setGuard is IllegalStateException && assignGuard is IllegalStateException
+                            }
+                        other.start()
+                        other.join()
+                        false
+                    },
+                )
+
+            engine.start()
+
+            guarded shouldBe true
+        }
     })

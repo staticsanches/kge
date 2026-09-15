@@ -72,6 +72,7 @@ internal object GlfwDriverService : DriverService {
 private class GlfwDriver(
     private val window: Long,
 ) : Driver,
+    GlfwWindow,
     GpuDevice by GlfwGpuDevice(window) {
     override val input = RawInput()
 
@@ -129,6 +130,16 @@ private class GlfwDriver(
     override fun isClosing(): Boolean = closed || GLFW.glfwWindowShouldClose(window)
 
     override fun cancelClose() = GLFW.glfwSetWindowShouldClose(window, false)
+
+    override fun setTitle(title: String) = GLFW.glfwSetWindowTitle(window, title)
+
+    override fun show() = GLFW.glfwShowWindow(window)
+
+    override fun hide() = GLFW.glfwHideWindow(window)
+
+    override var closeRequested: Boolean
+        get() = GLFW.glfwWindowShouldClose(window)
+        set(value) = GLFW.glfwSetWindowShouldClose(window, value)
 
     override fun close() {
         if (closed) return

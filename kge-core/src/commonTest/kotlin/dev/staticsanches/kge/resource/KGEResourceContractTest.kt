@@ -16,6 +16,16 @@ class KGEResourceContractTest :
             autoCloseable.close()
         }
 
+        test("KGEInternalResource is a KGEResource managed by the engine") {
+            val resource =
+                object : KGEInternalResource {
+                    override fun close() = Unit
+                }
+
+            val kgeResource: KGEResource = resource
+            kgeResource.close()
+        }
+
         test("a KGECleanAction invokes its payload once per call") {
             var calls = 0
             val action = KGECleanAction { calls++ }

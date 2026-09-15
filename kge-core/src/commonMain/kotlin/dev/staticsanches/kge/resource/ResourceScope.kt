@@ -56,17 +56,8 @@ class ResourceScope : KGEResource {
         if (closed) return
         closed = true
 
-        var failure: Throwable? = null
-        for (resource in resources.values.toList().asReversed()) {
-            try {
-                resource.close()
-            } catch (e: Throwable) {
-                val first = failure
-                if (first == null) failure = e else first.addSuppressed(e)
-            }
-        }
+        val toClose = resources.values.toList().asReversed()
         resources.clear()
-
-        failure?.let { throw it }
+        toClose.closeAll()
     }
 }

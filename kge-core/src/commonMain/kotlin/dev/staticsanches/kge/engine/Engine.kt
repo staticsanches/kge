@@ -1,11 +1,16 @@
 package dev.staticsanches.kge.engine
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.input.InputState
 import dev.staticsanches.kge.engine.input.InputTracker
+import dev.staticsanches.kge.engine.layer.LayerStack
 import dev.staticsanches.kge.image.Colors
+import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.renderer.Renderer
+import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.resource.ResourceScope
 import dev.staticsanches.kge.time.FrameAccumulator
 import dev.staticsanches.kge.time.Time
@@ -27,25 +32,88 @@ import kotlin.time.Duration
 @OptIn(ExperimentalAtomicApi::class)
 abstract class Engine(
     protected val config: WindowConfig,
-) {
+) : HasWindow,
+    HasTime,
+    HasInput,
+    HasLayers,
+    HasDrawTarget,
+    HasDrawModes,
+    HasDriver {
     private val active = AtomicBoolean(false)
     private val accumulator = FrameAccumulator()
     private val inputTracker = InputTracker()
-    private val screenSize = Int2D(config.screenWidth, config.screenHeight)
-    private val pixelSize = Int2D(config.pixelWidth, config.pixelHeight)
+
+    override val window: WindowInfo = WindowInfo(config)
+
+    private var engineLayers: LayerStack? = null
+
+    /**
+     * The engine's layers; fails fast when read before [start] or after it
+     * returns. Layer 0 exists for the whole run.
+     */
+    override val layers: LayerStack
+        get() = engineLayers ?: error("layers is only available while the engine is running")
+
+    /**
+     * The sprite the engine draws into; it points at layer 0's target at
+     * startup. A non-null assignment keeps the selected layer, `null` selects
+     * layer 0.
+     */
+    override var drawTarget: Sprite? = null
+        set(value) {
+            requireEngineThread()
+            if (value == null) {
+                layers.targetIndex = 0
+                field = layers[0].target
+            } else {
+                field = value
+            }
+        }
+
+    /** How raster primitives blend into [drawTarget]. */
+    override var pixelMode: Pixel.Mode = Pixel.Mode.Normal
+
+    /** How decals blend into [drawTarget]. */
+    override var decalMode: Decal.Mode = Decal.Mode.NORMAL
+
+    /** How a decal instance's vertex list is assembled into primitives. */
+    override var decalStructure: Decal.Structure = Decal.Structure.FAN
+
+    /** Suppresses a layer's automatic CPU → GPU upload before it is composited. */
+    override var suspendTextureTransfer: Boolean = false
+
+    override fun setDrawTarget(
+        index: Int,
+        dirty: Boolean,
+    ) {
+        requireEngineThread()
+        val layer = layers[index]
+        layers.targetIndex = index
+        layer.update = dirty
+        drawTarget = layer.target
+    }
 
     private var engineDispatcher: CoroutineDispatcher? = null
     private var engineThreadId: Long? = null
+    private var engineDriver: Driver? = null
+
+    /**
+     * The driver of the current run; fails fast when read before [start] or
+     * after it returns.
+     */
+    @KGESensitiveAPI
+    override val driver: Driver
+        get() = engineDriver ?: error("driver is only available while the engine is running")
 
     private var lastFramebufferSize: Int2D? = null
     private var viewportFit: ViewportFit? = null
 
     /** The snapshot of the last rendered frame; zero before [start]. */
-    var frame: FrameInfo = FrameInfo(Duration.ZERO, 0, 0, Int2D(0, 0))
+    final override var frame: FrameInfo = FrameInfo(Duration.ZERO, 0, 0, Int2D(0, 0))
         private set
 
     /** The input snapshot of the current frame; it refreshes before each [onUserUpdate]. */
-    val input: InputState
+    override val input: InputState
         get() = inputTracker.state
 
     /**
@@ -80,13 +148,21 @@ abstract class Engine(
             // The driver is closed on every exit path; the scope first, so GPU
             // resources are released while the context is still alive.
             DriverService.create(config).use { driver ->
+                engineDriver = driver
                 driver.makeCurrent()
                 ResourceScope().use { scope ->
                     Renderer.createResources(driver, scope)
+                    val layerStack = LayerStack(window.screenSize.x, window.screenSize.y)
+                    engineLayers = layerStack
+                    scope.register(LayersKey, layerStack)
+                    drawTarget = null
                     runLoop(driver, scope)
                 }
             }
         } finally {
+            engineLayers = null
+            engineDriver = null
+            engineThreadId = null
             KGEOverridable.Proxy.resetAll()
         }
     }
@@ -101,7 +177,7 @@ abstract class Engine(
 
     /**
      * Fails fast unless called on the thread that called [start]; the check is
-     * unavailable before [start].
+     * unavailable before [start] and after it returns.
      */
     fun requireEngineThread() {
         val expected =
@@ -110,6 +186,24 @@ abstract class Engine(
         check(currentThreadId() == expected) {
             "Requires the engine thread, was thread ${currentThreadId()} instead of $expected"
         }
+    }
+
+    /**
+     * Changes the game screen to [width] x [height], re-allocating every layer
+     * at the new size and selecting layer 0 as the draw target. The viewport
+     * re-fits on the next frame. Both dimensions must be positive and the call
+     * must run on the engine thread.
+     */
+    fun setScreenSize(
+        width: Int,
+        height: Int,
+    ) {
+        require(width > 0 && height > 0) { "setScreenSize requires a positive size, was ${width}x$height" }
+        requireEngineThread()
+        layers.resizeAll(width, height)
+        window.screenSize = Int2D(width, height)
+        drawTarget = null
+        viewportFit = null
     }
 
     private suspend fun runLoop(
@@ -122,12 +216,14 @@ abstract class Engine(
                 val elapsed = accumulator.tick(Time.elapsed())
                 driver.pollEvents()
                 val framebufferSize = driver.framebufferSize()
-                if (framebufferSize != lastFramebufferSize) {
+                window.windowSize = driver.windowSize()
+                window.framebufferSize = framebufferSize
+                if (viewportFit == null || framebufferSize != lastFramebufferSize) {
                     lastFramebufferSize = framebufferSize
-                    viewportFit = fitViewport(screenSize, pixelSize, framebufferSize, config.cohesion)
+                    viewportFit = fitViewport(window.screenSize, window.pixelSize, framebufferSize, config.cohesion)
                 }
                 val fit = checkNotNull(viewportFit)
-                inputTracker.latch(driver.input, screenSize, fit, driver.windowSize(), framebufferSize)
+                inputTracker.latch(driver.input, window.screenSize, fit, window.windowSize, framebufferSize)
                 if (!onUserUpdate(elapsed)) active.store(false)
                 renderFrame(scope, driver, fit)
                 frame = FrameInfo(elapsed, accumulator.fps, accumulator.frameCount, framebufferSize)
@@ -147,7 +243,32 @@ abstract class Engine(
     ) {
         Renderer.updateViewport(fit.position, fit.size)
         Renderer.clearBuffer(Colors.BLACK, depth = true)
+
+        // Layer 0 is always composited and uploaded; the decal mode resets every frame.
+        layers[0].show = true
+        layers[0].update = true
+        decalMode = Decal.Mode.NORMAL
+
         Renderer.prepareDrawing(scope)
+
+        for (index in layers.size - 1 downTo 0) {
+            val layer = layers[index]
+            if (!layer.show) continue
+            val customRender = layer.customRender
+            if (customRender != null) {
+                customRender(layer)
+            } else {
+                Renderer.applyTexture(layer.decal.texture)
+                if (!suspendTextureTransfer && layer.update) {
+                    layer.decal.update()
+                    layer.update = false
+                }
+                Renderer.drawLayerQuad(scope, layer.offset, layer.scale, layer.tint)
+                layer.decalInstances.forEach { Renderer.drawDecal(scope, it) }
+                layer.decalInstances.clear()
+            }
+        }
+
         driver.present()
         driver.awaitNextFrame()
     }
@@ -155,3 +276,6 @@ abstract class Engine(
 
 /** The OS identity of the calling thread — the engine's thread identity. */
 internal expect fun currentThreadId(): Long
+
+/** The engine's layer stack, registered so it closes before the renderer's built-in resources. */
+private object LayersKey : ResourceScope.Key<LayerStack>

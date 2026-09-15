@@ -187,6 +187,16 @@ class EngineTest :
             shouldThrow<IllegalStateException> { engine.requireEngineThread() }
         }
 
+        test("requireEngineThread fails fast after the run") {
+            installDriver(RecordingDriver())
+            installGl()
+            val engine = ScriptedEngine(onUpdate = { _, _ -> false })
+
+            engine.start()
+
+            shouldThrow<IllegalStateException> { engine.requireEngineThread() }
+        }
+
         test("requireEngineThread passes inside a callback") {
             installDriver(RecordingDriver())
             installGl()
