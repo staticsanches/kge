@@ -54,6 +54,20 @@ class EngineRenderStepTest :
                 )
         }
 
+        test("the framebuffer clear uses the configured clear color") {
+            val gl = installGl()
+            installDriver(RecordingDriver(scriptedFramebufferSize = Int2D(320, 240)))
+            val engine =
+                ScriptedEngine(
+                    config = WindowConfig(screenWidth = 320, screenHeight = 240, clearColor = Colors.RED),
+                    onUpdate = { _, _ -> false },
+                )
+
+            engine.start()
+
+            gl.calls.single { it.name == "clearColor" }.arguments shouldBe listOf(1f, 0f, 0f, 1f)
+        }
+
         test("decalMode resets to NORMAL each frame before prepareDrawing") {
             val gl = installGl()
             lateinit var engine: ScriptedEngine

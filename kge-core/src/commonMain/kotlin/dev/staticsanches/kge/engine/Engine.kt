@@ -4,7 +4,6 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.input.InputState
 import dev.staticsanches.kge.engine.input.InputTracker
 import dev.staticsanches.kge.engine.layer.LayerStack
-import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Int2D
@@ -242,7 +241,7 @@ abstract class Engine(
         fit: ViewportFit,
     ) {
         Renderer.updateViewport(fit.position, fit.size)
-        Renderer.clearBuffer(Colors.BLACK, depth = true)
+        Renderer.clearBuffer(config.clearColor, depth = true)
 
         // Layer 0 is always composited and uploaded; the decal mode resets every frame.
         layers[0].show = true

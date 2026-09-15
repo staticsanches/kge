@@ -76,3 +76,47 @@ model does not fit.
   show/hide, and the settable close flag (`windowShouldClose`). The `HasWindow`
   role/addon and a `Driver` seam extension (`setTitle`/`show`/`hide`) land there.
 
+## 2026-09-15 — Benchmark render workload + `WindowConfig.clearColor`
+
+### Render workload
+
+- **`BenchmarkWorkload` (Empty/Render)** is a third sweep dimension: `runSweep`
+  walks sizes × modes × workloads and the table gains a `Workload` column.
+  `FpsBenchmarkEngine` implements the draw addons; on `Render` it blits one
+  sprite, created with the run and released in `onUserDestroy`.
+- **Scene (`Scene.kt`)** is a deterministic grid: the target is cleared to
+  `SCENE_BACKGROUND`, then each `SCENE_CELL`-sized cell draws one operation
+  cycling filled/outlined rectangles, circles and triangles, a diagonal line and
+  a sprite blit, from a fixed palette. The element count follows the screen (no
+  fixed count); every shape stays inside its cell; the pattern is identical
+  frame to frame. The first cut drew 1000 random primitives each frame at new
+  positions — faithful but visual noise, replaced here.
+- **The `empty` workload clears the target too.** The draw target is `memAlloc`
+  (uninitialized) and the engine only clears the GPU framebuffer, never the CPU
+  target — as in olc and `main`, clearing the draw target is the application's
+  responsibility (`Clear()`). Without the clear, `empty` presented raw
+  uninitialized memory (and any app that skips `clear()` accumulates frames).
+
+### `WindowConfig.clearColor`
+
+- **New `WindowConfig.clearColor` (default `Colors.BLACK`)**, used by
+  `Engine.renderFrame` in place of a hardcoded `Colors.BLACK`. It is the
+  framebuffer clear (visible in the letterbox), distinct from the app-level
+  `ClearAddon.clear` on the draw target. `main` had
+  `Renderer.defaultClearBufferColor` (JVM `Colors.BLACK`, JS `Colors.BLANK`),
+  dropped by the restructure; the config restores app-level control. olc
+  hardcodes `olc::BLACK` in `olc_CoreUpdate`.
+
+### Verification (macOS JVM, M1, 120 Hz panel)
+
+- **Engine compositing verified pixel-exact**: a throwaway diagnostic read the
+  framebuffer with `glReadPixels` and compared it to the CPU draw target, for a
+  gradient and for the scene, orientation included — 0 mismatches of 3072.
+- **640x360**: vsync saturates at 120 fps for both workloads (the frame fits the
+  8.3 ms budget); uncapped empty ≈ 0.75 ms/frame vs render ≈ 1.0 ms/frame.
+  HighDpi (1280x720): empty ≈ 0.76, render ≈ 1.13. The grid adds ≈ 0.3–0.4 ms
+  at this size; the baseline clear + layer upload dominates at low resolution.
+- The full sweep (320x240 → 3840x2160) is restored; it was narrowed to one
+  resolution only while the scene was tuned.
+
+

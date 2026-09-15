@@ -13,6 +13,7 @@ fun main() {
         runSweep(
             sizes = benchmarkSizes,
             modes = webModes,
+            workloads = benchmarkWorkloads,
             warmup = benchmarkWarmup,
             measure = benchmarkMeasure,
         ) { result ->

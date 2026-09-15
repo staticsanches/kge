@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.engine
 
+import dev.staticsanches.kge.image.Colors
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -19,6 +20,7 @@ class WindowConfigTest :
             config.decorated shouldBe true
             config.cohesion shouldBe false
             config.highDpi shouldBe false
+            config.clearColor shouldBe Colors.BLACK
         }
 
         test("non-positive screen sizes are rejected") {

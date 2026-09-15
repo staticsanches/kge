@@ -1,5 +1,8 @@
 package dev.staticsanches.kge.engine
 
+import dev.staticsanches.kge.image.Colors
+import dev.staticsanches.kge.image.Pixel
+
 /**
  * Startup configuration for the engine window.
  *
@@ -7,6 +10,9 @@ package dev.staticsanches.kge.engine
  * [pixelHeight] are the art zoom applied to them. [highDpi] honors the
  * platform's high-density backing store (GLFW's macOS HiDPI framebuffer, the
  * web `devicePixelRatio`); when false the drawable matches the logical size.
+ *
+ * [clearColor] is the color the framebuffer is cleared to each frame before the
+ * layers composite; it is visible in the letterbox area around the viewport.
  */
 data class WindowConfig(
     val screenWidth: Int,
@@ -27,6 +33,7 @@ data class WindowConfig(
      */
     val cohesion: Boolean = false,
     val highDpi: Boolean = false,
+    val clearColor: Pixel = Colors.BLACK,
 ) {
     init {
         require(screenWidth > 0 && screenHeight > 0) {

@@ -9,6 +9,7 @@ fun main(): Unit =
         runSweep(
             sizes = benchmarkSizes,
             modes = jvmModes,
+            workloads = benchmarkWorkloads,
             warmup = benchmarkWarmup,
             measure = benchmarkMeasure,
         ) { result ->
@@ -16,7 +17,7 @@ fun main(): Unit =
             println(
                 "${result.size.x}x${result.size.y} " +
                     "(${result.framebufferSize.x}x${result.framebufferSize.y}) " +
-                    "${result.mode} highDpi=${result.highDpi}: " +
+                    "${result.mode} ${result.workload} highDpi=${result.highDpi}: " +
                     "avg ${result.metrics.avgFps.roundToInt()} fps, " +
                     "min ${result.metrics.minFps} fps",
             )

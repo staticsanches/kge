@@ -9,13 +9,23 @@ import kotlin.math.roundToLong
  */
 private fun tableCells(results: List<BenchmarkResult>): List<List<String>> {
     val header =
-        listOf(LOGICAL_HEADER, PHYSICAL_HEADER, MODE_HEADER, HIGH_DPI_HEADER, FPS_HEADER, MIN_HEADER, MS_HEADER)
+        listOf(
+            LOGICAL_HEADER,
+            PHYSICAL_HEADER,
+            MODE_HEADER,
+            WORKLOAD_HEADER,
+            HIGH_DPI_HEADER,
+            FPS_HEADER,
+            MIN_HEADER,
+            MS_HEADER,
+        )
     val rows =
         results.map { result ->
             listOf(
                 result.size.label(),
                 result.framebufferSize.label(),
                 result.mode,
+                result.workload,
                 if (result.highDpi) ON else OFF,
                 result.metrics.avgFps.fixed2(),
                 result.metrics.minFps.toString(),
@@ -66,12 +76,13 @@ private fun Double.fixed2(): String {
 
 private fun String.escapeHtml(): String = replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-/** The text columns (logical, physical, mode, HiDPI) before the right-aligned numbers. */
-private const val LAST_TEXT_COLUMN = 3
+/** The text columns (logical, physical, mode, workload, HiDPI) before the right-aligned numbers. */
+private const val LAST_TEXT_COLUMN = 4
 
 private const val LOGICAL_HEADER = "Logical"
 private const val PHYSICAL_HEADER = "Physical"
 private const val MODE_HEADER = "Mode"
+private const val WORKLOAD_HEADER = "Workload"
 private const val HIGH_DPI_HEADER = "HiDPI"
 private const val FPS_HEADER = "Avg FPS"
 private const val MIN_HEADER = "Min FPS"
