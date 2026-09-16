@@ -67,16 +67,21 @@ KeyboardKey` + companion intersection vocabulary, `ButtonState`/`InputTracker`
 backends, and `Engine.input`; `C10c` (log #27) — the ISP roles (`HasWindow`/
 `HasTime`/`HasInput`/`HasLayers`/…) and addons, `Layer`/`LayerStack` and the olc
 layer render step. The `kge-benchmark` module (FPS sweep, log #26) and the
-golden-image test harness (log #28) are also in. **`R6` (elaborate text) is the
-only remaining concept — next is its touch-point.**
+golden-image test harness (log #28) are also in. **Text is the last area.** The
+2026-09-16 touch-point fixed the stack (HarfBuzz + FreeType, thin per-platform
+seam) and split the work: `C7` bitmap text in `kge-core` (revived; zero new
+deps) and `R6` elaborate text as the opt-in `kge-text-ttf` module (rounds B–E).
+**`C7` round A closed 2026-09-16 (log #29)**: the stateless scope-parameterized
+`DrawStringService` (private font holder), `HasResourceScope`, the engine wiring
+and `DrawStringAddon` (CPU + decal). **Next: `R6` round B — `kge-text-ttf`
+scaffold.**
 
-**Text (R6) — deferred to the end; research recorded.** Owner decision
-(2026-09-10): do not invest in text during the `main` restructure; text is the
-final concept with shaping + rasterization + atlas + blit. The font-library
-research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate stacks,
-UNVERIFIED items) was done and is in
-`docs/decisions/phase-1/14-text-r6.md` — **do not re-research**; consult that
-chunk before any text work.
+**Text (R6) — touch-point decided 2026-09-16; research recorded.** The
+font-library research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate
+stacks, UNVERIFIED items) is in `docs/decisions/phase-1/14-text-r6.md` — **do
+not re-research**; the touch-point decisions and spike findings are in
+`docs/plans/2026-09-16-r6-text-touchpoint.md`. The 2026-09-10 note that the
+`main` bitmap font was not ported is **reversed** by `C7` (log #29).
 
 ## Read first
 

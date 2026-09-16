@@ -11,6 +11,7 @@ import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.text.DrawStringService
 import dev.staticsanches.kge.time.FrameAccumulator
 import dev.staticsanches.kge.time.Time
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,7 +38,8 @@ abstract class Engine(
     HasLayers,
     HasDrawTarget,
     HasDrawModes,
-    HasDriver {
+    HasDriver,
+    HasResourceScope {
     private val active = AtomicBoolean(false)
     private val accumulator = FrameAccumulator()
     private val inputTracker = InputTracker()
@@ -95,6 +97,7 @@ abstract class Engine(
     private var engineDispatcher: CoroutineDispatcher? = null
     private var engineThreadId: Long? = null
     private var engineDriver: Driver? = null
+    private var engineScope: ResourceScope? = null
 
     /**
      * The driver of the current run; fails fast when read before [start] or
@@ -103,6 +106,14 @@ abstract class Engine(
     @KGESensitiveAPI
     override val driver: Driver
         get() = engineDriver ?: error("driver is only available while the engine is running")
+
+    /**
+     * The scope that owns the run's resources; fails fast when read before
+     * [start] or after it returns.
+     */
+    @KGESensitiveAPI
+    override val resourceScope: ResourceScope
+        get() = engineScope ?: error("resourceScope is only available while the engine is running")
 
     private var lastFramebufferSize: Int2D? = null
     private var viewportFit: ViewportFit? = null
@@ -150,7 +161,9 @@ abstract class Engine(
                 engineDriver = driver
                 driver.makeCurrent()
                 ResourceScope().use { scope ->
+                    engineScope = scope
                     Renderer.createResources(driver, scope)
+                    DrawStringService.createResources(scope)
                     val layerStack = LayerStack(window.screenSize.x, window.screenSize.y)
                     engineLayers = layerStack
                     scope.register(LayersKey, layerStack)
@@ -161,6 +174,7 @@ abstract class Engine(
         } finally {
             engineLayers = null
             engineDriver = null
+            engineScope = null
             engineThreadId = null
             KGEOverridable.Proxy.resetAll()
         }
