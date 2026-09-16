@@ -14,7 +14,7 @@ import org.lwjgl.opengl.GL as LwjglGL
  * terminating GLFW and clearing the thread-local capabilities. The device
  * behavior is the shared [GlfwGpuDevice].
  */
-internal class GlfwTestDevice private constructor(
+class GlfwTestDevice private constructor(
     private val window: Long,
 ) : GpuDevice by GlfwGpuDevice(window),
     AutoCloseable {

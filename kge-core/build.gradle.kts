@@ -1,3 +1,8 @@
+import java.awt.image.BufferedImage
+import java.io.File
+import java.util.Base64
+import javax.imageio.ImageIO
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.ksp.gradle)
@@ -180,4 +185,193 @@ ktlint {
 // the format tasks need the same exclusion per task (both are PatternFilterable).
 tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().configureEach {
     exclude { element -> element.file.invariantSeparatorsPath.contains("/build/generated/") }
+}
+
+// ImageIO exposes non-premultiplied 0xAARRGGBB; the harness stores R,G,B,A to
+// match Pixel.nativeRGBA's little-endian byte order.
+private object GoldenRgba {
+    fun argbToRgba(
+        argb: Int,
+        out: ByteArray,
+        offset: Int,
+    ) {
+        out[offset] = ((argb ushr 16) and 0xFF).toByte()
+        out[offset + 1] = ((argb ushr 8) and 0xFF).toByte()
+        out[offset + 2] = (argb and 0xFF).toByte()
+        out[offset + 3] = ((argb ushr 24) and 0xFF).toByte()
+    }
+
+    fun rgbaToArgb(
+        bytes: ByteArray,
+        offset: Int,
+    ): Int =
+        ((bytes[offset].toInt() and 0xFF) shl 16) or
+            ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
+            (bytes[offset + 2].toInt() and 0xFF) or
+            ((bytes[offset + 3].toInt() and 0xFF) shl 24)
+}
+
+abstract class GenerateGoldenImagesTask : DefaultTask() {
+    @get:InputDirectory
+    abstract val inputDir: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val root = inputDir.get().asFile
+        val images =
+            root
+                .walkTopDown()
+                .filter { it.isFile && it.extension.equals("png", ignoreCase = true) }
+                .sortedBy { it.invariantSeparatorsPath }
+                .map { decodeGolden(it, it.relativeTo(root).invariantSeparatorsPath.removeSuffix(".png")) }
+                .toList()
+        val duplicates = images.groupBy { it.name }.filterValues { it.size > 1 }.keys
+        check(duplicates.isEmpty()) { "Golden images map to duplicate names: ${duplicates.sorted()}" }
+
+        val file = File(outputDir.get().asFile, "dev/staticsanches/kge/golden/GoldenImages.kt")
+        file.parentFile.mkdirs()
+        file.writeText(render(images))
+    }
+
+    private fun decodeGolden(
+        file: File,
+        name: String,
+    ): GoldenImage {
+        val image = ImageIO.read(file) ?: error("Golden image is not decodable: ${file.path}")
+        val width = image.width
+        val height = image.height
+        check(width > 0 && height > 0) { "Golden image has non-positive dimensions: ${file.path} (${width}x$height)" }
+        check(width <= MAX_DIMENSION && height <= MAX_DIMENSION) {
+            "Golden image exceeds the ${MAX_DIMENSION}px guard: ${file.path} (${width}x$height)"
+        }
+        val rgba = ByteArray(width * height * 4)
+        var index = 0
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                GoldenRgba.argbToRgba(image.getRGB(x, y), rgba, index)
+                index += 4
+            }
+        }
+        return GoldenImage(name, width, height, rgba)
+    }
+
+    private fun render(images: List<GoldenImage>): String {
+        val encoder = Base64.getEncoder()
+        val entries =
+            images.joinToString(",\n") { golden ->
+                "            GoldenImage(\"${golden.name}\", ${golden.width}, ${golden.height}, " +
+                    "\"${encoder.encodeToString(golden.rgba)}\")"
+            }
+        return buildString {
+            appendLine("package dev.staticsanches.kge.golden")
+            appendLine()
+            appendLine("object GoldenImages {")
+            appendLine("    val byName: Map<String, GoldenImage> =")
+            appendLine("        listOf(")
+            appendLine(entries)
+            appendLine("        ).associateBy { it.name }")
+            appendLine("}")
+            appendLine()
+            appendLine("class GoldenImage(")
+            appendLine("    val name: String,")
+            appendLine("    val width: Int,")
+            appendLine("    val height: Int,")
+            appendLine("    val rgbaBase64: String,")
+            appendLine(")")
+        }
+    }
+
+    private class GoldenImage(
+        val name: String,
+        val width: Int,
+        val height: Int,
+        val rgba: ByteArray,
+    )
+
+    private companion object {
+        const val MAX_DIMENSION = 4096
+    }
+}
+
+val generateGoldenImages =
+    tasks.register<GenerateGoldenImagesTask>("generateGoldenImages") {
+        description = "Decodes the committed golden PNGs into a typed Kotlin accessor."
+        group = "build"
+        inputDir.set(layout.projectDirectory.dir("src/commonTest/golden"))
+        outputDir.set(layout.buildDirectory.dir("generated/golden/commonTest/kotlin"))
+    }
+
+abstract class GoldenActualToPngTask : DefaultTask() {
+    @get:Input
+    @get:Optional
+    abstract val token: Property<String>
+
+    @get:InputFile
+    @get:Optional
+    abstract val tokenFile: RegularFileProperty
+
+    @get:OutputFile
+    abstract val outputPng: RegularFileProperty
+
+    @TaskAction
+    fun convert() {
+        val raw =
+            token.orNull?.trim()?.ifEmpty { null }
+                ?: tokenFile.orNull
+                    ?.asFile
+                    ?.readText()
+                    ?.trim()
+                ?: error("""missing -PgoldenActual="WxH:<base64>" (or -PgoldenActualFile=<path>)""")
+
+        val separator = raw.indexOf(':')
+        check(separator > 0) { "malformed golden token, expected 'WxH:<base64>': \"$raw\"" }
+        val dimensions = raw.substring(0, separator)
+        val x = dimensions.indexOf('x')
+        check(x > 0) { "malformed golden token dimensions \"$dimensions\" in \"$raw\"" }
+        val width = dimensions.substring(0, x).toIntOrNull()
+        val height = dimensions.substring(x + 1).toIntOrNull()
+        check(width != null && height != null) { "malformed golden token dimensions \"$dimensions\" in \"$raw\"" }
+        check(width > 0 && height > 0) { "golden token dimensions must be positive: \"$dimensions\"" }
+
+        val bytes =
+            try {
+                Base64.getDecoder().decode(raw.substring(separator + 1))
+            } catch (exception: IllegalArgumentException) {
+                error("malformed golden token base64: ${exception.message}")
+            }
+        check(bytes.size == width * height * 4) {
+            "golden token \"$dimensions\" needs ${width * height * 4} bytes but carries ${bytes.size}"
+        }
+
+        val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+        var offset = 0
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                image.setRGB(x, y, GoldenRgba.rgbaToArgb(bytes, offset))
+                offset += 4
+            }
+        }
+        val output = outputPng.get().asFile
+        output.parentFile.mkdirs()
+        ImageIO.write(image, "png", output)
+    }
+}
+
+tasks.register<GoldenActualToPngTask>("goldenActualToPng") {
+    description = "Renders a shouldMatchGolden 'WxH:<base64>' token to an RGBA PNG under build/."
+    group = "verification"
+    token.set(providers.gradleProperty("goldenActual"))
+    providers.gradleProperty("goldenActualFile").orNull?.let { tokenFile.fileValue(File(it)) }
+    outputPng.set(layout.buildDirectory.file("golden-actual.png"))
+}
+
+kotlin {
+    sourceSets {
+        commonTest {
+            kotlin.srcDir(generateGoldenImages.flatMap { it.outputDir })
+        }
+    }
 }

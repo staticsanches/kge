@@ -18,7 +18,7 @@ import kotlin.math.abs
  * fabricates the texture handle; both resources close when [block] returns. The
  * sprite dimensions drive the draw services' quantisation and UV scale.
  */
-internal fun withTestDecal(
+fun withTestDecal(
     width: Int = 8,
     height: Int = 4,
     block: (Decal) -> Unit,
@@ -32,7 +32,7 @@ internal fun withTestDecal(
 }
 
 /** Asserts [vertices]' x/y pulls match [expected] within [tolerance]. */
-internal fun assertVerticesCloseTo(
+fun assertVerticesCloseTo(
     vertices: VerticesInfo,
     expected: List<Float2D>,
     tolerance: Float = 1e-5f,
@@ -47,7 +47,7 @@ internal fun assertVerticesCloseTo(
 }
 
 /** Asserts [vertices]' u/v pulls match [expected] within [tolerance]. */
-internal fun assertUvsCloseTo(
+fun assertUvsCloseTo(
     vertices: VerticesInfo,
     expected: List<Float2D>,
     tolerance: Float = 1e-5f,
@@ -62,7 +62,7 @@ internal fun assertUvsCloseTo(
 }
 
 /** Asserts [vertices]' per-index tints match [expected]. */
-internal fun assertTints(
+fun assertTints(
     vertices: VerticesInfo,
     expected: List<Pixel>,
 ) {
@@ -75,14 +75,14 @@ internal fun assertTints(
 }
 
 /** A list-backed [VerticesInfo] double for arbitrary vertex counts. */
-internal fun verticesOf(
+fun verticesOf(
     pos: List<Float2D>,
     uv: List<Float2D>,
     tint: List<Pixel>,
 ): VerticesInfo = ListVerticesInfo(pos, uv, tint)
 
 /** The zero-vertex double used by override-behavior tests. */
-internal fun emptyVertices(): VerticesInfo = verticesOf(emptyList(), emptyList(), emptyList())
+fun emptyVertices(): VerticesInfo = verticesOf(emptyList(), emptyList(), emptyList())
 
 private class ListVerticesInfo(
     private val pos: List<Float2D>,

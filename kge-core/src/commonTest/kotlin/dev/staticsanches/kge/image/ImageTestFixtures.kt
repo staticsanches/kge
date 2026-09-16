@@ -13,7 +13,7 @@ package dev.staticsanches.kge.image
  * (JPEG/JFIF) and trailer `FF D9` (EOI). Lossy, so only the dimensions are
  * pinned.
  */
-internal val tinyJpegBytes: ByteArray =
+val tinyJpegBytes: ByteArray =
     byteArrayOf(
         -1, -40, -1, -32, 0, 16, 74, 70, 73, 70, 0, 1, 1, 0, 0, 1,
         0, 1, 0, 0, -1, -37, 0, 67, 0, 3, 2, 2, 3, 2, 2, 3,
@@ -49,7 +49,7 @@ internal val tinyJpegBytes: ByteArray =
  * `getImageData`/STB paths read it as un-premultiplied BGRA, so it is lossless
  * and pinned against [tinyPngPixels].
  */
-internal val tinyBmpBytes: ByteArray =
+val tinyBmpBytes: ByteArray =
     byteArrayOf(
         66, 77, -102, 0, 0, 0, 0, 0, 0, 0, -118, 0, 0, 0, 124, 0,
         0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 1, 0, 32, 0, 3, 0,
@@ -68,7 +68,7 @@ internal val tinyBmpBytes: ByteArray =
  * signature `47 49 46 38 39 61` ("GIF89a"). Palette-based, so a source pixel
  * at 50% alpha is quantized and only the dimensions are pinned.
  */
-internal val tinyGifBytes: ByteArray =
+val tinyGifBytes: ByteArray =
     byteArrayOf(
         71, 73, 70, 56, 57, 97, 2, 0, 2, 0, -15, 0, 0, -1, 0, 0,
         0, -1, 0, -1, -1, 0, 0, 0, -1, 33, -7, 4, 0, 0, 0, 0,
@@ -82,7 +82,7 @@ internal val tinyGifBytes: ByteArray =
  * ("RIFF") + `57 45 42 50` ("WEBP", `VP8L` chunk). Browser-only: the JVM's STB
  * backend has no WEBP decoder, but `createImageBitmap` does.
  */
-internal val tinyWebpBytes: ByteArray =
+val tinyWebpBytes: ByteArray =
     byteArrayOf(
         82, 73, 70, 70, 52, 0, 0, 0, 87, 69, 66, 80, 86, 80, 56, 76,
         39, 0, 0, 0, 47, 1, 64, 0, 16, 31, 48, -1, 2, -126, 34, -1,

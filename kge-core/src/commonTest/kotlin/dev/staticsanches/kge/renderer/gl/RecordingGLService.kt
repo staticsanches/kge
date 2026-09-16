@@ -4,7 +4,7 @@ import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.renderer.gl.service.GLService
 
 /** One command observed by [RecordingGLService]: the method name and its raw arguments. */
-internal data class RecordedGLCall(
+data class RecordedGLCall(
     val name: String,
     val arguments: List<Any?>,
 )
@@ -14,7 +14,7 @@ internal data class RecordedGLCall(
  * context and fabricates the handles the `create*` commands return, so the
  * common renderer runs against it on every target with no GPU.
  */
-internal class RecordingGLService : GLService {
+class RecordingGLService : GLService {
     private val mutableCalls = mutableListOf<RecordedGLCall>()
     val calls: List<RecordedGLCall> get() = mutableCalls
 

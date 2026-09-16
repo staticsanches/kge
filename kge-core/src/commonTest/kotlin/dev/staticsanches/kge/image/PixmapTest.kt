@@ -180,7 +180,7 @@ class PixmapTest :
     })
 
 /** Minimal Pixmap.Mutable over an IntArray — only the raw accessors are real. */
-internal class PixmapDouble(
+class PixmapDouble(
     override val width: Int,
     override val height: Int,
     override var sampleMode: Pixmap.SampleMode = Pixmap.SampleMode.NORMAL,

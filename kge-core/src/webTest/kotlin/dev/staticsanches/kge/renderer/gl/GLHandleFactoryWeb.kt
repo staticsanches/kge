@@ -42,17 +42,17 @@ private val uniformLocationHandle: GLUniformLocation by lazy {
     checkNotNull(uniformLocation(handleContext)) { "the fabricating program has no active uniform" }
 }
 
-internal actual fun recordingTextureHandle(seed: Int): GLTexture = textureHandle
+actual fun recordingTextureHandle(seed: Int): GLTexture = textureHandle
 
-internal actual fun recordingProgramHandle(seed: Int): GLProgram = programHandle
+actual fun recordingProgramHandle(seed: Int): GLProgram = programHandle
 
-internal actual fun recordingShaderHandle(seed: Int): GLShader = shaderHandle
+actual fun recordingShaderHandle(seed: Int): GLShader = shaderHandle
 
-internal actual fun recordingBufferHandle(seed: Int): GLBuffer = bufferHandle
+actual fun recordingBufferHandle(seed: Int): GLBuffer = bufferHandle
 
-internal actual fun recordingVertexArrayHandle(seed: Int): GLVertexArrayObject = vertexArrayHandle
+actual fun recordingVertexArrayHandle(seed: Int): GLVertexArrayObject = vertexArrayHandle
 
-internal actual fun recordingUniformLocationHandle(seed: Int): GLUniformLocation = uniformLocationHandle
+actual fun recordingUniformLocationHandle(seed: Int): GLUniformLocation = uniformLocationHandle
 
 /** Links a minimal program with an active `sampler2D` uniform, returning its location. */
 private fun uniformLocation(gl: WebGL2RenderingContext): GLUniformLocation? {

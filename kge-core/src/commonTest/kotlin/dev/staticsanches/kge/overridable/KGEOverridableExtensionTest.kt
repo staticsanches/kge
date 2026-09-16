@@ -4,8 +4,8 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
-internal expect val translatorDefault: TranslatorService
-internal expect val translatorExpectedDefault: String
+expect val translatorDefault: TranslatorService
+expect val translatorExpectedDefault: String
 
 /**
  * The extension-contract proof: a service is an interface plus a companion

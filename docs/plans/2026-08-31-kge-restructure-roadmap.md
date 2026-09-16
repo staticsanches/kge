@@ -615,3 +615,15 @@ default, one `Duration` unit) + the olc FPS `FrameAccumulator`, the immutable
 confinement, atomic `stop()`, olc `bAtomActive` restart), the fractional
 letterbox and the clear/present render step. A review fix round corrected a
 loop exit bug and the web HiDPI canvas. Next session: `C10b` (input).
+
+**2026-09-15 — golden image test harness closed (decisions-log #28).** A
+test-infrastructure concept: CPU-raster output asserted against committed PNG
+references on all three targets. The PNG is the only committed source of truth;
+a Gradle task decodes/validates it into a generated `GoldenImages` accessor and
+an exact `shouldMatchGolden(name)` matcher compares raw RGBA, failing with a
+summary plus a `WxH:<base64>` actual token that the inverse `goldenActualToPng`
+task renders to a PNG. Twenty hand/olc-derived cases (lines/patterns, circles +
+octant masks, rects/triangles, blit nearest/region, `sampleBL`, sampling modes,
+blend Alpha/Mask, viewport clip). Cross-cutting: test source sets drop the
+no-op `internal` and follow the same `private`-first ladder as production
+(`AGENTS.md`). GL/renderer goldens are a later concept.

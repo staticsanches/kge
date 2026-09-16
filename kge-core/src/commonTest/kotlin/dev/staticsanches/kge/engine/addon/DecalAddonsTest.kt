@@ -88,14 +88,15 @@ class DecalAddonsTest :
 
             test("the addon only queues the instance, issuing no draw command") {
                 withHost { gl, host, decal ->
+                    val layer = host.layers.target
+                    layer.target.clear(Colors.WHITE)
                     gl.clear()
 
                     host.drawDecal(Float2D(16f, 8f), decal)
 
-                    val layer = host.layers.target
                     layer.decalInstances.size shouldBe 1
                     gl.calls shouldBe emptyList()
-                    layer.target.get(0, 0) shouldBe Colors.TRANSPARENT
+                    layer.target.get(0, 0) shouldBe Colors.WHITE
                     layer.update shouldBe false
                 }
             }

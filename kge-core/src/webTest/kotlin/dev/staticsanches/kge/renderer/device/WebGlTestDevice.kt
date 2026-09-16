@@ -15,7 +15,7 @@ import web.html.HTMLCanvasElement
  * observes a stale context. The canvas stays referenced through the context for
  * the device's lifetime.
  */
-internal class WebGlTestDevice private constructor(
+class WebGlTestDevice private constructor(
     private val canvas: HTMLCanvasElement,
     private val device: WebGpuDevice,
 ) : GpuDevice by device,

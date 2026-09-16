@@ -4,10 +4,10 @@ import dev.staticsanches.kge.renderer.gl.RecordingGLService
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import kotlin.time.Duration
 
-internal val testWindowConfig = WindowConfig(screenWidth = 320, screenHeight = 240)
+private val testWindowConfig = WindowConfig(screenWidth = 320, screenHeight = 240)
 
 /** A [DriverService] handing out one recorded driver and counting creations. */
-internal class FakeDriverService(
+class FakeDriverService(
     private val driver: Driver,
 ) : DriverService {
     var createCount = 0
@@ -19,20 +19,20 @@ internal class FakeDriverService(
     }
 }
 
-internal fun installDriver(driver: Driver): FakeDriverService {
+fun installDriver(driver: Driver): FakeDriverService {
     val service = FakeDriverService(driver)
     DriverService.override(service)
     return service
 }
 
-internal fun installGl(): RecordingGLService {
+fun installGl(): RecordingGLService {
     val service = RecordingGLService()
     GLService.override(service)
     return service
 }
 
 /** An [Engine] whose callbacks are scripted by lambdas and counted. */
-internal class ScriptedEngine(
+class ScriptedEngine(
     config: WindowConfig = testWindowConfig,
     private val onCreate: suspend (ScriptedEngine) -> Boolean = { true },
     private val onUpdate: suspend (ScriptedEngine, Duration) -> Boolean = { _, _ -> true },

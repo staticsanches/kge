@@ -8,7 +8,7 @@ import dev.staticsanches.kge.math.vector.Int2D
  * order and reports the scripted closing state and framebuffer size. Its
  * [input] is scriptable between frames.
  */
-internal class RecordingDriver(
+class RecordingDriver(
     var scriptedClosing: Boolean = false,
     var scriptedFramebufferSize: Int2D = Int2D(0, 0),
     var scriptedWindowSize: Int2D = Int2D(0, 0),

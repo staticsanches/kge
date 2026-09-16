@@ -93,16 +93,19 @@ These two are the only active documents; older plans/specs were deleted
   project review sub-agents (`.opencode/agent/review-standards.md` and
   `.opencode/agent/review-spec.md`) when configured, or — when they are not —
   through two fresh general sub-agents run in parallel, one per axis (never a
-  self-review by the working model that produced the diff). The Spec axis
-  carries mandatory checks against the **three sources of truth** (olc behavior
-  parity, no unjustified regression against `main`, Kotlin realization), because
-  a plan-conformance review does not catch a defect of the plan itself: a
-  divergence from olc, or a regression against a `main` solution, is a finding
-  unless a rationale is recorded in the decisions log, the micro-plan, or KDoc,
-  and recorded divergences are listed as accepted rather than suppressed. The
-  olc reference is `~/workspace/olcPixelGameEngine/olcPixelGameEngine.h` (the
-  upstream checkout); `main` is read via `git show main:<path>`.
-  The review writes its report to
+  self-review by the working model that produced the diff). The close flow is
+  **green gate → reviews ok → marker → commit**: the working agent runs the gate
+  first (below), and the review sub-agents do **not** run the build, tests or
+  gate — they review the diff statically, so the gate executes once, not once
+  per axis. The Spec axis carries mandatory checks against the **three sources
+  of truth** (olc behavior parity, no unjustified regression against `main`,
+  Kotlin realization), because a plan-conformance review does not catch a defect
+  of the plan itself: a divergence from olc, or a regression against a `main`
+  solution, is a finding unless a rationale is recorded in the decisions log,
+  the micro-plan, or KDoc, and recorded divergences are listed as accepted
+  rather than suppressed. The olc reference is
+  `~/workspace/olcPixelGameEngine/olcPixelGameEngine.h` (the upstream checkout);
+  `main` is read via `git show main:<path>`. The review writes its report to
   `.opencode/reviews/<name>.md` (gitignored local state) and the marker
   `.opencode/review-passed`; the commit gate is enforced by the opencode
   plugin `.opencode/plugin/review-gate.ts` (blocks `git commit` touching
@@ -136,7 +139,11 @@ These two are the only active documents; older plans/specs were deleted
   behind an `internal` factory, not an `internal` type. Public API exists on
   purpose — KGE is an **extensible engine**, so services, facades, role
   interfaces and the types an extender must name are legitimately public; the
-  defect is *accidental* widening. The concept review audits visibility too.
+  defect is *accidental* widening. **Test source sets**: `internal` is a no-op
+  on unpublished code, so the ladder drops it — keep the same preference,
+  `private` first, and widen to no modifier (the default `public`) only when the
+  declaration is shared across test files (or cannot be `private`, as with
+  `expect`/`actual`). The concept review audits visibility too.
 - **KDoc discipline**: a KDoc never references the docs tree (`docs/...`) —
   rationale lives in the decisions log/plan, not in the code — and the KDoc of
   public API never names `internal`/`private` concepts, methods, or classes.
@@ -144,7 +151,9 @@ These two are the only active documents; older plans/specs were deleted
   references. Keep every comment and KDoc succinct and indispensable: the
   contract and the non-obvious only, never a narration of the code or a
   rationale essay.
-- **Gate (every concept close)**: `./gradlew build --rerun-tasks`. **Why `build`,
+- **Gate (every concept close, run by the working agent)**: `./gradlew build
+  --rerun-tasks`; the review sub-agents do not re-run it — the close is gate
+  green first, then reviews, then marker/commit. **Why `build`,
   not only `:kge-core:allTests`:** `build` is
   `check` + `assemble` — the tests of every target plus the `webMain`-class
   metadata/klib compilation of intermediate source sets, which only
