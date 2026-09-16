@@ -220,15 +220,20 @@ internal helper.
 - **R6 ● Elaborate text** — arbitrary TTF/OTF through four layers: **shaping**
   (Unicode → glyph ids + advances/offsets, kerning/ligatures), **rasterization**
   (glyph outline → coverage bitmap), **atlas** (packing glyphs), and **blit**
-  (CPU to a `MutablePixmap`/layer, and the decal/GPU variant). Deliberately at
-  the **end of the migration** (2026-09-10 owner decision): it is not on the
-  critical path of the `main` restructure and has no consumer before the engine
-  presents a layer. Depends on C5+C6+S5 (already closed) for the CPU blit and on
-  R3/R4/R5 for the decal variant. The `main` font is a hardcoded bitmap sheet —
-  **not ported** and not the basis. Bidi/script itemization are out of the
-  initial scope (HarfBuzz shapes an already-ordered run). Library choice and the
-  full findings are recorded in the decisions log (2026-09-10); decided at its
-  touch-point after a feasibility spike, not frozen here.
+  (CPU to a `MutablePixmap`/layer, and the decal/GPU variant). Touch-point
+  2026-09-16 (owner): stack = **HarfBuzz (shaping) + FreeType (rasterization)**
+  with a thin per-platform seam; layout/atlas/blit in common code (spike-verified
+  parity on jvm/js/wasmJs). Because the dependencies are heavy, `R6` ships as the
+  separate, opt-in **`kge-text-ttf`** module (jvm/js/wasmJs) with its own API; a
+  compatible API across the core bitmap text and the module is a follow-up
+  analysis, not a commitment. Bidi/script itemization are out (HarfBuzz shapes an
+  already-ordered run). The 2026-09-10 note ("`main` bitmap font not ported") is
+  superseded by `C7` below.
+- **C7 ● Bitmap text (revived 2026-09-16, owner)** — the olc 8x8 sheet and
+  `drawString`/`getTextSize` (mono + prop, + decal variants) in `kge-core`, **zero
+  new dependencies**. Reverses the 2026-09-10 decision that dropped the simple
+  text: the core keeps a faithful olc text capability cheaply; the heavy TTF path
+  stays opt-in in `kge-text-ttf`.
 
 ### Engine (macro only)
 - **E1 ● Engine/lifecycle** — addon-based engine + platform engines; the known
@@ -363,8 +368,9 @@ at its touch-point)
 `C8` state dissolved into it — decisions-log #20 — and split at the 2026-09-13
 touch-point into `C10a` loop/window/time → `C10b` input → `C10c` addons; see
 `docs/plans/2026-09-13-c10-engine-touchpoint.md`)
-→ `R6` elaborate text (shaping + rasterization + atlas + blit — the final
-concept; see the catalog; not the `main` bitmap font).
+→ `C7` bitmap text (`kge-core`, zero deps — revived 2026-09-16)
+→ `R6` elaborate text (shaping + rasterization + atlas + blit) as the separate
+`kge-text-ttf` module (HarfBuzz + FreeType; see the catalog).
 
 **2026-09-10 ordering revision (owner).** Elaborate text moves from after the
 raster concept (the old `C7`) to the **end** of the migration. Rationale: text
@@ -616,6 +622,40 @@ confinement, atomic `stop()`, olc `bAtomActive` restart), the fractional
 letterbox and the clear/present render step. A review fix round corrected a
 loop exit bug and the web HiDPI canvas. Next session: `C10b` (input).
 
+**2026-09-13 — C10b (input) closed (decisions-log #25).** The second `C10`
+session: the entry-less `expect enum KeyboardKey` (native members per platform,
+JVM GLFW / web W3C `code`) with the common companion intersection vocabulary
+(`KeyVocabulary` + an `internal expect fun keyboardKey`), superseding the C10
+decision 7 "common `KeyCode`"; `ButtonState` (olc `HWButton`) and the internal
+`InputTracker` latch (olc `ScanHardware`), mouse in pixel space, `Modifiers`,
+focus; `Driver.input: RawInput` with the JVM GLFW and web DOM backends (callbacks
+retained/disposed) and the web resize path; `Engine.input`. Focus loss releases
+held keys (accepted divergence, fixes olc's sticky keys). A review fix round
+retained the GLFW callbacks (lambda-overload leak), corrected the web wheel sign
+and removed dead API.
+
+**2026-09-14 — FPS benchmark + window config restorations (decisions-log #26).**
+New `kge-benchmark` KMP module (jvm + wasmJs): an `Engine` subclass driving a
+size × mode × workload sweep (2 s warmup + 5 s measured, slowest one-second
+window), a manual JVM `benchmarkJvm` task and a web distribution — compiled and
+unit-tested by the gate, the sweep is manual. `WindowConfig` restores `main`'s
+`highDpi`/`keepAspectRatio`, adds `decorated` and `clearColor`; `FrameInfo`
+exposes `framebufferSize`. Findings: the triple-buffered swap chain weakens the
+`glfwSwapInterval` cap, `glfw_async` + `-XstartOnFirstThread` traps in
+`glfwInit`, decorated windows are clamped on macOS, HiDPI costs ≈3–4.4×. The
+deterministic render-workload scene landed 2026-09-15.
+
+**2026-09-15 — C10c (addons/roles/layers) closed (decisions-log #27).** The third
+and last `C10` session: the narrow ISP roles (`HasWindow`/`HasTime`/`HasInput`/
+`HasLayers`/`HasDrawTarget`/`HasDrawModes`/`HasDriver`) with the engine as
+composition root, the addon mixins (everything except text), `Layer`/`LayerStack`
+driving the olc `olc_CoreUpdate` render step (reverse layer order, decal flush),
+the JVM-only `WindowManipulationAddon` and `Engine.setScreenSize`. An owner Hunk
+review correction made `LayerStack` a composite `KGEInternalResource`/
+`CompositeResource` (the C2-deferred composite helper; live composites are never
+empty, emptiness is closed) built in `start()`. Next concept: `R6` (elaborate
+text).
+
 **2026-09-15 — golden image test harness closed (decisions-log #28).** A
 test-infrastructure concept: CPU-raster output asserted against committed PNG
 references on all three targets. The PNG is the only committed source of truth;
@@ -627,3 +667,17 @@ octant masks, rects/triangles, blit nearest/region, `sampleBL`, sampling modes,
 blend Alpha/Mask, viewport clip). Cross-cutting: test source sets drop the
 no-op `internal` and follow the same `private`-first ladder as production
 (`AGENTS.md`). GL/renderer goldens are a later concept.
+
+**2026-09-16 — `R6` touch-point: stack, module split, `C7` revival (owner).** The
+elaborate-text stack is **HarfBuzz (shaping) + FreeType (rasterization)** with a
+thin per-platform seam; a throwaway spike verified shaping and rasterization
+parity across jvm/js/wasmJs (the Skiko, stb_truetype, own-rasterizer and
+one-wasm alternatives were rejected with recorded rationale). Because the deps
+are heavy, `R6` ships as the separate, opt-in **`kge-text-ttf`** module with its
+own API (a compatible API over the core bitmap text is a follow-up analysis to
+exercise the plug). **`C7` (bitmap text) is revived in `kge-core`**, reversing
+the 2026-09-10 drop: the core keeps the olc text with zero new dependencies.
+Five thin rounds: `A` bitmap text in core → `B` `kge-text-ttf` scaffold →
+`C` face + shaping + layout → `D` raster + atlas/cache → `E` blit + addons +
+decal. Touch-point material:
+`docs/plans/2026-09-16-r6-text-touchpoint.md`.

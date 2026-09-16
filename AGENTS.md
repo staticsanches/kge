@@ -56,13 +56,19 @@ cell of the clipped walk — `Filled` is the untouched pre-change behavior. **Im
 `Sprite` RGBA-only, `PNG`/`JPEG` uniform encode, documented per-platform decode
 divergence). The web targets are now **browser-only** (node dropped) and the
 browser suites run in CI. `C9` (renderer/GL/decals) closed 2026-09-12 (log
-#22): the GL layer, the renderer/pipeline and the decal exist. `C10` splits at
+#22): the GL layer, the renderer/pipeline and the decal exist. `C10` split at
 the 2026-09-13 touch-point into `C10a` (loop/window/time) → `C10b` (input) →
-`C10c` (addons); **`C10a` closed 2026-09-13 (log #24)**: the `Driver`/`DriverService`
+`C10c` (addons), **all closed**: `C10a` (log #24) — the `Driver`/`DriverService`
 seam (JVM GLFW + web canvas/WebGL2), `TimeService`/`FrameAccumulator`,
-`WindowConfig`, the abstract `Engine` loop with suspend callbacks, the
-fractional letterbox and the clear/present render step run on JVM and web.
-`C10b` (input) is next.
+`WindowConfig` and the abstract `Engine` loop with suspend callbacks (fractional
+letterbox, clear/present); `C10b` (log #25) — the entry-less `expect enum
+KeyboardKey` + companion intersection vocabulary, `ButtonState`/`InputTracker`
+(olc `HWButton`), mouse/focus/modifiers, `Driver.input` with JVM GLFW/web DOM
+backends, and `Engine.input`; `C10c` (log #27) — the ISP roles (`HasWindow`/
+`HasTime`/`HasInput`/`HasLayers`/…) and addons, `Layer`/`LayerStack` and the olc
+layer render step. The `kge-benchmark` module (FPS sweep, log #26) and the
+golden-image test harness (log #28) are also in. **`R6` (elaborate text) is the
+only remaining concept — next is its touch-point.**
 
 **Text (R6) — deferred to the end; research recorded.** Owner decision
 (2026-09-10): do not invest in text during the `main` restructure; text is the
