@@ -10,6 +10,8 @@ kotlinx-browser = "0.5.0"
 kotlin-js = "2026.9.0"
 lwjgl = "3.4.3"
 slf4j = "2.0.18"
+harfbuzzjs = "1.6.1"
+freetype-wasm = "2.14.3"
 
 [libraries]
 kotest-framework = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
@@ -26,6 +28,8 @@ lwjgl-core = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
 lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
 lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
+lwjgl-harfbuzz = { module = "org.lwjgl:lwjgl-harfbuzz", version.ref = "lwjgl" }
+lwjgl-freetype = { module = "org.lwjgl:lwjgl-freetype", version.ref = "lwjgl" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 
 [plugins]

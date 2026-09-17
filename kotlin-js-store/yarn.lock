@@ -261,6 +261,11 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
+"@zkl2333/freetype-wasm@2.14.3":
+  version "2.14.3"
+  resolved "https://registry.yarnpkg.com/@zkl2333/freetype-wasm/-/freetype-wasm-2.14.3.tgz#d1e1e4f16cba6e70c1bc8ede3e114f5e8abcc346"
+  integrity sha512-A7fgJM0s+yh8NCQ9CAk4pbV+SpJp0DC3tirNPebL60ssc5D0awftWcR6zdD6teZUQgG2J8pk3AiqVXyHmElxDg==
+
 accepts@~1.3.4:
   version "1.3.8"
   resolved "https://registry.yarnpkg.com/accepts/-/accepts-1.3.8.tgz#0bf0be125b67014adcb0b0921e62db7bffe16b2e"
@@ -977,6 +982,11 @@ graceful-fs@^4.1.2, graceful-fs@^4.1.6, graceful-fs@^4.2.0, graceful-fs@^4.2.10,
   version "4.2.11"
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.11.tgz#4183e4e8bf08bb6e05bbb2f7d2e0c8f712ca40e3"
   integrity sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==
+
+harfbuzzjs@1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/harfbuzzjs/-/harfbuzzjs-1.6.1.tgz#c93b59ba288f58417f6efc594dbc061726711d93"
+  integrity sha512-+JeJmO+HzXjDwpfCOdGSyM2bNP8WzJNFKl/8TKivbInMYDtfRIuPIDLtnBNmQzcJw6GptbhHY6o5gaH6deCMEw==
 
 has-flag@^4.0.0:
   version "4.0.0"

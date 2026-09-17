@@ -73,8 +73,10 @@ seam) and split the work: `C7` bitmap text in `kge-core` (revived; zero new
 deps) and `R6` elaborate text as the opt-in `kge-text-ttf` module (rounds B–E).
 **`C7` round A closed 2026-09-16 (log #29)**: the stateless scope-parameterized
 `DrawStringService` (private font holder), `HasResourceScope`, the engine wiring
-and `DrawStringAddon` (CPU + decal). **Next: `R6` round B — `kge-text-ttf`
-scaffold.**
+and `DrawStringAddon` (CPU + decal). **`R6` round B closed 2026-09-16 (log
+#30)**: the `kge-text-ttf` scaffold — a new jvm/js/wasmJs module with the
+HarfBuzz/FreeType deps wired and smoke-tested on every target. **Next: `R6`
+round C — face + HarfBuzz shaping + public layout.**
 
 **Text (R6) — touch-point decided 2026-09-16; research recorded.** The
 font-library research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate

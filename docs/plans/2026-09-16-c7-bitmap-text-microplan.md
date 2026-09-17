@@ -42,8 +42,8 @@ spike findings.
   `libs.versions.freetype.wasm.get()`.
 - **Round E:** no new dependencies.
 
-JVM native classifiers follow the `lwjglNatives` block in
-`kge-core/build.gradle.kts`; the web npm Emscripten glue needs the webpack
+JVM native classifiers come from the shared `lwjglNativesClassifier()` utility
+in `buildSrc` (round B); the web npm Emscripten glue needs the webpack
 `resolve.fallback` entries (`module`/`fs`/`path`) recorded in the touch-point
 spike findings.
 
