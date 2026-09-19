@@ -221,7 +221,13 @@ These two are the only active documents; older plans/specs were deleted
 ./gradlew build --rerun-tasks  # full gate: ktlint (wired into check) + all targets' tests + assemble/metadata
 ./gradlew :kge-core:allTests   # tests only (jvm + js browser + wasmJs browser)
 ./gradlew :kge-core:jvmTest    # JVM only
+tools/gradle <args>            # same arguments, for a sandbox that denies writes to ~/.gradle
 ```
+
+`tools/gradle` exists for agents whose file sandbox confines writes to the
+workspace: Gradle needs a writable user home, so the wrapper falls back to
+`.gradle-home/` in the repository and reads the default dependency cache
+read-only (no re-download). Outside such a sandbox it is exactly `./gradlew`.
 
 `jvmTest` runs through `kotest-runner-junit5` + `useJUnitPlatform()` in
 `kge-core/build.gradle.kts` — kotest's Gradle plugin does not wire the JVM

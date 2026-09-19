@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Runs Gradle with the project's wrapper and the given arguments.
+#
+# When the default Gradle user home is not writable — an agent sandbox that
+# confines writes to the workspace — this falls back to a repository-local home
+# and reuses the default dependency cache read-only, so no dependency is
+# re-downloaded. Outside a sandbox it is exactly `./gradlew`.
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel)
+default_home=${GRADLE_USER_HOME:-$HOME/.gradle}
+
+if mkdir -p "$default_home" 2>/dev/null && [ -w "$default_home" ]; then
+    exec "$root/gradlew" "$@"
+fi
+
+local_home="$root/.gradle-home"
+mkdir -p "$local_home"
+export GRADLE_USER_HOME="$local_home"
+
+if [ -d "$HOME/.gradle/caches/modules-2" ]; then
+    export GRADLE_RO_DEP_CACHE="$HOME/.gradle/caches"
+fi
+
+# The Kotlin daemon cannot start outside a writable user home; skipping the
+# attempt avoids a failed daemon start before every compile.
+set -- -Pkotlin.compiler.execution.strategy=in-process "$@"
+
+launcher=$(ls -d "$HOME"/.gradle/wrapper/dists/gradle-*-bin/*/gradle-*/bin/gradle 2>/dev/null | head -n 1 || true)
+if [ -n "$launcher" ]; then
+    exec "$launcher" "$@"
+fi
+
+exec "$root/gradlew" "$@"

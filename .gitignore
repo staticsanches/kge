@@ -2,6 +2,8 @@
 .gradle/
 build/
 .kotlin/
+# Sandbox-local Gradle user home (tools/gradle fallback)
+.gradle-home/
 # IDE
 .idea/
 *.iml
