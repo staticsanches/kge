@@ -10,3 +10,4 @@ rootProject.name = "kge"
 include("kge-core")
 include("kge-benchmark")
 include("kge-text-ttf")
+include("kge-font-roboto")
