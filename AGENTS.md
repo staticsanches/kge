@@ -144,7 +144,11 @@ These two are the only active documents; older plans/specs were deleted
   plugin `.opencode/plugin/review-gate.ts` (blocks `git commit` touching
   `docs/decisions/` without a valid marker + `tree:` hash). Marker
   writes and the commit must be separate bash commands (the gate reads the
-  marker before the command runs).
+  marker before the command runs). **Round cap:** a close runs at most
+  **three** review rounds. A PASS closes the round — residual minors are
+  recorded in the report, not chased with another round — and a third-round
+  FAIL escalates: the marker carries `escalated` and the concept does not close
+  without an owner decision.
 - **Concept flow**: touch-point (design confirmation, open items decided) →
   micro-plan (1-2 pages, TDD steps, just-in-time) → implement → gate → log
   entry. The touch-point and the micro-plan consult olc (behavior), the `main`
