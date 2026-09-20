@@ -75,15 +75,25 @@ deps) and `R6` elaborate text as the opt-in `kge-text-ttf` module (rounds B–E)
 `DrawStringService` (private font holder), `HasResourceScope`, the engine wiring
 and `DrawStringAddon` (CPU + decal). **`R6` round B closed 2026-09-16 (log
 #30)**: the `kge-text-ttf` scaffold — a new jvm/js/wasmJs module with the
-HarfBuzz/FreeType deps wired and smoke-tested on every target. **Next: `R6`
-round C — face + HarfBuzz shaping + public layout.**
+HarfBuzz/FreeType deps wired and smoke-tested on every target. **Bundled fonts
+closed 2026-09-19 (log #31)**: the `buildSrc` embedder plus the data-only
+`kge-font-roboto` (Roboto 3.015 / Roboto Mono 3.001 variable, OFL-1.1), which is
+also round C's `commonTest` fixture. **Next: `R6` round C — face + HarfBuzz
+shaping + public layout** (micro-plan revised 2026-09-19: shipped-font fixture,
+base64 entry point + `BufferService`, contract re-measured on the default
+instance; variable axes deferred).
 
 **Text (R6) — touch-point decided 2026-09-16; research recorded.** The
 font-library research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate
 stacks, UNVERIFIED items) is in `docs/decisions/phase-1/14-text-r6.md` — **do
 not re-research**; the touch-point decisions and spike findings are in
 `docs/plans/2026-09-16-r6-text-touchpoint.md`. The 2026-09-10 note that the
-`main` bitmap font was not ported is **reversed** by `C7` (log #29).
+`main` bitmap font was not ported is **reversed** by `C7` (log #29). The
+2026-09-19 touch-point revision amends the `Font` byte transport (base64 entry
+point + `BufferService`, direct buffer retained on JVM, staging copy on web) and
+records the deferred variable-axes shape; the measured axes/named instances and
+the per-backend discovery matrix are in the font-bundle findings — **do not
+re-verify**.
 
 ## Read first
 

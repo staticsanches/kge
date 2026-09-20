@@ -83,6 +83,42 @@ Two non-obvious findings:
 2. **Shaping matches** between variable-default and static 3.016 exactly; the
    older 2.137 differs slightly (e.g. advance `576` vs `575` on `1`,`2`,`3`).
 
+#### Axes and named instances, measured from the committed files (2026-09-19)
+
+Parsed from the `fvar`/`name` tables of the files actually committed under
+`kge-font-roboto/fonts/` — the 3.015/3.001 builds, not the spike's:
+
+| File | Axes (tag: min/default/max) | Named instances |
+|---|---|---|
+| `Roboto[wdth,wght].ttf` | `wght 100/400/900`, `wdth 75/100/100` | **18** — Thin…Black × {normal, Condensed} |
+| `RobotoMono[wght].ttf` | `wght 100/400/700` | **7** — Thin, ExtraLight, Light, Regular, Medium, SemiBold, Bold |
+
+- **`nameID` is not stable across families**: "Regular" is nameID `2` in Roboto
+  and `263` in Roboto Mono; "Weight" is `256` in both. The axis/instance data is
+  the `fvar` table; the labels come from `name`.
+- `fvar` record sizes: `axisSize = 20`, and
+  `instanceSize = axisCount * 4 + 4` (subfamily nameID + flags) `+ 2` when the
+  optional `postScriptNameID` is present — `14` for Roboto's two axes, `10` for
+  Mono's one.
+- Both families default to `wght = 400`, so "the default instance" (round C) is
+  Regular; Roboto's width axis is condensed-only (`75–100`).
+
+#### Runtime discovery — what each backend actually exposes (verified 2026-09-19)
+
+| Path | JVM | web | Axes | Named instances |
+|---|---|---|---|---|
+| `hb_ot_var_*` (HarfBuzz) | ❌ absent from LWJGL 3.4.3 (only `hb_font_*` is bound) | — | — | — |
+| `harfbuzzjs` `face.getAxisInfos()` | — | ✅ | ✅ tag, nameID, flags (`HIDDEN`), min/default/max; labels via `face.getName`/`listNames` | ❌ not exposed |
+| LWJGL HarfBuzz | ✅ | — | ❌ | ❌ enumerate; ✅ **select** — `hb_font_set_var_named_instance`, `hb_font_set_variations`, `set/get_var_coords_design`/`normalized` |
+| FreeType `FT_Get_MM_Var` (+ `FT_Done_MM_Var`, `FT_Set/Get_Var_Design_Coordinates`, `FT_Get_Var_Axis_Flags`) | ✅ | ✅ (the 19 wasm exports) | ✅ | ✅ coordinates + name |
+| Pure-Kotlin `fvar` + `name` reader | ✅ | ✅ | ✅ | ✅ |
+
+Consequence: **no single backend covers both**, and the JVM can *use* a named
+instance by index while being unable to *list* which index is which.
+Target-uniform discovery therefore means reading `fvar`/`name` in `commonMain`
+(no dependency, and it works for user-supplied fonts); FreeType's
+`FT_Get_MM_Var` stays available as the round D cross-check.
+
 ### Sizes
 
 | File | raw | base64 | gzip | base64+gzip |
@@ -175,6 +211,10 @@ findings, 1 and 2 by the owner (§6 below).
   its own round, so the two concepts do not share a commit.
 
 ## 5. Resume here
+
+**Closed 2026-09-19 (log #31); kept as the hand-off record.** The module and the
+converter landed, and round C's revised micro-plan takes the module as its
+`commonTest` fixture — the steps below are history, not a to-do list.
 
 1. Owner picks the remaining open decisions (1 family, 2 version) — the license
    file and the round C shaping contract both follow from them.

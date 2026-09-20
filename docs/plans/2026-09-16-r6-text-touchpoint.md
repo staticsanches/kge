@@ -165,3 +165,52 @@ The rest of this document still describes `R6` (the elaborate text, now
 `kge-text-ttf`); the seam/API details it leaves to the micro-plan apply to that
 module.
 
+## Revision (2026-09-19) — font byte transport and the shipped-font fixture
+
+Supersedes the `Font` resource line of "Derived model" and the round C
+micro-plan's seam and test-font sections; no stack, scope, ordering or
+round-split decision changes. Context:
+`docs/plans/2026-09-17-fonts-module-touchpoint.md`,
+`docs/plans/2026-09-17-resource-packaging-mechanism.md` §3.2 and
+`docs/plans/2026-09-17-font-bundle-findings.md`.
+
+1. **The font payload is engine-owned memory, not a caller-held array.**
+   `Font.load` accepts bytes or the chunked base64 that `kge-font-roboto`
+   emits, and allocates the decoded bytes through `BufferService`, so the
+   payload is off-heap and inside leak detection. On JVM the seam hands HarfBuzz
+   the **direct** buffer (`hb_blob_create` + `HB_MEMORY_MODE_READONLY`: HarfBuzz
+   references it and owns nothing), so the native face retains the
+   `ResourceWrapper` and closes it **after** font/face/blob; a non-direct buffer
+   is unusable — LWJGL would stage a temporary the retained blob outlives. On
+   web `harfbuzzjs` copies into wasm memory and the engine buffer is transient.
+   This replaces the earlier seam sketch that took a `ByteArray`.
+2. **The TTF fixture is the shipped data module.** Round C's `commonTest`
+   depends on `kge-font-roboto` (Roboto 3.015 / Roboto Mono 3.001 variable,
+   OFL-1.1) instead of committing a TTF plus an inline base64 generator, and the
+   shaping contract is re-measured on the default instance of the file that
+   ships. The shipped fonts are **variable**, which is exactly why the identity
+   of the fixture must be asserted alongside the measured constants.
+
+### Variable fonts (deferred)
+
+Exposing axes or named weights stays **out of scope** (decided 2026-09-17): the
+round C contract is the **default instance** (`wght = 400` in both families).
+"Weight selection is later and additive" means the following shape, recorded so
+the later round does not re-derive it:
+
+- **Discovery in `commonMain`, by reading `fvar` + `name`.** That is the only
+  path uniform across jvm/js/wasmJs and the only one that covers **named
+  instances** for a font the application supplies; the measured axes/instances
+  and the per-backend availability matrix are in
+  `docs/plans/2026-09-17-font-bundle-findings.md` — do not re-verify.
+- **Selection is per backend:** JVM `hb_font_set_var_named_instance` /
+  `hb_font_set_variations`, web `Font.setVariations`; FreeType
+  `FT_Set_Var_Design_Coordinates` joins in D so raster and shaping agree.
+- **One `Font` per instance, over the same face/blob.** HarfBuzz carries
+  variations on the font, not on the face, so a `Font` cannot serve two weights
+  at once; the additive design is a second `Font` sharing the retained data.
+- **Optional precedent, not a substitute:** the `buildSrc` embedder already
+  walks the committed TTFs, so it could also emit generated axis/instance
+  constants for the bundled families (zero runtime parse). It does not serve
+  third-party fonts, which is why the runtime reader is the primary path.
+
