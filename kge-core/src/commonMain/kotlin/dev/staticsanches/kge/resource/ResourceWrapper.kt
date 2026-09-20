@@ -68,8 +68,12 @@ private class DefaultResourceWrapper<R>(
     fun onCollectionObserved() = cleanable.onCollectionObserved()
 }
 
-/** Deterministic test seam: fires the platform collection trigger. */
-internal fun ResourceWrapper<*>.onCollectionObserved() {
+/**
+ * Engine-facing seam: fires the collection path on a live resource, as if the
+ * platform had collected it, so an unclosed resource is reported as a leak.
+ */
+@KGESensitiveAPI
+fun ResourceWrapper<*>.onCollectionObserved() {
     require(this is DefaultResourceWrapper)
     this.onCollectionObserved()
 }

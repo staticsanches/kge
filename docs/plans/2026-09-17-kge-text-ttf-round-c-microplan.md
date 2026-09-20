@@ -20,13 +20,40 @@ micro-plan.
 > `docs/plans/2026-09-17-resource-packaging-mechanism.md` §3.2 and
 > `docs/plans/2026-09-19-kge-font-roboto-microplan.md`.
 
+> **Revised 2026-09-20 — `faceIndex` removed (review round 1, spec axis).** The
+> public `faceIndex` was rejected as an unpinnable parameter: on a single-face
+> payload HarfBuzz honours no positive index, so `load(bytes, 1)` selected face 0
+> while the getter reported 1. The plan never scoped a multi-face fixture. With
+> the parameter gone the seam is `createNativeFace(bytes)` and `load` opens face
+> 0; multi-face (TTC) support returns whole, with a fixture that pins real
+> selection. The remaining review minors are dispositioned in the decisions log.
+
+> **Revised 2026-09-20 (second) — the seam is a resource, and it is three names
+> wide.** The face owns the payload and the native handles, so those get the
+> engine's resource contract: the created face is wrapped in
+> `ResourceWrapper<NativeFace>` — leak detection registered against **the face**,
+> never the byte buffer — and `Font` delegates `KGEResource` to that wrapper
+> rather than to the payload's. The seam itself narrows to `NativeFace`, its
+> factory and its close: the operations become methods, the internal carriers
+> give way to the public `ShapedGlyph`/`TextMetrics`, the scale constant and the
+> handles become file-`private`, and the nine harfbuzz externals stay `internal`
+> because a `@file:JsModule` file admits only `external` declarations. FreeType
+> also stops being production surface: it stays test-only on both platforms until
+> round D consumes it. Consequences: the payload wrapper is closed by the
+> face — last on JVM, right after the face exists on web — the JVM `closed` flag
+> is deleted and `Font`'s use-after-close guard reads the face wrapper's state;
+> the web face keeps its nullable handle, which is how the JS handle reference is
+> dropped rather than a second guard; and the web staging-buffer retention stops
+> being a divergence.
+
 ## Scope
 
 The seam's first two operations (open/close face, shape), the public `Font`
 resource created from decoded bytes, and the public shaped-run layout. **No
 rasterization, no atlas, no blit, no addons** — those are D/E. The module gains
-its `kge-core` dependency and moves its dependencies from the test source sets
-to the production ones (decision 3 of round B).
+its `kge-core` dependency and moves its **HarfBuzz** dependencies from the test
+source sets to the production ones (decision 3 of round B); FreeType stays
+test-only until round D consumes it.
 
 ## Build changes
 
@@ -35,14 +62,17 @@ to the production ones (decision 3 of round B).
    `kge-text-ttf` need them on the compile classpath; `implementation` would hide
    them. `kge-benchmark` uses `implementation` because its API does not expose
    core types — that precedent does not apply here.
-2. **Dependencies move to production source sets.** `jvmMain` takes
-   `lwjgl-harfbuzz` (+ `lwjgl-core`, the BOM and the natives classifier);
-   `webMain` takes the two npm packages **and the HarfBuzz/FreeType externals**
-   (round B left them in `webTest`); `commonTest` takes
-   `project(":kge-font-roboto")` as the font fixture. `jvmTest` keeps only the
+2. **HarfBuzz moves to the production source sets; FreeType waits for D.**
+   `jvmMain` takes `lwjgl-harfbuzz` (+ `lwjgl-core`, the BOM and the natives
+   classifier); `webMain` takes the `harfbuzzjs` npm package and its externals.
+   FreeType has no production consumer in C — rasterization is round D — so it
+   stays test-only on both platforms: `lwjgl-freetype` and the
+   `@zkl2333/freetype-wasm` package with its externals live in the test source
+   sets. The roadmap's "the skeleton contains nothing with no consumer yet" and
+   principle 7 both forbid shipping it early. `commonTest` takes
+   `project(":kge-font-roboto")` as the font fixture; `jvmTest` keeps the
    HarfBuzz/FreeType **runtime** natives it needs to execute, inherited from
-   `jvmMain` per the `kge-core` precedent. Round B's comment claiming the deps
-   are "test-only" is superseded.
+   `jvmMain` per the `kge-core` precedent.
 
 ## The seam (`expect`/`actual`, internal)
 
@@ -55,14 +85,32 @@ class` in `jvmMain` and the shared `webMain`).
 
 ```kotlin
 // commonMain — internal
-internal expect class NativeFace                       // opaque handle owner
-internal expect fun createNativeFace(bytes: ResourceWrapper<ByteBuffer>, faceIndex: Int): NativeFace
+internal expect class NativeFace {
+    fun shape(codePoints: IntArray, sizePx: Int): List<ShapedGlyph>
+    fun metrics(sizePx: Int): TextMetrics
+}
+internal expect fun createNativeFace(bytes: ResourceWrapper<ByteBuffer>): NativeFace
 internal expect fun closeNativeFace(face: NativeFace)
-internal expect fun shapeRun(face: NativeFace, codePoints: IntArray, sizePx: Int): NativeRun
-internal expect fun faceMetrics(face: NativeFace, sizePx: Int): NativeMetrics
-internal expect fun nativeGlyphCount(face: NativeFace): Int
 ```
 
+- **The seam is three names, and only three.** Everything else is file-`private`:
+  the 26.6 scale constant (one per actual) and the platform handles.
+  `NativeRun`/`NativeMetrics`/`NativeGlyph` disappear — the seam speaks the
+  public `ShapedGlyph`/`TextMetrics`, so no internal carrier exists — and the JVM
+  `actual` is the face class itself, dropping the `JvmNativeFace` typealias
+  indirection. The nine harfbuzz externals stay `internal` in their own
+  `@file:JsModule` file: Kotlin admits only `external` declarations in such a
+  file, so the `actual class` cannot share it, and a `private` top-level is
+  invisible across files. A seam that exposes a vocabulary instead of an entry
+  point is the defect principle 7 names.
+- **`NativeFace` is a handle; the wrapper is the resource.** The face is what
+  `ResourceWrapper<NativeFace>` owns, exactly as `ByteBuffer` is what
+  `ResourceWrapper<ByteBuffer>` owns in `kge-core` — the raw handle does not
+  implement `KGEResource`, the wrapper does. A `private` common helper creates it
+  with `closeNativeFace` as the clean action (`@OptIn(KGESensitiveAPI::class)`,
+  the `kge-benchmark` precedent), and `Font : KGEResource by` that wrapper. The
+  leak detector therefore reports a font **face**, never the byte buffer, and the
+  use-after-close guard lives in the object being guarded, on both backends.
 - **`bytes` is the `BufferService`-allocated wrapper** (`kge-core`), decoded
   from the caller's bytes or base64 in `commonMain`; the seam never receives a
   bare array, because the JVM side must retain it and the web side must release
@@ -105,11 +153,10 @@ otherwise. On JVM the close is real and ordered.
 ```kotlin
 // package dev.staticsanches.kge.text.ttf
 class Font : KGEResource {
-    val faceIndex: Int
     fun shape(text: String, sizePx: Int): ShapedRun
     companion object {
-        fun load(bytes: ByteArray, faceIndex: Int = 0): Font
-        fun load(base64: List<String>, faceIndex: Int = 0): Font
+        fun load(bytes: ByteArray): Font
+        fun load(base64: List<String>): Font
     }
 }
 
@@ -123,6 +170,10 @@ data class ShapedRun(val glyphs: List<ShapedGlyph>, val metrics: TextMetrics)
 data class TextMetrics(val ascender: Float, val descender: Float, val lineGap: Float)
 ```
 
+- **`Font`'s resource identity is the native face**, not the payload: it
+  delegates `KGEResource` to the `ResourceWrapper<NativeFace>` (the `Sprite`
+  idiom), so close, its idempotency and the use-after-close guard all belong to
+  the object that owns the native lifetime.
 - **`shape` takes `String`** and converts to code points internally; the seam
   takes `IntArray`.
 - **`load(base64: List<String>)`** accepts the chunked form the data module
@@ -274,7 +325,7 @@ disagreement as a finding rather than pinning per-target constants.
 2. **Public layout types (red → green).** Add `ShapedGlyph`/`ShapedRun`/
    `TextMetrics` with a `commonTest` test pinning their shape and the
    `Float2D`-typed `offset`/`advance`.
-3. **Face + validation (red → green).** `Font.load(bytes|base64)` + `faceIndex`;
+3. **Face + validation (red → green).** `Font.load(bytes|base64)`;
    test that `load(base64)` from the fixture matches `load(decoded)`, that the
    Roboto fixture loads, and that junk bytes fail fast (finding 3). Red:
    unresolved `load`. Green: seam `createNativeFace`/`closeNativeFace` on both

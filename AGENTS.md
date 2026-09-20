@@ -71,13 +71,23 @@ Every round runs this sequence:
    the three sources of truth — a plan-conformance review does not catch a defect
    of the plan itself — lists recorded divergences as accepted rather than
    suppressed, and covers the resource, API and scope disciplines below.
-6. **Marker → commit → hand back** — report in `.opencode/reviews/<name>.md`
-   (local and gitignored), marker in `.opencode/review-passed`, then one squashed
-   commit for the round. Marker write and commit stay separate commands — under
-   opencode the commit gate (`.opencode/plugin/review-gate.ts`) reads the marker
-   before the command runs. The orchestrator then stops: it never pushes, and the
-   owner reviews, pushes and may implement parts personally.
-7. **Cleanup** — delete the round's scratch from the gitignored `.tmp/` — logs,
+   Findings are fixed in a delta and re-reviewed, or dispositioned in the
+   decisions entry; they are not chased past the round cap.
+6. **Decisions entry** — the round's entry (`docs/decisions/phase-1/<n>-<name>.md`
+   plus its row in the index), staged with the round **before the review round
+   whose report the marker will name**. The commit gate recomputes
+   `git diff --cached <base> | shasum` and requires that report to carry the
+   matching `tree:` line, so an entry staged after the final review round cannot
+   be committed with the round — it costs one more review round instead.
+7. **Marker → commit → hand back** — the marker at `.opencode/review-passed` is
+   `<base-commit> <branch> <rounds> <status> <report-file>`: `<base-commit>` is
+   the commit the round's diff is taken from, and the named report must contain
+   the staged diff's `tree:` line. Then one squashed commit for the round. Marker
+   write and commit stay separate commands — under opencode the commit gate
+   (`.opencode/plugin/review-gate.ts`) reads the marker before the command runs.
+   The orchestrator then stops: it never pushes, and the owner reviews, pushes
+   and may implement parts personally.
+8. **Cleanup** — delete the round's scratch from the gitignored `.tmp/` — logs,
    extracted trees, downloaded sources, spike output — so nothing accumulates
    across rounds.
 
@@ -102,17 +112,28 @@ the owner.
 - **Gate**: `tools/gradle build` = `check` + `assemble`, so it covers every
   target's tests, ktlint and the intermediate-source-set metadata/kLIB that
   `allTests` misses. Test tasks always execute (up-to-dateness is disabled), so a
-  plain `build` is already forced; `ktlintFormat` stays manual.
+  plain `build` is already forced; `ktlintFormat` stays manual. **What that does
+  not buy:** a web browser suite can execute, report zero tests and still exit 0
+  (decisions log, chunk 10) — check the reported test counts, and force the web
+  target with `--rerun-tasks` when one is missing or short.
 - **Resource discipline**: every failure path of code that allocated a resource
   closes it; allocate-then-construct call sites wrap construction in
   `letClosingIfFailed`.
 - **API discipline**: every public parameter has an observable effect, pinned by
   a test.
-- **Scope discipline**: the narrowest visibility that compiles — `private` before
-  `internal` before `public`, and a concrete implementation shared across files
-  is a `private` type behind an `internal` factory. Public API exists on purpose
-  (KGE is an extensible engine), so the defect is accidental widening. In test
-  source sets `internal` is a no-op: `private` first, then no modifier.
+- **Scope discipline**: `private` is the default, and **widening is what needs
+  justifying** — the justification names a consumer that must reach it.
+  `internal` is for a real cross-file or cross-source-set consumer and is a cost,
+  not a safe landing: inside the module it is as reachable as `public`.
+  `public` is only the extension contract (a seam, or a type an extender must
+  name). A concrete implementation shared across files is a `private` type behind
+  an `internal` factory, never an `internal` type. The decomposition decides how
+  much *can* be private, so the width of a platform seam is a touch-point
+  decision: `expect`/`actual` makes everything it carries module-visible, so a
+  seam is one internal entry point and the rest stays file-private. Recorded
+  trade: a `private` production type is unreachable from `commonTest` — pin
+  behavior through the exposed API, not the implementation. In test source sets
+  `internal` is a no-op: `private` first, then no modifier.
 - **KDoc discipline**: at most two lines per comment or KDoc block, the contract
   and the non-obvious only. Rationale lives in the decisions log, not in the
   code; public KDoc reads on its own, without naming `internal`/`private`

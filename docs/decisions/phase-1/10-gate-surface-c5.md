@@ -156,3 +156,26 @@ test-only `asSequence` extension.
   explicit `width`/`height` loop; a `Sequence<Pixel>` view stays one extension
   function away if a real consumer appears.
 
+### Gate hole (2026-09-20) — a web browser suite can report zero tests and exit 0
+
+`:kge-text-ttf:jsBrowserTest` reports **zero tests and still exits 0** when it
+runs as part of `tools/gradle build`. With every `build/test-results/` directory
+deleted first, one full gate run finished `BUILD SUCCESSFUL` with that suite at 0
+tests — no XML, `binary/results-generic.bin` of 44 bytes — while the same run
+reported its full counts everywhere else: `kge-core` js 750, `kge-font-roboto`
+js 6, `kge-text-ttf` wasm 22. Invoked on its own with `--rerun-tasks` the suite
+runs for real (22 tests, nine XMLs, 6260 bytes), so the trigger is not stale
+state but running inside the multi-task build, where several browser suites start
+Karma at once. A Karma port collision — the default 9876 shared by concurrent
+servers — is the suspicion; no root cause was established.
+
+This is the second phantom-green mechanism, and the gate rule does not cover it:
+disabling up-to-dateness makes the test *task* execute, but a browser suite can
+still report nothing, and a zero-test run is indistinguishable from a passing one
+by exit code.
+
+- **Consequence for a close:** a plain `tools/gradle build` is not by itself
+  evidence for the web targets. Check that each suite reported tests
+  (`build/test-results/<target>/*.xml`) and force `--rerun-tasks` on the web
+  target when a count is missing or short.
+

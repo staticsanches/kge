@@ -88,6 +88,17 @@ These do not go through the decision lenses; no lens may eliminate one.
    nondeterministic quota/timing). LWJGL counts as a reference with the same
    weight as the behavior reference. This is a Kotlin (JVM+web) engine: JVM-native paths are part of
    the design, not a C++ re-enactment.
+7. **Minimum reachable surface.** A type or member exists `private` unless a
+   consumer that must *name* it lives outside its own file; **widening is the
+   change that needs justifying, never privacy**. Rationale: a responsibility
+   stays scoped to the thing that owns it, and the module's authoring surface —
+   what an IDE offers while the concept is written, and what a reader must hold
+   in mind — stays small. The decomposition decides how much *can* be private,
+   above all the width of a platform seam: `expect`/`actual` makes every
+   declaration it carries module-visible, so a seam is one internal entry point
+   and everything behind it is file-private. Recorded trade: a `private`
+   production type is unreachable from `commonTest`, so tests pin behavior
+   through the API the module already exposes rather than the implementation.
 
 ## Decision path — three lenses
 
@@ -104,7 +115,9 @@ For every candidate concept, in this order:
    no entity in the roadmap?
 3. **Minimal form.** The smallest shape that satisfies the consumer; proof =
    pixel-exact parity tests + hot-loop sanity; everything the consumer does not
-   require is YAGNI.
+   require is YAGNI. Minimal form covers the *reachable surface* too: the
+   smallest shape is also the fewest concepts visible outside their own file
+   (principle 7).
 
 Corollary: dependency pressure (LWJGL → java.nio; rAF vs GLFW) stays at the
 **platform seam**; the dependency type does not propagate into the common kernel.
@@ -422,7 +435,9 @@ mutable defaults, PNG to S5.
 ## Per-concept workflow
 
 1. **Touch-point**: confirm the macro requirement + invariant reading, decide
-   the open items, record the decisions.
+   the open items — including the **width of any platform seam**, i.e. how many
+   concepts must be module-visible and which resource each close flow belongs to
+   — and record the decisions.
 2. **Micro-plan** (1–2 pages, TDD steps) written then, for that concept only.
    Future concepts stay unplanned.
 3. **Implement** TDD: test → red → implement → green on all 3 targets; several
