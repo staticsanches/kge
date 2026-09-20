@@ -15,9 +15,9 @@ import dev.staticsanches.kge.resource.letClosingIfFailed
 
 /**
  * The engine-defined common [Renderer] default: drawing logic over the
- * overridable [GL], with no state of its own. The built-in quad program and its
- * staging buffer are built eagerly by [createResources] into the engine-owned
- * [ResourceScope] and resolved from it by every draw.
+ * overridable [GL]. It holds no GPU objects and no state of its own: its
+ * built-in resources and the blend mode last applied live in the engine-owned
+ * [ResourceScope], built eagerly by [createResources] and resolved per draw.
  */
 internal class DefaultRenderer : Renderer {
     override fun createResources(
@@ -31,6 +31,7 @@ internal class DefaultRenderer : Renderer {
         val quad = scope.get(QuadKey)
         GL.enable(GL.BLEND)
         GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+        quad.decalMode = Decal.Mode.NORMAL
         GL.useProgram(quad.programHandle)
         GL.bindVertexArray(quad.vertexArrayHandle)
     }
@@ -84,8 +85,11 @@ internal class DefaultRenderer : Renderer {
     ) {
         val quad = scope.get(QuadKey)
         GL.disable(GL.CULL_FACE)
-        val (source, destination) = instance.mode.toGLBlend()
-        GL.blendFunc(source, destination)
+        if (quad.decalMode != instance.mode) {
+            val (source, destination) = instance.mode.toGLBlend()
+            GL.blendFunc(source, destination)
+            quad.decalMode = instance.mode
+        }
         instance.decal.texture.apply()
 
         val vertices = instance.vertices

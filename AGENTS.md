@@ -85,9 +85,13 @@ instance; variable axes deferred). **Renderer submission levers priced
 2026-09-20 (log #32)**: the vertex-upload lever is refuted by measurement
 (1–3.8 fps), merging the text run is real but deferred (a public
 `DrawStringService` decision), and state dedupe splits into a blend-guard parity
-correction — the next round — and a `CULL_FACE`/`bindTexture` dedupe that belongs
-to a coalescing round. Full tables in
+correction and a `CULL_FACE`/`bindTexture` dedupe that belongs to a coalescing
+round. Full tables in
 `docs/plans/2026-09-20-renderer-lever-measurements.md` — **do not re-measure**.
+**Decal blend-mode guard closed 2026-09-20 (log #33)**: the olc/`main` per-mode
+`glBlendFunc` guard is restored — a parity correction, not a measurable
+optimization — with the mode mirror in the scope-owned built-in bundle, re-armed
+by `prepareDrawing`.
 
 **Text (R6) — touch-point decided 2026-09-16; research recorded.** The
 font-library research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate

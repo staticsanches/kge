@@ -256,6 +256,37 @@ class EngineRenderStepTest :
             queueEmptied shouldBe true
         }
 
+        test("same-mode decals share the frame's one blendFunc") {
+            val gl = installGl()
+            installDriver(RecordingDriver(scriptedFramebufferSize = Int2D(320, 240)))
+            val engine =
+                ScriptedEngine(
+                    onUpdate = { e, _ ->
+                        val layer = e.layers[0]
+                        repeat(3) {
+                            layer.decalInstances +=
+                                DrawPolygonDecalService.drawPolygonDecal(
+                                    decal = layer.decal,
+                                    pos = listOf(Float2D(0f, 0f), Float2D(1f, 0f), Float2D(0f, 1f)),
+                                    uv = listOf(Float2D(0f, 0f), Float2D(1f, 0f), Float2D(0f, 1f)),
+                                    tint = List(3) { Colors.WHITE },
+                                    mode = Decal.Mode.NORMAL,
+                                    structure = Decal.Structure.FAN,
+                                    viewport = e.window.screenSize,
+                                )
+                        }
+                        gl.clear()
+                        false
+                    },
+                )
+
+            engine.start()
+
+            gl.calls.count { it.name == "blendFunc" } shouldBe 1
+            gl.calls.single { it.name == "blendFunc" }.arguments shouldBe
+                listOf(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+        }
+
         test("customRender replaces the upload, quad and decals for its layer") {
             val gl = installGl()
             installDriver(RecordingDriver(scriptedFramebufferSize = Int2D(320, 240)))

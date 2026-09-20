@@ -16,11 +16,11 @@ import dev.staticsanches.kge.resource.ResourceScope
  * The typed drawing surface over the raw, overridable
  * [dev.staticsanches.kge.renderer.gl.service.GLService].
  *
- * The renderer is stateless: it holds no GPU objects. Its built-in GPU
- * resources live in the [ResourceScope] the engine owns and closes;
- * [createResources] builds them once at startup while a context is current,
- * and every draw resolves them through the same scope. A consumer may replace
- * the whole behavior for the process via
+ * The renderer holds no GPU objects and no state of its own: its built-in
+ * resources and the blend mode last applied live in the [ResourceScope] the
+ * engine owns and closes; [createResources] builds them once at startup while
+ * a context is current, and every draw resolves them through the same scope.
+ * A consumer may replace the whole behavior for the process via
  * [override][KGEOverridable.Proxy.override].
  */
 interface Renderer : KGEOverridable {

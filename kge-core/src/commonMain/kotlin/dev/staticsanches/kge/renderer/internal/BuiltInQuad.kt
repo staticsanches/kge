@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.renderer.internal
 
+import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.device.GpuDevice
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.GLProgram
@@ -11,10 +12,10 @@ import dev.staticsanches.kge.resource.letClosingIfFailed
 /**
  * The renderer's built-in 2D program and the geometry it draws through.
  *
- * The single quad shader used for both layer quads and decals:
- * a `pos4`/`uv2`/`col4` layout whose fragment is `texture * color`; the
- * trailing `z`/`w` of the position attribute are carried but unused. The vertex
- * array object binds the [staging] buffer's attributes once.
+ * The single quad shader used for both layer quads and decals: a
+ * `pos4`/`uv2`/`col4` layout whose fragment is `texture * color`; the trailing
+ * `z`/`w` of the position attribute are carried but unused. [decalMode] is the
+ * blend mode last applied; the vertex array binds [staging]'s attributes once.
  *
  * Owned by the caller's [dev.staticsanches.kge.resource.ResourceScope]; [close]
  * makes [device]'s context current first, because the scope does not own a
@@ -26,6 +27,8 @@ internal class BuiltInQuad private constructor(
     private val vertexArray: ResourceWrapper<GLVertexArrayObject>,
     val staging: StagingBuffer,
 ) : KGEResource {
+    var decalMode: Decal.Mode = Decal.Mode.NORMAL
+
     val programHandle: GLProgram get() = program.resource
 
     val vertexArrayHandle: GLVertexArrayObject get() = vertexArray.resource

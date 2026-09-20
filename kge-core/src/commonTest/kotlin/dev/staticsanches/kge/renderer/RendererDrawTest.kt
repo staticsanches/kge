@@ -105,6 +105,10 @@ class RendererDrawTest :
                         renderer.drawLayerQuad(scope, Float2D(0f, 0f), Float2D(1f, 1f), Colors.WHITE)
 
                         Decal.Mode.entries.forEach { mode ->
+                            renderer.drawDecal(
+                                scope,
+                                instance(decal, Decal.Mode.entries.first { it != mode }, Decal.Structure.LIST),
+                            )
                             recorder.clear()
                             renderer.drawDecal(scope, instance(decal, mode, Decal.Structure.LIST))
 
@@ -117,7 +121,8 @@ class RendererDrawTest :
                                     Decal.Mode.ILLUMINATE -> listOf(GL.ONE_MINUS_SRC_ALPHA, GL.SRC_ALPHA)
                                     Decal.Mode.WIREFRAME -> listOf(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
                                 }
-                            recorder.calls.first { it.name == "blendFunc" }.arguments shouldBe expected
+                            recorder.calls.filter { it.name == "blendFunc" }.map { it.arguments } shouldBe
+                                listOf(expected)
                         }
                     }
                 }
@@ -234,7 +239,6 @@ class RendererDrawTest :
                             recorder.calls.map { it.name } shouldBe
                                 listOf(
                                     "disable",
-                                    "blendFunc",
                                     "bindTexture",
                                     "bindBuffer",
                                     "bufferData",
@@ -272,6 +276,100 @@ class RendererDrawTest :
 
                         recorder.calls.count { it.name == "createBuffer" } shouldBe 1
                         recorder.calls.count { it.name == "bufferData" } shouldBe 3
+                    }
+                }
+            }
+        }
+
+        test("a repeated decal mode issues no second blendFunc") {
+            val recorder = RecordingGLService()
+            val renderer = renderer(recorder)
+            ResourceScope().use { scope ->
+                renderer.createResources(RecordingGpuDevice(), scope)
+                renderer.prepareDrawing(scope)
+                renderer.createTexture(2, 2, Decal.Filter.NEAREST, Decal.Wrap.CLAMP_TO_EDGE).use { texture ->
+                    SpriteService.create(2, 2, Pixmap.SampleMode.NORMAL, null).use { sprite ->
+                        val decal = texture.decalWith(sprite)
+                        renderer.drawLayerQuad(scope, Float2D(0f, 0f), Float2D(1f, 1f), Colors.WHITE)
+                        recorder.clear()
+
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.NORMAL, Decal.Structure.FAN))
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.NORMAL, Decal.Structure.FAN))
+
+                        recorder.calls.count { it.name == "blendFunc" } shouldBe 0
+                    }
+                }
+            }
+        }
+
+        test("a decal mode change issues the olc pair exactly once") {
+            val recorder = RecordingGLService()
+            val renderer = renderer(recorder)
+            ResourceScope().use { scope ->
+                renderer.createResources(RecordingGpuDevice(), scope)
+                renderer.prepareDrawing(scope)
+                renderer.createTexture(2, 2, Decal.Filter.NEAREST, Decal.Wrap.CLAMP_TO_EDGE).use { texture ->
+                    SpriteService.create(2, 2, Pixmap.SampleMode.NORMAL, null).use { sprite ->
+                        val decal = texture.decalWith(sprite)
+                        renderer.drawLayerQuad(scope, Float2D(0f, 0f), Float2D(1f, 1f), Colors.WHITE)
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.NORMAL, Decal.Structure.FAN))
+                        recorder.clear()
+
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.ADDITIVE, Decal.Structure.FAN))
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.NORMAL, Decal.Structure.FAN))
+
+                        recorder.calls.filter { it.name == "blendFunc" }.map { it.arguments } shouldBe
+                            listOf(
+                                listOf(GL.SRC_ALPHA, GL.ONE),
+                                listOf(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA),
+                            )
+                    }
+                }
+            }
+        }
+
+        test("the guard compares the mode, so wireframe re-issues the same pair") {
+            val recorder = RecordingGLService()
+            val renderer = renderer(recorder)
+            ResourceScope().use { scope ->
+                renderer.createResources(RecordingGpuDevice(), scope)
+                renderer.prepareDrawing(scope)
+                renderer.createTexture(2, 2, Decal.Filter.NEAREST, Decal.Wrap.CLAMP_TO_EDGE).use { texture ->
+                    SpriteService.create(2, 2, Pixmap.SampleMode.NORMAL, null).use { sprite ->
+                        val decal = texture.decalWith(sprite)
+                        renderer.drawLayerQuad(scope, Float2D(0f, 0f), Float2D(1f, 1f), Colors.WHITE)
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.NORMAL, Decal.Structure.FAN))
+                        recorder.clear()
+
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.WIREFRAME, Decal.Structure.FAN))
+
+                        recorder.calls.count { it.name == "blendFunc" } shouldBe 1
+                        recorder.calls.single { it.name == "blendFunc" }.arguments shouldBe
+                            listOf(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+                    }
+                }
+            }
+        }
+
+        test("prepareDrawing re-arms the blend guard") {
+            val recorder = RecordingGLService()
+            val renderer = renderer(recorder)
+            ResourceScope().use { scope ->
+                renderer.createResources(RecordingGpuDevice(), scope)
+                renderer.prepareDrawing(scope)
+                renderer.createTexture(2, 2, Decal.Filter.NEAREST, Decal.Wrap.CLAMP_TO_EDGE).use { texture ->
+                    SpriteService.create(2, 2, Pixmap.SampleMode.NORMAL, null).use { sprite ->
+                        val decal = texture.decalWith(sprite)
+                        renderer.drawLayerQuad(scope, Float2D(0f, 0f), Float2D(1f, 1f), Colors.WHITE)
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.ADDITIVE, Decal.Structure.FAN))
+                        recorder.clear()
+
+                        renderer.prepareDrawing(scope)
+                        renderer.drawDecal(scope, instance(decal, Decal.Mode.NORMAL, Decal.Structure.FAN))
+
+                        val blends = recorder.calls.filter { it.name == "blendFunc" }
+                        blends.size shouldBe 1
+                        blends.single().arguments shouldBe listOf(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
                     }
                 }
             }

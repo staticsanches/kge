@@ -121,7 +121,6 @@ class RendererSurfaceTest :
                         "bufferData",
                         "drawArrays",
                         "disable",
-                        "blendFunc",
                         "bindTexture",
                         "bindBuffer",
                         "bufferData",
