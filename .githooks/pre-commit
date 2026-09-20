@@ -8,8 +8,7 @@
 # (ktlintCheck) stays the final proof.
 #
 # NOTE: a fresh checkout pays a one-time Gradle distribution/plugin download
-# (minutes) on the first .kt commit; ktlintFormat covers every module, so
-# untouched-unstaged Kotlin files may also change on disk.
+# (minutes) on the first .kt commit, which formats every module and buildSrc.
 set -euo pipefail
 
 # Only act when the commit touches staged Kotlin sources.
@@ -24,12 +23,13 @@ fi
 # formatted on disk but its index entry is left as staged.
 UNSTAGED_KT=$(git diff --name-only -- '*.kt' || true)
 
-# `tools/gradle` is the wrapper's stand-in under a write-confined sandbox; it
-# delegates to `./gradlew` wherever the default Gradle user home is writable.
-runner="$(git rev-parse --show-toplevel)/tools/gradle"
+# Delegates to `./gradlew` unless the Gradle user home is not writable.
+root="$(git rev-parse --show-toplevel)"
+runner="$root/tools/gradle"
 
 echo "pre-commit: ktlintFormat…"
 "$runner" ktlintFormat --quiet
+"$runner" -p "$root/buildSrc" ktlintFormat --quiet
 
 restage() {
   local file="$1"

@@ -48,7 +48,12 @@ fun renderEmbeddedFonts(
     chunkSize: Int,
 ): String {
     require(packageName.isNotBlank()) { "packageName must not be blank" }
-    val duplicates = families.groupBy { it.accessorName }.filterValues { it.size > 1 }.keys.sorted()
+    val duplicates =
+        families
+            .groupBy { it.accessorName }
+            .filterValues { it.size > 1 }
+            .keys
+            .sorted()
     check(duplicates.isEmpty()) { "duplicate accessor name(s): $duplicates" }
     val ordered = families.sortedBy { it.accessorName }
 

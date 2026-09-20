@@ -1,0 +1,2 @@
+# Byte-exact: a checkout must not rewrite these line endings (Windows autocrlf).
+**/OFL.txt text eol=lf

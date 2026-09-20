@@ -163,9 +163,10 @@ These two are the only active documents; older plans/specs were deleted
   Public API documentation must read on its own, without implementation
   references. Keep every comment and KDoc succinct and indispensable: the
   contract and the non-obvious only, never a narration of the code or a
-  rationale essay.
-- **Gate (every concept close, run by the working agent)**: `./gradlew build
-  --rerun-tasks`; the review sub-agents do not re-run it — the close is gate
+  rationale essay. **At most two lines per comment or KDoc block**, and never
+  restate the diff, the plan, or the decisions log.
+- **Gate (every concept close, run by the working agent)**: `./gradlew build`;
+  the review sub-agents do not re-run it — the close is gate
   green first, then reviews, then marker/commit. **Why `build`,
   not only `:kge-core:allTests`:** `build` is
   `check` + `assemble` — the tests of every target plus the `webMain`-class
@@ -175,12 +176,12 @@ These two are the only active documents; older plans/specs were deleted
   never in the webMain metadata compilation — `allTests` stayed green while
   `build` failed (decisions log item 14, correction). **Why no explicit
   `ktlintCheck`: ktlint-gradle 14.2.0 wires the ktlint source-set checks into
-  `check` (decisions log #32); `ktlintFormat` stays a manual step.** **Why
-  `--rerun-tasks` is mandatory:** build cache and
-  configuration cache (both enabled in gradle.properties) can return up-to-date
-  results without executing — a "green" can be stale. Historical proof:
-  `jvmTest` once reported "1 test" while the kotest engine never ran (decisions
-  log item 15). Only force-executed green counts. JVM, JS (browser) and wasmJs
+  `check` (decisions log #32); `ktlintFormat` stays a manual step.** **Why the
+  test tasks always run:** the build config disables up-to-dateness and caching
+  for every test task, so a plain `build` executes them — a cache can otherwise
+  replay a stale green (`jvmTest` once reported "1 test" with the kotest engine
+  never running, decisions log item 15); `--rerun-tasks` remains for a full
+  forced re-run. JVM, JS (browser) and wasmJs
   (browser) run the same commonTest suite (the web targets are browser-only —
   node was dropped at S6, log #19).
 - **Sources of truth — three roles**: **(1) olcPixelGameEngine v2.30** is the
@@ -202,8 +203,8 @@ These two are the only active documents; older plans/specs were deleted
 - **Docs and commit messages in English**; committed documents carry no personal
   quotes — decisions are recorded by rationale, not by who said them.
 - **Commit messages are succinct** (subject + non-obvious core only): a
-  one-line subject, then at most a few body lines covering only what is not
-  deducible from the diff — the "why", recorded decisions, non-obvious
+  one-line subject, then **at most two short body lines** covering only what is
+  not deducible from the diff — the "why", recorded decisions, non-obvious
   consequences. Every line — subject included — stays within 80 columns. No
   gate history, no test counts, no review narratives, no change-by-change recap
   (that is what the diff shows), no doc/location pointers. Long-form context
@@ -218,21 +219,20 @@ These two are the only active documents; older plans/specs were deleted
 ## Commands
 
 ```bash
-./gradlew build --rerun-tasks  # full gate: ktlint (wired into check) + all targets' tests + assemble/metadata
-./gradlew :kge-core:allTests   # tests only (jvm + js browser + wasmJs browser)
-./gradlew :kge-core:jvmTest    # JVM only
-tools/gradle <args>            # same arguments, for a sandbox that denies writes to ~/.gradle
+./gradlew build                       # full gate: ktlint (wired into check) + all targets' tests + assemble/metadata
+./gradlew :kge-core:allTests          # tests only (jvm + js browser + wasmJs browser)
+./gradlew :kge-core:jvmTest           # JVM only
+tools/gradle <args>                   # same arguments, for a sandbox that denies writes to ~/.gradle
 ```
 
-`tools/gradle` exists for agents whose file sandbox confines writes to the
-workspace: Gradle needs a writable user home, so the wrapper falls back to
-`.gradle-home/` in the repository and reads the default dependency cache
-read-only (no re-download). Outside such a sandbox it is exactly `./gradlew`.
+`build` also covers `buildSrc` (through the `buildSrcCheck` task). Agents run
+`tools/gradle` in place of `./gradlew`: it needs no escalation, and outside a
+confining sandbox it is exactly the wrapper.
 
 `jvmTest` runs through `kotest-runner-junit5` + `useJUnitPlatform()` in
 `kge-core/build.gradle.kts` — kotest's Gradle plugin does not wire the JVM
 target under KGP 2.4.10, and without that wiring `jvmTest` executes zero tests
-(decisions log item 15; the phantom green that motivates the `--rerun-tasks`
-rule).
+(decisions log item 15; the phantom green the always-run test config exists
+for).
 
 A JDK 21 daemon and the Gradle wrapper 9.7.1 are pinned; bytecode target 11.

@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
-# Runs Gradle with the project's wrapper and the given arguments.
-#
-# When the default Gradle user home is not writable — an agent sandbox that
-# confines writes to the workspace — this falls back to a repository-local home
-# and reuses the default dependency cache read-only, so no dependency is
-# re-downloaded. Outside a sandbox it is exactly `./gradlew`.
+# Runs Gradle like `./gradlew`, falling back to a repository-local user home
+# (and the default dependency cache read-only) when the default one is not
+# writable.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
-default_home=${GRADLE_USER_HOME:-$HOME/.gradle}
+real_home=${HOME:?}
+default_home=${GRADLE_USER_HOME:-$real_home/.gradle}
 
 if mkdir -p "$default_home" 2>/dev/null && [ -w "$default_home" ]; then
     exec "$root/gradlew" "$@"
@@ -18,15 +16,23 @@ local_home="$root/.gradle-home"
 mkdir -p "$local_home"
 export GRADLE_USER_HOME="$local_home"
 
-if [ -d "$HOME/.gradle/caches/modules-2" ]; then
-    export GRADLE_RO_DEP_CACHE="$HOME/.gradle/caches"
+if [ -d "$real_home/.gradle/caches/modules-2" ]; then
+    export GRADLE_RO_DEP_CACHE="$real_home/.gradle/caches"
 fi
 
-# The Kotlin daemon cannot start outside a writable user home; skipping the
-# attempt avoids a failed daemon start before every compile.
-set -- -Pkotlin.compiler.execution.strategy=in-process "$@"
+# The Kotlin daemon and its npm tooling both need a writable home.
+set -- \
+    -Pkotlin.compiler.execution.strategy=in-process \
+    -Pkotlin.user.home="$local_home/kotlin" \
+    "$@"
 
-launcher=$(ls -d "$HOME"/.gradle/wrapper/dists/gradle-*-bin/*/gradle-*/bin/gradle 2>/dev/null | head -n 1 || true)
+# The distribution the wrapper pins, so the fallback never runs another Gradle.
+launcher=""
+wrapper_properties="$root/gradle/wrapper/gradle-wrapper.properties"
+wrapper_version=$(sed -E -n 's/.*gradle-([0-9][^-]*)-(bin|all)\.zip.*/\1/p' "$wrapper_properties" 2>/dev/null | head -n 1)
+if [ -n "$wrapper_version" ]; then
+    launcher=$(ls -d "$real_home"/.gradle/wrapper/dists/gradle-"$wrapper_version"-*/*/gradle-"$wrapper_version"/bin/gradle 2>/dev/null | head -n 1 || true)
+fi
 if [ -n "$launcher" ]; then
     exec "$launcher" "$@"
 fi

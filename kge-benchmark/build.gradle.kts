@@ -14,7 +14,13 @@ kotlin {
     jvm()
 
     wasmJs {
-        browser()
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadlessNoSandbox()
+                }
+            }
+        }
         binaries.executable()
     }
 

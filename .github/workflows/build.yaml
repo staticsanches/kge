@@ -20,13 +20,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xvfb libgl1-mesa-dri libglx-mesa0
       - if: matrix.os == 'windows-latest'
         uses: ssciwr/setup-mesa-dist-win@v3
-      # `buildSrc` is not part of the main build's task graph, so its own tests
-      # need a separate invocation before the root build.
-      - run: ./gradlew -p buildSrc build --rerun-tasks --stacktrace
       # `build` = check + assemble; only `assemble` exercises the webMain
       # metadata compilation, so `allTests` cannot be the gate. ktlint's
-      # source-set checks are wired into `check`.
+      # source-set checks, and buildSrc's own, are wired into `check`.
       - if: matrix.os == 'ubuntu-latest'
-        run: xvfb-run -a ./gradlew build --rerun-tasks --stacktrace
+        run: xvfb-run -a ./gradlew build --stacktrace
       - if: matrix.os != 'ubuntu-latest'
-        run: ./gradlew build --rerun-tasks --stacktrace
+        run: ./gradlew build --stacktrace

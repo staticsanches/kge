@@ -1,6 +1,3 @@
-import java.io.File
-import java.security.MessageDigest
-import java.util.Base64
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
@@ -17,6 +14,9 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.register
+import java.io.File
+import java.security.MessageDigest
+import java.util.Base64
 
 private const val DEFAULT_CHUNK_SIZE = 32768
 
