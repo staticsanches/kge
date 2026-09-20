@@ -1,10 +1,11 @@
 # KGE
 
-Guidance for AI agent work in this repository. The rules are harness-neutral:
-`.opencode/` holds this project's sub-agent definitions and review state, used
-when the harness supports them; under a harness that does not, read those
-definitions as the prompt for a general sub-agent and keep the same order and
-completion criteria.
+Guidance for the orchestrating agent in this repository. The rules are
+harness-neutral: `.opencode/` holds this project's sub-agent definitions and
+review state, and those definitions are **binding**. Under a harness with no
+sub-agent definitions of its own, the content of the definition file is the
+prompt of the general sub-agent that takes the role; the order and the
+completion criteria do not change.
 
 ## Project
 
@@ -36,6 +37,16 @@ documents under `docs/plans/` stay authoritative for their own concept.
 (`docs/plans/2026-09-17-font-bundle-findings.md`) and the renderer-lever
 measurements (`docs/plans/2026-09-20-renderer-lever-measurements.md`).
 
+## Role
+
+The session agent is the **orchestrator**. It owns the touch-point, the
+micro-plan, the gate, the review dispatch, the marker and the commit, and it
+decides what happens next. It writes **no production and no test code**:
+implementation always goes to a `tdd-developer` sub-agent and each review axis
+to a fresh review sub-agent. Code written in the orchestrator's own context
+defeats the separation of duties the flow exists for — it is a process defect,
+not a saving.
+
 ## Round flow
 
 Every round runs this sequence:
@@ -44,9 +55,14 @@ Every round runs this sequence:
    sources of truth (below) and each divergence recorded.
 2. **Micro-plan** — 1–2 pages of TDD steps, written just-in-time; its test code
    is the contract.
-3. **Implement** — test-first, per feature: failing test → run (red) → implement
-   → run (green). Dispatched implementation follows the project definition in
-   `.opencode/agent/tdd-developer.md`.
+3. **Implement — dispatched, never in the orchestrator's context.** Give a
+   `tdd-developer` sub-agent (`.opencode/agent/tdd-developer.md`) the micro-plan
+   path, the step or slice, the files, the success criteria (the tests that must
+   pass) and the already-resolved decisions. It runs strict test-first per
+   feature — failing test → run (red) → implement → run (green) — and never
+   commits or edits the spec; a wrong or ambiguous plan comes back as a blocker.
+   The orchestrator steers, resolves blockers and re-dispatches; it does not take
+   the code over.
 4. **Gate** — `tools/gradle build` (below), once, before the reviews.
 5. **Review** — two axes, two fresh sub-agents in parallel, never the model that
    produced the diff: Standards and Spec conformance, defined by
@@ -55,11 +71,12 @@ Every round runs this sequence:
    the three sources of truth — a plan-conformance review does not catch a defect
    of the plan itself — lists recorded divergences as accepted rather than
    suppressed, and covers the resource, API and scope disciplines below.
-6. **Marker → commit** — report in `.opencode/reviews/<name>.md` (local and
-   gitignored), marker in `.opencode/review-passed`, then one squashed commit for
-   the round. Marker write and commit stay separate commands — under opencode the
-   commit gate (`.opencode/plugin/review-gate.ts`) reads the marker before the
-   command runs.
+6. **Marker → commit → hand back** — report in `.opencode/reviews/<name>.md`
+   (local and gitignored), marker in `.opencode/review-passed`, then one squashed
+   commit for the round. Marker write and commit stay separate commands — under
+   opencode the commit gate (`.opencode/plugin/review-gate.ts`) reads the marker
+   before the command runs. The orchestrator then stops: it never pushes, and the
+   owner reviews, pushes and may implement parts personally.
 7. **Cleanup** — delete the round's scratch from the gitignored `.tmp/` — logs,
    extracted trees, downloaded sources, spike output — so nothing accumulates
    across rounds.
