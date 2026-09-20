@@ -5,6 +5,7 @@ import dev.staticsanches.kge.engine.addon.DrawCircleAddon
 import dev.staticsanches.kge.engine.addon.DrawLineAddon
 import dev.staticsanches.kge.engine.addon.DrawRectAddon
 import dev.staticsanches.kge.engine.addon.DrawSpriteAddon
+import dev.staticsanches.kge.engine.addon.DrawStringAddon
 import dev.staticsanches.kge.engine.addon.DrawTriangleAddon
 import dev.staticsanches.kge.engine.addon.FillCircleAddon
 import dev.staticsanches.kge.engine.addon.FillRectAddon
@@ -12,6 +13,7 @@ import dev.staticsanches.kge.engine.addon.FillTriangleAddon
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Float2D
 
 /** The draw surface [renderScene] paints on: the addons it exercises. */
 internal interface SceneTarget :
@@ -25,8 +27,22 @@ internal interface SceneTarget :
     FillTriangleAddon,
     DrawSpriteAddon
 
+/** The draw surface [renderTextScene] paints on: the addons it exercises. */
+internal interface TextSceneTarget :
+    ClearAddon,
+    DrawStringAddon
+
 /** The side of the sprite every rendered frame blits, in pixels. */
 internal const val SCENE_SPRITE_SIZE = 32
+
+/** The glyph line the text workload queues, identical from frame to frame. */
+internal const val SCENE_TEXT = "SCORE 123456  FPS 60  TIME 12:34  HEALTH 100"
+
+/** The vertical pitch of one [SCENE_TEXT] line, in pixels. */
+private const val SCENE_TEXT_LINE_HEIGHT = 12
+
+/** How many [SCENE_TEXT] copies each row queues, so the glyph load dominates. */
+private const val SCENE_TEXT_COLUMNS = 3
 
 /** The side of one grid cell, in pixels; the element count follows the screen. */
 private const val SCENE_CELL = 48
@@ -89,6 +105,29 @@ internal fun renderScene(
                 6 -> target.drawTriangle(centerX, y0, x0, y1, x1, y1, color)
                 else -> target.drawSprite(x0, y0, sprite, (x1 - x0 + 1) / sprite.width)
             }
+        }
+    }
+}
+
+/**
+ * Paints one frame of the text workload: clear to [SCENE_BACKGROUND], then queue
+ * [SCENE_TEXT] [SCENE_TEXT_COLUMNS] times per [SCENE_TEXT_LINE_HEIGHT] row.
+ */
+internal fun renderTextScene(
+    target: TextSceneTarget,
+    width: Int,
+    height: Int,
+) {
+    target.clear(SCENE_BACKGROUND)
+    val rows = ((height - 4) / SCENE_TEXT_LINE_HEIGHT).coerceAtLeast(1)
+    val columnPitch = width / SCENE_TEXT_COLUMNS
+    for (row in 0 until rows) {
+        for (column in 0 until SCENE_TEXT_COLUMNS) {
+            target.drawStringDecal(
+                position = Float2D((4 + column * columnPitch).toFloat(), (2 + row * SCENE_TEXT_LINE_HEIGHT).toFloat()),
+                text = SCENE_TEXT,
+                color = scenePalette[(row + column) % scenePalette.size],
+            )
         }
     }
 }

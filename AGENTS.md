@@ -81,7 +81,13 @@ closed 2026-09-19 (log #31)**: the `buildSrc` embedder plus the data-only
 also round C's `commonTest` fixture. **Next: `R6` round C — face + HarfBuzz
 shaping + public layout** (micro-plan revised 2026-09-19: shipped-font fixture,
 base64 entry point + `BufferService`, contract re-measured on the default
-instance; variable axes deferred).
+instance; variable axes deferred). **Renderer submission levers priced
+2026-09-20 (log #32)**: the vertex-upload lever is refuted by measurement
+(1–3.8 fps), merging the text run is real but deferred (a public
+`DrawStringService` decision), and state dedupe splits into a blend-guard parity
+correction — the next round — and a `CULL_FACE`/`bindTexture` dedupe that belongs
+to a coalescing round. Full tables in
+`docs/plans/2026-09-20-renderer-lever-measurements.md` — **do not re-measure**.
 
 **Text (R6) — touch-point decided 2026-09-16; research recorded.** The
 font-library research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate

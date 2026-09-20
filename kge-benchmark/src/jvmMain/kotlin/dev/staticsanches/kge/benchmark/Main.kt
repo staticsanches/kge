@@ -3,15 +3,26 @@ package dev.staticsanches.kge.benchmark
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 
-fun main(): Unit =
+/**
+ * Runs the JVM sweep; `--key=value` arguments (`sizes`, `modes`, `workloads`,
+ * `highDpi`, `warmup`, `measure`) narrow it, so one comparison costs seconds.
+ */
+fun main(args: Array<String>): Unit =
     runBlocking {
+        val options = parseBenchmarkOptions(args.toList(), jvmModes)
+        println(
+            "sweep sizes=${options.sizes.joinToString { "${it.x}x${it.y}" }} " +
+                "modes=${options.modes.joinToString { "${it.label}/highDpi=${it.highDpi}" }} " +
+                "workloads=${options.workloads.joinToString { it.label }} " +
+                "warmup=${options.warmup} measure=${options.measure}",
+        )
         val results = mutableListOf<BenchmarkResult>()
         runSweep(
-            sizes = benchmarkSizes,
-            modes = jvmModes,
-            workloads = benchmarkWorkloads,
-            warmup = benchmarkWarmup,
-            measure = benchmarkMeasure,
+            sizes = options.sizes,
+            modes = options.modes,
+            workloads = options.workloads,
+            warmup = options.warmup,
+            measure = options.measure,
         ) { result ->
             results += result
             println(
