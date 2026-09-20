@@ -1,262 +1,124 @@
 # KGE
 
-Guidance for AI agent work in this repository (opencode / Claude Code).
+Guidance for AI agent work in this repository. The rules are harness-neutral:
+`.opencode/` holds this project's sub-agent definitions and review state, used
+when the harness supports them; under a harness that does not, read those
+definitions as the prompt for a general sub-agent and keep the same order and
+completion criteria.
 
 ## Project
 
 **KGE** — a Kotlin Multiplatform game engine, a free adaptation of
-[olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine),
-targeting JVM (LWJGL/GLFW/OpenGL) and web (WebGL2 via kotlin-wrappers).
+[olcPixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine), for
+JVM (LWJGL/GLFW/OpenGL) and web (WebGL2 via kotlin-wrappers).
 
-**Current state:** greenfield restructure in progress on the work branch. The
-engine is being rebuilt concept by concept; the old engine lives in the git
-history of `main` (evidence, not a mandate: `git show main:<path>`). So far:
-`kge-core` KMP module (jvm/js/wasmJs) with scaffold smoke tests on all targets,
-the CI workflow, C4 (Pixel) closed (log #24), the extension mechanism closed
-then **redesigned** at the T2 touch-point (log #28) — `KGEOverridable`
-supersedes the `KGEContext` contract — T3 (pixel display formats, log #29,
-the first real T2 consumer), **C2 (resource lifecycle, T1, log #30)**:
-resource contract + `LeakReporterService` + leak detection, and **C3 (native
-memory, S1, log #31)**: `ByteBuffer` (JVM = `java.nio.ByteBuffer` via
-typealias-actual; web TypedArray emulation) + `MemoryAllocatorService` — the
-first platform-defaulted T2 service. C5 (surface — S3/S4, log #33) closed:
-`Pixmap`/`MutablePixmap` (mode-aware `get`, nearest/bilinear sampling),
-`Sprite` over native memory and the platform-independent
-`SpriteService`. **S5 (PNG codec, log #34) closed, then generalized by S6 (log
-#19, closed 2026-09-11)**: `ImageService` (generic `Decoder<T>`/`Encoder<T>`,
-suspend `load`/`save`, JVM STB, web-native `createImageBitmap`/canvas), the
-extension codecs (`BytesDecoder`/`Base64Decoder`/`UrlDecoder`/`FetchDecoder`,
-`PngEncoder`/`JpegEncoder`/`Base64PngEncoder`), and a module-wide kotest
-`ProjectConfig` that resets service overrides after every test. **C6 (raster ops, R1, log #35) closed**: four per-scope raster
-sub-services (`DrawService`/`OutlineService`/`FillService`/`DrawSpriteService`)
-aggregated by `Rasterizer`, pixel-mode blend via the draw seam, native bulk
-buffer ops, and the `SpriteService` rename. **Vector/point concept (closed
-2026-09-09)**: pure `Int2D`/`Float2D` `data class`es (`math/vector`) + typed
-`Int2D` overloads on the raster sub-services (interface defaults + companion
-`Proxy` analog forwarding). **Ordering revision (2026-09-10, owner):** the old
-`C7` (simple text) is dropped — text becomes **elaborate text** (shaping +
-rasterization + atlas + blit), shipped **last** as `R6`, after `R2`, `C9`,
-`C10`; the `main` bitmap font is not ported. **R2 (viewport/clipping,
-closed 2026-09-10)**: the pure `Viewport` sealed type, the `ClipService` seam
-(fifth raster sub-service, olc `ClipLineToDrawTarget` Cohen–Sutherland),
-`Pixmap : Viewport.Bounded`, and the clip-then-walk `drawLine` that clears the
-C6 partial-OOB debt. **Window + partial blit (closed 2026-09-10, log #16)**:
-the nested `Pixmap.Mutable`/`Pixmap.RawBacked`, the anonymous `Pixmap.window`
-views, `BlitService`/`blit`/`blitRegion` over a `Pixmap` source (the
-`DrawSpriteService` rename), `Flip` moved to `Pixmap`, and
-`Sprite.byteBuffer` retired for `RawBacked.buffer`. **Circle octant masks
-(closed 2026-09-11, log #17)**: the `CircleOctantMask` type and the required
-`mask` on `drawCircle`/`fillCircle` (raw + `Int2D`, forwarded by `Rasterizer`)
-— `ALL` is the untouched C6 behavior. **Line patterns (closed 2026-09-11, log
-#18)**: the `LinePattern` sealed type and the required `pattern` on
-`drawLine`/`drawRect`/`drawTriangle`, consumed per walked cell from the first
-cell of the clipped walk — `Filled` is the untouched pre-change behavior. **Image service
-`S6` (closed 2026-09-11, log #19)**: supersedes `S5` with a platform-generic
-`ImageService` (generic `Decoder<T>`/`Encoder<T>`, suspend `load`/`save`,
-`Sprite` RGBA-only, `PNG`/`JPEG` uniform encode, documented per-platform decode
-divergence). The web targets are now **browser-only** (node dropped) and the
-browser suites run in CI. `C9` (renderer/GL/decals) closed 2026-09-12 (log
-#22): the GL layer, the renderer/pipeline and the decal exist. `C10` split at
-the 2026-09-13 touch-point into `C10a` (loop/window/time) → `C10b` (input) →
-`C10c` (addons), **all closed**: `C10a` (log #24) — the `Driver`/`DriverService`
-seam (JVM GLFW + web canvas/WebGL2), `TimeService`/`FrameAccumulator`,
-`WindowConfig` and the abstract `Engine` loop with suspend callbacks (fractional
-letterbox, clear/present); `C10b` (log #25) — the entry-less `expect enum
-KeyboardKey` + companion intersection vocabulary, `ButtonState`/`InputTracker`
-(olc `HWButton`), mouse/focus/modifiers, `Driver.input` with JVM GLFW/web DOM
-backends, and `Engine.input`; `C10c` (log #27) — the ISP roles (`HasWindow`/
-`HasTime`/`HasInput`/`HasLayers`/…) and addons, `Layer`/`LayerStack` and the olc
-layer render step. The `kge-benchmark` module (FPS sweep, log #26) and the
-golden-image test harness (log #28) are also in. **Text is the last area.** The
-2026-09-16 touch-point fixed the stack (HarfBuzz + FreeType, thin per-platform
-seam) and split the work: `C7` bitmap text in `kge-core` (revived; zero new
-deps) and `R6` elaborate text as the opt-in `kge-text-ttf` module (rounds B–E).
-**`C7` round A closed 2026-09-16 (log #29)**: the stateless scope-parameterized
-`DrawStringService` (private font holder), `HasResourceScope`, the engine wiring
-and `DrawStringAddon` (CPU + decal). **`R6` round B closed 2026-09-16 (log
-#30)**: the `kge-text-ttf` scaffold — a new jvm/js/wasmJs module with the
-HarfBuzz/FreeType deps wired and smoke-tested on every target. **Bundled fonts
-closed 2026-09-19 (log #31)**: the `buildSrc` embedder plus the data-only
-`kge-font-roboto` (Roboto 3.015 / Roboto Mono 3.001 variable, OFL-1.1), which is
-also round C's `commonTest` fixture. **Next: `R6` round C — face + HarfBuzz
-shaping + public layout** (micro-plan revised 2026-09-19: shipped-font fixture,
-base64 entry point + `BufferService`, contract re-measured on the default
-instance; variable axes deferred). **Renderer submission levers priced
-2026-09-20 (log #32)**: the vertex-upload lever is refuted by measurement
-(1–3.8 fps), merging the text run is real but deferred (a public
-`DrawStringService` decision), and state dedupe splits into a blend-guard parity
-correction and a `CULL_FACE`/`bindTexture` dedupe that belongs to a coalescing
-round. Full tables in
-`docs/plans/2026-09-20-renderer-lever-measurements.md` — **do not re-measure**.
-**Decal blend-mode guard closed 2026-09-20 (log #33)**: the olc/`main` per-mode
-`glBlendFunc` guard is restored — a parity correction, not a measurable
-optimization — with the mode mirror in the scope-owned built-in bundle, re-armed
-by `prepareDrawing`.
-
-**Text (R6) — touch-point decided 2026-09-16; research recorded.** The
-font-library research (FreeType/HarfBuzz across JVM + js + wasmJs, candidate
-stacks, UNVERIFIED items) is in `docs/decisions/phase-1/14-text-r6.md` — **do
-not re-research**; the touch-point decisions and spike findings are in
-`docs/plans/2026-09-16-r6-text-touchpoint.md`. The 2026-09-10 note that the
-`main` bitmap font was not ported is **reversed** by `C7` (log #29). The
-2026-09-19 touch-point revision amends the `Font` byte transport (base64 entry
-point + `BufferService`, direct buffer retained on JVM, staging copy on web) and
-records the deferred variable-axes shape; the measured axes/named instances and
-the per-backend discovery matrix are in the font-bundle findings — **do not
-re-verify**.
+Greenfield restructure on the work branch: concepts are rebuilt one at a time,
+and the previous engine lives in `main` (evidence, not a mandate:
+`git show main:<path>`). **Where we are and what is next come from the roadmap's
+ordering and the decisions index — this file carries no per-round log.**
 
 ## Read first
 
 - `docs/plans/2026-08-31-kge-restructure-roadmap.md` — the macro roadmap:
   concept list, guiding principles, decision lenses, ordering, per-concept
-  workflow. **The plan is the roadmap; detail is not frozen ahead.**
+  workflow. The plan is the roadmap; detail is not frozen ahead.
 - `docs/decisions/phase-1.md` — append-only log of verified facts and
-  per-concept decisions. Future sessions use it, do not question without
-  evidence. It is an **index**; entries live in `docs/decisions/phase-1/` split
-  by concept era — read the index, then only the relevant chunk (see "How to
-  read" there). Do not read every chunk.
+  per-concept decisions, written as an **index**: read the index, then only the
+  relevant chunk under `docs/decisions/phase-1/`, never every chunk. Entries are
+  settled; reopen one only with evidence.
 
-These two are the only active documents; older plans/specs were deleted
-(history is the archive).
+Older plans and specs were deleted — git history is the archive — and the dated
+documents under `docs/plans/` stay authoritative for their own concept.
 
-## Working rules
+**Settled — do not redo without new evidence:** the font-library research
+(`docs/decisions/phase-1/14-text-r6.md`), the R6 touch-point decisions
+(`docs/plans/2026-09-16-r6-text-touchpoint.md`), the font-bundle findings
+(`docs/plans/2026-09-17-font-bundle-findings.md`) and the renderer-lever
+measurements (`docs/plans/2026-09-20-renderer-lever-measurements.md`).
 
-- **Code review**: every code review (concept close / PR review) runs the
-  two-axis review (Standards + Spec conformance) — dispatched through the
-  project review sub-agents (`.opencode/agent/review-standards.md` and
-  `.opencode/agent/review-spec.md`) when configured, or — when they are not —
-  through two fresh general sub-agents run in parallel, one per axis (never a
-  self-review by the working model that produced the diff). The close flow is
-  **green gate → reviews ok → marker → commit**: the working agent runs the gate
-  first (below), and the review sub-agents do **not** run the build, tests or
-  gate — they review the diff statically, so the gate executes once, not once
-  per axis. The Spec axis carries mandatory checks against the **three sources
-  of truth** (olc behavior parity, no unjustified regression against `main`,
-  Kotlin realization), because a plan-conformance review does not catch a defect
-  of the plan itself: a divergence from olc, or a regression against a `main`
-  solution, is a finding unless a rationale is recorded in the decisions log,
-  the micro-plan, or KDoc, and recorded divergences are listed as accepted
-  rather than suppressed. The olc reference is
-  `~/workspace/olcPixelGameEngine/olcPixelGameEngine.h` (the upstream checkout);
-  `main` is read via `git show main:<path>`. The review writes its report to
-  `.opencode/reviews/<name>.md` (gitignored local state) and the marker
-  `.opencode/review-passed`; the commit gate is enforced by the opencode
-  plugin `.opencode/plugin/review-gate.ts` (blocks `git commit` touching
-  `docs/decisions/` without a valid marker + `tree:` hash). Marker
-  writes and the commit must be separate bash commands (the gate reads the
-  marker before the command runs). **Round cap:** a close runs at most
-  **three** review rounds. A PASS closes the round — residual minors are
-  recorded in the report, not chased with another round — and a third-round
-  FAIL escalates: the marker carries `escalated` and the concept does not close
-  without an owner decision.
-- **Concept flow**: touch-point (design confirmation, open items decided) →
-  micro-plan (1-2 pages, TDD steps, just-in-time) → implement → gate → log
-  entry. The touch-point and the micro-plan consult olc (behavior), the `main`
-  implementation (its Kotlin-level solutions, not discarded) and the Kotlin
-  constraints/facilities, and record why each divergence is taken. Never a slice
-  of a concept; never a provisional API a later concept must break ("no
-  throwaway commits" — restructure at the concept checkpoint).
-- **TDD**: failing test → run (red) → implement → run (green), per feature; the
-  micro-plan's test code is the contract. When dispatched, implementation runs
-  through the project `tdd-developer` subagent
-  (`.opencode/agent/tdd-developer.md`), which carries the olc-parity check too.
-- **Resource discipline**: every failure path of engine code that allocated a
-  resource must close it — allocate-then-construct call sites wrap the
-  construction in `letClosingIfFailed` (the `main` engine's guard, ported to
-  the new kernel); the concept review audits every allocate/close path,
-  including construction failure branches.
-- **API discipline**: every public parameter has an observable effect — a
-  parameter with no behavior is a provisional API and a defect; its effect is
-  pinned by a test. The concept review audits parameters too (the micro-plan
-  can record a wrong "detail" — a plan-conformance review does not catch a
-  defect of the plan itself).
-- **Scope discipline**: prefer the narrowest visibility that compiles — a
-  `private` top-level/class member over `internal`, and `internal` over
-  `public`; a concrete implementation shared across files is a `private` type
-  behind an `internal` factory, not an `internal` type. Public API exists on
-  purpose — KGE is an **extensible engine**, so services, facades, role
-  interfaces and the types an extender must name are legitimately public; the
-  defect is *accidental* widening. **Test source sets**: `internal` is a no-op
-  on unpublished code, so the ladder drops it — keep the same preference,
-  `private` first, and widen to no modifier (the default `public`) only when the
-  declaration is shared across test files (or cannot be `private`, as with
-  `expect`/`actual`). The concept review audits visibility too.
-- **KDoc discipline**: a KDoc never references the docs tree (`docs/...`) —
-  rationale lives in the decisions log/plan, not in the code — and the KDoc of
-  public API never names `internal`/`private` concepts, methods, or classes.
-  Public API documentation must read on its own, without implementation
-  references. Keep every comment and KDoc succinct and indispensable: the
-  contract and the non-obvious only, never a narration of the code or a
-  rationale essay. **At most two lines per comment or KDoc block**, and never
-  restate the diff, the plan, or the decisions log.
-- **Gate (every concept close, run by the working agent)**: `./gradlew build`;
-  the review sub-agents do not re-run it — the close is gate
-  green first, then reviews, then marker/commit. **Why `build`,
-  not only `:kge-core:allTests`:** `build` is
-  `check` + `assemble` — the tests of every target plus the `webMain`-class
-  metadata/klib compilation of intermediate source sets, which only
-  `assemble` exercises. `allTests` did not cover it once: the C3
-  `org.khronos.webgl` imports resolved on every platform compilation but
-  never in the webMain metadata compilation — `allTests` stayed green while
-  `build` failed (decisions log item 14, correction). **Why no explicit
-  `ktlintCheck`: ktlint-gradle 14.2.0 wires the ktlint source-set checks into
-  `check` (decisions log #32); `ktlintFormat` stays a manual step.** **Why the
-  test tasks always run:** the build config disables up-to-dateness and caching
-  for every test task, so a plain `build` executes them — a cache can otherwise
-  replay a stale green (`jvmTest` once reported "1 test" with the kotest engine
-  never running, decisions log item 15); `--rerun-tasks` remains for a full
-  forced re-run. JVM, JS (browser) and wasmJs
-  (browser) run the same commonTest suite (the web targets are browser-only —
-  node was dropped at S6, log #19).
-- **Sources of truth — three roles**: **(1) olcPixelGameEngine v2.30** is the
-  *behavior* reference (semantics, exact pixel math): this is a port, so a
-  divergence from olc is a finding unless a rationale is recorded. **(2) `main`**
-  is the previous Kotlin implementation — not a mandate (we are rewriting the
-  port, its old tests are not ported) but **evidence that must not be discarded**:
-  its Kotlin-level solutions (allocation, boxing, buffer strategy, structure,
-  seam shape) are candidates, and **a regression against a `main` solution is a
-  finding unless a recorded rationale justifies it**. **(3) Kotlin/KMP** is the
-  realization medium: respect its constraints (value-class boxing in
-  generic/nullable/supertype positions, web `Long` emulation, `expect`/`actual`,
-  browser single-threading) and use its facilities — write idiomatic Kotlin, not
-  a C++ re-enactment; olc parity is behavioral, the Kotlin form is ours to
-  choose. All three are consulted at every touch-point and micro-plan, not only
-  in review. (See the roadmap's three lenses.)
-- **Dependencies**: at add-time always use the current release unless a known
-  problem exists; record non-obvious findings in the decisions log.
-- **Docs and commit messages in English**; committed documents carry no personal
-  quotes — decisions are recorded by rationale, not by who said them.
-- **Commit messages are succinct** (subject + non-obvious core only): a
-  one-line subject, then **at most two short body lines** covering only what is
-  not deducible from the diff — the "why", recorded decisions, non-obvious
-  consequences. Every line — subject included — stays within 80 columns. No
-  gate history, no test counts, no review narratives, no change-by-change recap
-  (that is what the diff shows), no doc/location pointers. Long-form context
-  lives in the decisions log and KDocs, never in the commit body.
-- **One commit per round**: the round's work is committed as a single commit —
-  never stack commits; squash before hand-off. The owner reviews and pushes;
-  only then does the next round begin.
-- **Delivery**: the agent commits the round's work (tests, gate and review
-  green) and never pushes; the owner reviews, pushes, and may implement parts
-  personally.
+## Round flow
+
+Every round runs this sequence:
+
+1. **Touch-point** — design confirmation; open items decided against the three
+   sources of truth (below) and each divergence recorded.
+2. **Micro-plan** — 1–2 pages of TDD steps, written just-in-time; its test code
+   is the contract.
+3. **Implement** — test-first, per feature: failing test → run (red) → implement
+   → run (green). Dispatched implementation follows the project definition in
+   `.opencode/agent/tdd-developer.md`.
+4. **Gate** — `tools/gradle build` (below), once, before the reviews.
+5. **Review** — two axes, two fresh sub-agents in parallel, never the model that
+   produced the diff: Standards and Spec conformance, defined by
+   `.opencode/agent/review-standards.md` and `.opencode/agent/review-spec.md`.
+   They review the diff statically and never run the gate. The Spec axis audits
+   the three sources of truth — a plan-conformance review does not catch a defect
+   of the plan itself — lists recorded divergences as accepted rather than
+   suppressed, and covers the resource, API and scope disciplines below.
+6. **Marker → commit** — report in `.opencode/reviews/<name>.md` (local and
+   gitignored), marker in `.opencode/review-passed`, then one squashed commit for
+   the round. Marker write and commit stay separate commands — under opencode the
+   commit gate (`.opencode/plugin/review-gate.ts`) reads the marker before the
+   command runs.
+7. **Cleanup** — delete the round's scratch from the gitignored `.tmp/` — logs,
+   extracted trees, downloaded sources, spike output — so nothing accumulates
+   across rounds.
+
+At most **three** review rounds per close: a PASS closes it and records residual
+minors in the report instead of chasing another round; a third FAIL escalates to
+the owner.
+
+## Rules
+
+- **Three sources of truth** — consulted at every touch-point, micro-plan and
+  review. **(1) olcPixelGameEngine v2.30**
+  (`~/workspace/olcPixelGameEngine/olcPixelGameEngine.h`) is the behavior
+  reference: a divergence is a finding unless a rationale is recorded.
+  **(2) `main`** is the previous Kotlin implementation — not a mandate, but
+  evidence to mine for Kotlin-level solutions; a regression against it is a
+  finding unless a recorded rationale justifies it. **(3) Kotlin/KMP** is the
+  realization medium: respect its constraints (value-class boxing, web `Long`,
+  `expect`/`actual`, browser single-threading) and write idiomatic Kotlin rather
+  than a C++ re-enactment — olc parity is behavioral, the form is ours.
+- **Ship concepts whole**: never a slice, and never a provisional API a later
+  concept must break — restructure at the concept checkpoint.
+- **Gate**: `tools/gradle build` = `check` + `assemble`, so it covers every
+  target's tests, ktlint and the intermediate-source-set metadata/kLIB that
+  `allTests` misses. Test tasks always execute (up-to-dateness is disabled), so a
+  plain `build` is already forced; `ktlintFormat` stays manual.
+- **Resource discipline**: every failure path of code that allocated a resource
+  closes it; allocate-then-construct call sites wrap construction in
+  `letClosingIfFailed`.
+- **API discipline**: every public parameter has an observable effect, pinned by
+  a test.
+- **Scope discipline**: the narrowest visibility that compiles — `private` before
+  `internal` before `public`, and a concrete implementation shared across files
+  is a `private` type behind an `internal` factory. Public API exists on purpose
+  (KGE is an extensible engine), so the defect is accidental widening. In test
+  source sets `internal` is a no-op: `private` first, then no modifier.
+- **KDoc discipline**: at most two lines per comment or KDoc block, the contract
+  and the non-obvious only. Rationale lives in the decisions log, not in the
+  code; public KDoc reads on its own, without naming `internal`/`private`
+  concepts or restating the diff or the plan.
+- **Dependencies**: use the current release at add-time unless a known problem
+  exists; record non-obvious findings in the decisions log.
+- **Language**: docs and commit messages in English; committed documents carry
+  no personal quotes — decisions are recorded by rationale, not by who said
+  them.
+- **Commit messages**: one-line subject, at most two short body lines, every line
+  within 80 columns, carrying only the why and the non-obvious consequences. No
+  gate history, test counts, review narrative, change recap or doc pointers.
+- **Delivery**: the agent commits the round and never pushes; the owner reviews,
+  pushes, and may implement parts personally. The next round starts after that.
 
 ## Commands
 
 ```bash
-./gradlew build                       # full gate: ktlint (wired into check) + all targets' tests + assemble/metadata
-./gradlew :kge-core:allTests          # tests only (jvm + js browser + wasmJs browser)
-./gradlew :kge-core:jvmTest           # JVM only
-tools/gradle <args>                   # same arguments, for a sandbox that denies writes to ~/.gradle
+tools/gradle build               # the gate; identical to ./gradlew build
+tools/gradle :kge-core:allTests  # tests only (jvm + js browser + wasmJs browser)
+tools/gradle :kge-core:jvmTest   # JVM only
 ```
 
-`build` also covers `buildSrc` (through the `buildSrcCheck` task). Agents run
-`tools/gradle` in place of `./gradlew`: it needs no escalation, and outside a
-confining sandbox it is exactly the wrapper.
-
-`jvmTest` runs through `kotest-runner-junit5` + `useJUnitPlatform()` in
-`kge-core/build.gradle.kts` — kotest's Gradle plugin does not wire the JVM
-target under KGP 2.4.10, and without that wiring `jvmTest` executes zero tests
-(decisions log item 15; the phantom green the always-run test config exists
-for).
-
-A JDK 21 daemon and the Gradle wrapper 9.7.1 are pinned; bytecode target 11.
+Agents run `tools/gradle` in place of `./gradlew`: it needs no escalation, and
+outside a confining sandbox it is exactly the wrapper. JDK 21 toolchain; bytecode
+target 11.

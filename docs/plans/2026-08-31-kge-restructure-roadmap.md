@@ -74,8 +74,8 @@ These do not go through the decision lenses; no lens may eliminate one.
 3. **Pure, testable kernel.** No I/O and no dependency types in the kernel;
    pixel-exact parity tests. Pure math units have no service, no lifecycle.
 4. **Reference semantics.** Where behavior is specified by the behavior
-   reference engine (see CLAUDE.md), the KGE behavior follows it (layout, blend
-   math, draw rules), adapted to Kotlin.
+   reference engine (olc — see `AGENTS.md`, "three sources of truth"), the KGE
+   behavior follows it (layout, blend math, draw rules), adapted to Kotlin.
 5. **Parity floor.** JVM + web with the **minimum platform-specific code** (only
    the essential). Where one platform is more demanding, the common design adopts
    the full form in **both** — uniform contract, lean platform implementation
