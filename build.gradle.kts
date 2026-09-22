@@ -33,6 +33,16 @@ subprojects {
     tasks.withType<AbstractTestTask>().configureEach {
         outputs.upToDateWhen { false }
         outputs.cacheIf { false }
+        // An executed task can report zero tests and still exit 0: fail it instead.
+        doLast {
+            val resultsDir = reports.junitXml.outputLocation.get().asFile
+            if (junitXmlTestCount(resultsDir) == 0) {
+                throw GradleException(
+                    "Test task $path executed but reported zero tests; " +
+                        "its JUnit XML under $resultsDir holds none.",
+                )
+            }
+        }
     }
 }
 

@@ -113,9 +113,10 @@ the owner.
   target's tests, ktlint and the intermediate-source-set metadata/kLIB that
   `allTests` misses. Test tasks always execute (up-to-dateness is disabled), so a
   plain `build` is already forced; `ktlintFormat` stays manual. **What that does
-  not buy:** a web browser suite can execute, report zero tests and still exit 0
-  (decisions log, chunk 10) — check the reported test counts, and force the web
-  target with `--rerun-tasks` when one is missing or short.
+  not buy:** the zero-test guard fires on a zero only, so a suite that reports
+  *fewer* tests than it has still exits 0 — check the reported counts, and force
+  the web target with `--rerun-tasks` when one is short or missing (decisions log,
+  chunk 35).
 - **Resource discipline**: every failure path of code that allocated a resource
   closes it; allocate-then-construct call sites wrap construction in
   `letClosingIfFailed`.
