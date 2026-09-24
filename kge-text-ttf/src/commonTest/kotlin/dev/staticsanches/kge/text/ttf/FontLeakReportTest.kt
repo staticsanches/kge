@@ -53,4 +53,22 @@ class FontLeakReportTest :
                 LeakReporterService.override(LeakReporterService.original)
             }
         }
+
+        test("a rasterized font is still reported as the face") {
+            val reports = mutableListOf<String>()
+            LeakReporterService.override(reporting(reports))
+            try {
+                val font = Font.load(Roboto.variableFont)
+                val glyphs = font.shape("A", 16).glyphs
+                val glyphId = glyphs.single().glyphId
+                font.glyph(16, glyphId)
+
+                font.onCollectionObserved()
+
+                reports.single() shouldContain "font face"
+                font.close()
+            } finally {
+                LeakReporterService.override(LeakReporterService.original)
+            }
+        }
     })

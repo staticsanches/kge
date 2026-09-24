@@ -242,6 +242,12 @@ internal helper.
   analysis, not a commitment. Bidi/script itemization are out (HarfBuzz shapes an
   already-ordered run). The 2026-09-10 note ("`main` bitmap font not ported") is
   superseded by `C7` below.
+  - Open at the `E` round (blit + addons): whether per-frame `drawString` needs a
+    **cached shaped run** — the `fontDevelopment` evidence (a pooled
+    `hb_buffer_t` reset per shape plus a caller-shared `IntBuffer` code-point
+    feed, deleted at that branch's tip) shows the cost was felt before; the round
+    D chunk records why the raster rounds do not port that pooling. Measure
+    before pooling: the cache is the lever, not the buffer reuse.
 - **C7 ● Bitmap text (revived 2026-09-16, owner)** — the olc 8x8 sheet and
   `drawString`/`getTextSize` (mono + prop, + decal variants) in `kge-core`, **zero
   new dependencies**. Reverses the 2026-09-10 decision that dropped the simple

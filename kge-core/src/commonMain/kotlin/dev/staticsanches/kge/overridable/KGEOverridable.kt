@@ -17,59 +17,60 @@ import kotlin.reflect.KClass
 @OptIn(ExperimentalAtomicApi::class)
 interface KGEOverridable {
     /**
-     * Base of a service facade companion. Its constructor is internal —
-     * services are engine-defined: consumers override them, they do not
-     * declare new ones.
+     * Base of a service facade companion. Declaring a service is sensitive:
+     * the engine and its satellite modules declare them, applications override.
      */
-    abstract class Proxy<O : KGEOverridable> internal constructor(
-        private val serviceType: KClass<O>,
-        /**
-         * The engine-defined default, always the un-overridden implementation.
-         */
-        val original: O,
-    ) {
-        private val current = AtomicReference(original)
-
-        /** The current implementation, resolved on every access. */
-        protected val delegate: O
-            get() = current.load()
-
-        /**
-         * Replaces the active implementation for the whole process
-         * (last-declared-wins, no per-consumer scope, no public undo). An
-         * override that does not delegate to [original] silently drops the
-         * engine default.
-         */
+    abstract class Proxy<O : KGEOverridable>
         @KGESensitiveAPI
-        fun override(impl: O): Unit = current.store(impl)
+        protected constructor(
+            private val serviceType: KClass<O>,
+            /**
+             * The engine-defined default, always the un-overridden implementation.
+             */
+            val original: O,
+        ) {
+            private val current = AtomicReference(original)
 
-        private fun clearOverride() = current.store(original)
-
-        init {
-            register(this)
-        }
-
-        companion object {
-            private val proxies = AtomicReference<PersistentMap<KClass<*>, Proxy<*>>>(persistentHashMapOf())
+            /** The current implementation, resolved on every access. */
+            protected val delegate: O
+                get() = current.load()
 
             /**
-             * Restores every service's engine default and discards all
-             * overrides — the sole path back. Call only at lifecycle
-             * boundaries (engine destroy, test teardown).
+             * Replaces the active implementation for the whole process
+             * (last-declared-wins, no per-consumer scope, no public undo). An
+             * override that does not delegate to [original] silently drops the
+             * engine default.
              */
             @KGESensitiveAPI
-            internal fun resetAll() {
-                proxies.load().values.forEach { proxy -> proxy.clearOverride() }
+            fun override(impl: O): Unit = current.store(impl)
+
+            private fun clearOverride() = current.store(original)
+
+            init {
+                register(this)
             }
 
-            private fun register(proxy: Proxy<*>) {
-                proxies.update { services ->
-                    require(proxy.serviceType !in services) {
-                        "Service ${proxy.serviceType} is already registered."
+            companion object {
+                private val proxies = AtomicReference<PersistentMap<KClass<*>, Proxy<*>>>(persistentHashMapOf())
+
+                /**
+                 * Restores every service's engine default and discards all
+                 * overrides — the sole path back. Call only at lifecycle
+                 * boundaries (engine destroy, test teardown).
+                 */
+                @KGESensitiveAPI
+                internal fun resetAll() {
+                    proxies.load().values.forEach { proxy -> proxy.clearOverride() }
+                }
+
+                private fun register(proxy: Proxy<*>) {
+                    proxies.update { services ->
+                        require(proxy.serviceType !in services) {
+                            "Service ${proxy.serviceType} is already registered."
+                        }
+                        services.putting(proxy.serviceType, proxy)
                     }
-                    services.putting(proxy.serviceType, proxy)
                 }
             }
         }
-    }
 }

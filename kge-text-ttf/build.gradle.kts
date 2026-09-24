@@ -57,12 +57,8 @@ kotlin {
             // The `org.khronos.webgl` typed arrays the HarfBuzz payload copy
             // uses; on wasmJs they come from kotlinx-browser, not the stdlib.
             implementation(libs.kotlinx.browser)
-            implementation(npm("harfbuzzjs", libs.versions.harfbuzzjs.get()))
-        }
-        webTest.dependencies {
             implementation(libs.kotlinx.coroutines.core)
-            // FreeType is not on the round C production path: the native-stack
-            // smoke test is its only consumer.
+            implementation(npm("harfbuzzjs", libs.versions.harfbuzzjs.get()))
             implementation(
                 npm(
                     "@zkl2333/freetype-wasm",
@@ -71,10 +67,14 @@ kotlin {
                 ),
             )
         }
+        webTest.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
+        }
         jvmMain.dependencies {
             implementation(project.dependencies.platform(libs.lwjgl.bom))
             implementation(libs.lwjgl.core)
             implementation(libs.lwjgl.harfbuzz)
+            implementation(libs.lwjgl.freetype)
             // Host natives go on the production runtime classpath so a
             // downstream JVM consumer can shape; the test source set inherits
             // them.
@@ -88,17 +88,14 @@ kotlin {
                     classifier = lwjglNatives
                 }
             }
-        }
-        jvmTest.dependencies {
-            implementation(libs.kotest.runner.junit5)
-            // FreeType is not on the round C production path: the native-stack
-            // smoke test is its only consumer.
-            implementation(libs.lwjgl.freetype)
             runtimeOnly(libs.lwjgl.freetype.get()) {
                 artifact {
                     classifier = lwjglNatives
                 }
             }
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotest.runner.junit5)
         }
     }
 }
