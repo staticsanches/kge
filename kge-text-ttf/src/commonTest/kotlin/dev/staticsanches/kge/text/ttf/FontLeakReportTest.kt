@@ -22,11 +22,16 @@ class FontLeakReportTest :
                 }
             }
 
+        // A fired collection trigger drops the release action, so the font's
+        // payload keeps a pending report; pin the font that leaked it.
+        val pinnedLeaks = mutableListOf<Font>()
+
         test("an unclosed font is reported as the face, not the payload") {
             val reports = mutableListOf<String>()
             LeakReporterService.override(reporting(reports))
             try {
                 val font = Font.load(Roboto.variableFont)
+                pinnedLeaks += font
 
                 font.onCollectionObserved()
 
@@ -59,6 +64,7 @@ class FontLeakReportTest :
             LeakReporterService.override(reporting(reports))
             try {
                 val font = Font.load(Roboto.variableFont)
+                pinnedLeaks += font
                 val glyphs = font.shape("A", 16).glyphs
                 val glyphId = glyphs.single().glyphId
                 font.glyph(16, glyphId)
@@ -66,7 +72,6 @@ class FontLeakReportTest :
                 font.onCollectionObserved()
 
                 reports.single() shouldContain "font face"
-                font.close()
             } finally {
                 LeakReporterService.override(LeakReporterService.original)
             }
