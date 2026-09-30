@@ -1,6 +1,9 @@
 package dev.staticsanches.kge.text.ttf
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.Pixmap
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.resource.ResourceScope
 
@@ -12,6 +15,44 @@ interface TtfTextService : KGEOverridable {
         font: Font,
     )
 
+    /** The pixel box of [text] at [sizePx] with tab stops of [tabSizeInSpaces] spaces. */
+    fun getTextSize(
+        font: Font,
+        text: String,
+        sizePx: Int,
+        tabSizeInSpaces: Int,
+    ): Int2D
+
+    /**
+     * Draws [text] into [target] from the ([x], [y]) line-box top-left: the tint
+     * carries each glyph's coverage, and only [Pixel.Mode.Custom] changes the blend.
+     */
+    fun drawString(
+        font: Font,
+        target: Pixmap.Mutable,
+        x: Int,
+        y: Int,
+        text: String,
+        sizePx: Int,
+        color: Pixel,
+        scale: Int,
+        tabSizeInSpaces: Int,
+        mode: Pixel.Mode,
+    )
+
+    /** The [Int2D] form of [drawString]. */
+    fun drawString(
+        font: Font,
+        target: Pixmap.Mutable,
+        position: Int2D,
+        text: String,
+        sizePx: Int,
+        color: Pixel,
+        scale: Int,
+        tabSizeInSpaces: Int,
+        mode: Pixel.Mode,
+    ): Unit = drawString(font, target, position.x, position.y, text, sizePx, color, scale, tabSizeInSpaces, mode)
+
     @OptIn(KGESensitiveAPI::class)
     companion object :
         KGEOverridable.Proxy<TtfTextService>(TtfTextService::class, TtfTextServiceDefault),
@@ -20,6 +61,38 @@ interface TtfTextService : KGEOverridable {
             scope: ResourceScope,
             font: Font,
         ) = delegate.createResources(scope, font)
+
+        override fun getTextSize(
+            font: Font,
+            text: String,
+            sizePx: Int,
+            tabSizeInSpaces: Int,
+        ) = delegate.getTextSize(font, text, sizePx, tabSizeInSpaces)
+
+        override fun drawString(
+            font: Font,
+            target: Pixmap.Mutable,
+            x: Int,
+            y: Int,
+            text: String,
+            sizePx: Int,
+            color: Pixel,
+            scale: Int,
+            tabSizeInSpaces: Int,
+            mode: Pixel.Mode,
+        ) = delegate.drawString(font, target, x, y, text, sizePx, color, scale, tabSizeInSpaces, mode)
+
+        override fun drawString(
+            font: Font,
+            target: Pixmap.Mutable,
+            position: Int2D,
+            text: String,
+            sizePx: Int,
+            color: Pixel,
+            scale: Int,
+            tabSizeInSpaces: Int,
+            mode: Pixel.Mode,
+        ) = delegate.drawString(font, target, position, text, sizePx, color, scale, tabSizeInSpaces, mode)
     }
 }
 
@@ -30,6 +103,26 @@ private object TtfTextServiceDefault : TtfTextService {
     ) {
         scope.register(FontKey(), font)
     }
+
+    override fun getTextSize(
+        font: Font,
+        text: String,
+        sizePx: Int,
+        tabSizeInSpaces: Int,
+    ): Int2D = measureText(font, text, sizePx, tabSizeInSpaces)
+
+    override fun drawString(
+        font: Font,
+        target: Pixmap.Mutable,
+        x: Int,
+        y: Int,
+        text: String,
+        sizePx: Int,
+        color: Pixel,
+        scale: Int,
+        tabSizeInSpaces: Int,
+        mode: Pixel.Mode,
+    ) = drawText(font, target, x, y, text, sizePx, color, scale, tabSizeInSpaces, mode)
 }
 
 /** A fresh key per adoption; identity matching lets one scope own several fonts. */

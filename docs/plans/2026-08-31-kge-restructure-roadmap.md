@@ -702,3 +702,18 @@ Five thin rounds: `A` bitmap text in core → `B` `kge-text-ttf` scaffold →
 `C` face + shaping + layout → `D` raster + atlas/cache → `E` blit + addons +
 decal. Touch-point material:
 `docs/plans/2026-09-16-r6-text-touchpoint.md`.
+
+**2026-09-24 — `R6` round E direction: atlas memory at the upload seam (owner).**
+The glyph-atlas sizing research
+(`docs/plans/2026-09-24-glyph-atlas-sizing-research.md`) found the `512x512`
+chart inherited from the abandoned `fontDevelopment` branch and unexplained by
+anything in this repository; power-of-two buys nothing for this sampler
+configuration (GL 3.3 core, GLES 3.0 and WebGL2 all accept NPOT for it), and the
+chart's dominant cost is RGBA8 — 1 MiB where the industry's alpha atlases of the
+same side are 256 KiB. Direction set: take the reduction at the **upload seam**
+(a one-channel coverage texture — `GL_R8` plus swizzle — with a region update and
+no `pixelStorei`), leaving `GlyphAtlas`, its `Sprite` charts and round D's
+white-alpha encoding as they are. The `512` constant is not what changes, and no
+CPU coverage surface is introduced. The `E` touch-point opens next session over
+this direction; it also decides the proposed split into `E1` (CPU blit + addons)
+and `E2` (coverage texture + decal).

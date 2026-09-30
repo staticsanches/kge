@@ -43,7 +43,7 @@ class TtfTextServiceTest :
             val requested = Font.load(Roboto.variableFont)
             val adopted = Font.load(Roboto.variableFont)
             TtfTextService.override(
-                object : TtfTextService {
+                object : TtfTextService by TtfTextService.original {
                     override fun createResources(
                         scope: ResourceScope,
                         font: Font,
