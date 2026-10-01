@@ -1,5 +1,7 @@
-package dev.staticsanches.kge.golden
+package dev.staticsanches.kge.testsupport.golden
 
+import dev.staticsanches.kge.golden.GoldenImages
+import dev.staticsanches.kge.golden.shouldMatchGolden
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.image.Sprite

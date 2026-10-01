@@ -717,3 +717,17 @@ white-alpha encoding as they are. The `512` constant is not what changes, and no
 CPU coverage surface is introduced. The `E` touch-point opens next session over
 this direction; it also decides the proposed split into `E1` (CPU blit + addons)
 and `E2` (coverage texture + decal).
+
+**2026-10-01 — text API unification scheduled after the decided steps (owner).**
+The analysis `docs/plans/2026-10-01-text-api-unification-findings.md` recommends
+not unifying the two text surfaces now: no font-agnostic consumer exists yet,
+`sizePx` would need either an unobservable core parameter or a public font
+handle, the mono/prop pair has no TTF counterpart, and one unified
+`KGEOverridable` proxy would make the two fonts mutually exclusive
+process-wide. Direction set by the owner: keep the sibling surfaces through the
+already-decided work and **attack the unification afterwards** — the core keeps
+the olc bitmap font, and `kge-text-ttf` draws from a font file through an API
+the core defines. Option (a′) of that document (a non-owning `TextFont`
+handle-per-size plus `TextService` as a shape, `prop` as a core extension) is
+the starting shape; its "decisions a future touch-point would have to take" is
+that touch-point's agenda, and E3 must have fixed the TTF decal contract first.

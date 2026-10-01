@@ -1,7 +1,6 @@
 package dev.staticsanches.kge.text
 
 import dev.staticsanches.kge.engine.installGl
-import dev.staticsanches.kge.golden.canvas
 import dev.staticsanches.kge.golden.shouldMatchGolden
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
@@ -10,6 +9,7 @@ import dev.staticsanches.kge.image.asSequence
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.service.DrawService
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.testsupport.golden.canvas
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 

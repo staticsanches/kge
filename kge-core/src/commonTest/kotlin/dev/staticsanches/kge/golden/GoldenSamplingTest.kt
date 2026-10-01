@@ -5,6 +5,7 @@ import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.SpriteService
 import dev.staticsanches.kge.resource.applyClosingIfFailed
+import dev.staticsanches.kge.testsupport.golden.canvas
 import io.kotest.core.spec.style.FunSpec
 
 class GoldenSamplingTest :

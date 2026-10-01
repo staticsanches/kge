@@ -1,4 +1,4 @@
-package dev.staticsanches.kge.golden
+package dev.staticsanches.kge.testsupport.golden
 
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixmap

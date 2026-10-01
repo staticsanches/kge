@@ -7,6 +7,7 @@ import dev.staticsanches.kge.image.SpriteService
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.Rasterizer
 import dev.staticsanches.kge.resource.applyClosingIfFailed
+import dev.staticsanches.kge.testsupport.golden.canvas
 import io.kotest.core.spec.style.FunSpec
 
 class GoldenBlitTest :

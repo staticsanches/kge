@@ -52,6 +52,7 @@ kotlin {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)
             implementation(project(":kge-font-roboto"))
+            implementation(project(":kge-test-support"))
         }
         webMain.dependencies {
             // The `org.khronos.webgl` typed arrays the HarfBuzz payload copy
@@ -112,4 +113,20 @@ ktlint {
 
 tasks.withType<org.jlleitschuh.gradle.ktlint.tasks.BaseKtLintCheckTask>().configureEach {
     exclude { element -> element.file.invariantSeparatorsPath.contains("/build/generated/") }
+}
+
+val generateGoldenImages =
+    goldenImages(
+        taskName = "generateGoldenImages",
+        packageName = "dev.staticsanches.kge.golden",
+        inputDir = layout.projectDirectory.dir("src/commonTest/golden"),
+        outputDir = layout.buildDirectory.dir("generated/golden/commonTest/kotlin"),
+    )
+
+kotlin {
+    sourceSets {
+        commonTest {
+            kotlin.srcDir(generateGoldenImages.flatMap { it.outputDir })
+        }
+    }
 }

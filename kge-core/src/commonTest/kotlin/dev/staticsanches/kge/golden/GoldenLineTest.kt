@@ -4,6 +4,7 @@ import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.rasterizer.LinePattern
 import dev.staticsanches.kge.rasterizer.Rasterizer
+import dev.staticsanches.kge.testsupport.golden.canvas
 import io.kotest.core.spec.style.FunSpec
 
 class GoldenLineTest :

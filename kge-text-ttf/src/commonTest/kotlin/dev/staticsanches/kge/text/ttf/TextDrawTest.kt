@@ -371,6 +371,34 @@ class TextDrawTest :
             }
         }
 
+        test("the scale anchors on the line box, not the draw origin") {
+            Font.load(Roboto.variableFont).use { font ->
+                emptySprite(width = 48, height = 40).use { target ->
+                    draw(font, target, 2, 2, "A", scale = 2)
+
+                    // (2 + round(0 * 2) + 0, 2 + round(14.84375 * 2) - 12 * 2) = (2, 8), 11x12 at 2x
+                    target.inkCells().bounds() shouldBe (Int2D(2, 8) to Int2D(23, 31))
+                    target.alphaSum() shouldBe 39932
+                }
+            }
+        }
+
+        test("a scaled newline advances by the scaled line height") {
+            Font.load(Roboto.variableFont).use { font ->
+                emptySprite(width = 32, height = 72).use { one ->
+                    emptySprite(width = 32, height = 72).use { two ->
+                        draw(font, one, 2, 2, "A", scale = 2)
+                        draw(font, two, 2, 2, "A\nA", scale = 2)
+
+                        // (2 + round((19 + 14.84375) * 2) - 24) = 46, one scaled line height below line 1
+                        val second = two.diffFrom(one)
+                        second.bounds() shouldBe (Int2D(2, 46) to Int2D(23, 69))
+                        second.sumOf { two.get(it.x, it.y).a } shouldBe 39932
+                    }
+                }
+            }
+        }
+
         test("a non-positive scale paints nothing and skips the other checks") {
             Font.load(Roboto.variableFont).use { font ->
                 emptySprite().use { target ->
@@ -576,7 +604,7 @@ private fun expectedPixel(
     return if (alpha == 0) Colors.TRANSPARENT else Pixel.rgba(tint.r, tint.g, tint.b, alpha)
 }
 
-/** The straight-alpha source-over of a coverage-weighted [tint] over [old]. */
+/** The straight-alpha source-over of a coverage-weighted [tint] over [old], exact in Int. */
 private fun sourceOver(
     tint: Pixel,
     coverage: Int,
@@ -585,14 +613,12 @@ private fun sourceOver(
     val weighted = tint.a * coverage / 255
     if (weighted == 0) return old
     if (old.a == 0) return Pixel.rgba(tint.r, tint.g, tint.b, weighted)
-    val sa = weighted / 255f
-    val da = old.a / 255f
-    val outA = sa + da * (1f - sa)
+    val n = weighted * 255 + old.a * (255 - weighted)
     return Pixel.rgba(
-        ((tint.r * sa + old.r * da * (1f - sa)) / outA).toInt(),
-        ((tint.g * sa + old.g * da * (1f - sa)) / outA).toInt(),
-        ((tint.b * sa + old.b * da * (1f - sa)) / outA).toInt(),
-        (outA * 255f).toInt(),
+        (tint.r * weighted * 255 + old.r * old.a * (255 - weighted)) / n,
+        (tint.g * weighted * 255 + old.g * old.a * (255 - weighted)) / n,
+        (tint.b * weighted * 255 + old.b * old.a * (255 - weighted)) / n,
+        n / 255,
     )
 }
 

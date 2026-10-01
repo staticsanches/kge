@@ -1,5 +1,6 @@
-package dev.staticsanches.kge.golden
+package dev.staticsanches.kge.testsupport.golden
 
+import dev.staticsanches.kge.golden.GoldenImages
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotlin.io.encoding.Base64

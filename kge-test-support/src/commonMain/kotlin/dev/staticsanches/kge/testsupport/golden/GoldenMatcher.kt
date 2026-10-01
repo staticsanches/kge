@@ -1,4 +1,4 @@
-package dev.staticsanches.kge.golden
+package dev.staticsanches.kge.testsupport.golden
 
 import dev.staticsanches.kge.image.Pixmap
 import kotlin.io.encoding.Base64
@@ -6,18 +6,21 @@ import kotlin.io.encoding.Base64
 private const val MAX_TOKEN_CELLS = 4096
 
 /**
- * Asserts that this surface is pixel-identical to the golden image [name]
+ * Asserts that this surface is pixel-identical to the golden [name] in [goldens]
  * (path relative to `golden/`, without extension). Unknown names, a size
- * disagreeing with the golden, or any differing cell throw [AssertionError].
- * A mismatch reports the count and, at or below [MAX_TOKEN_CELLS] cells,
- * carries the actual surface as a `WxH:<base64>` token (RGBA, ready for
- * `goldenActualToPng`); above the budget the token is omitted.
+ * disagreeing with the golden, or any differing cell throw [AssertionError]. A
+ * mismatch reports the count and, at or below a 4096-cell budget, carries the
+ * actual surface as a `WxH:<base64>` token (RGBA, ready for `goldenActualToPng`);
+ * above the budget the token is omitted.
  */
-fun Pixmap.shouldMatchGolden(name: String) {
+fun Pixmap.shouldMatchGolden(
+    goldens: Map<String, GoldenImage>,
+    name: String,
+) {
     val golden =
-        GoldenImages.byName[name]
+        goldens[name]
             ?: throw AssertionError(
-                "unknown golden \"$name\"; available: ${GoldenImages.byName.keys.sorted().joinToString(", ")}",
+                "unknown golden \"$name\"; available: ${goldens.keys.sorted().joinToString(", ")}",
             )
     if (width != golden.width || height != golden.height) {
         throw AssertionError(

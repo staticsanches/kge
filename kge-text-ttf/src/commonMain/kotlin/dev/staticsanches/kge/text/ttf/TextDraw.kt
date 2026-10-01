@@ -107,8 +107,8 @@ internal fun drawText(
             BlitService.blitRegion(
                 target,
                 // HarfBuzz offsets are y-up, the raster y-down.
-                ((penX + glyph.offset.x) * scale).roundToInt() + placed.bearing.x * scale,
-                ((penY - glyph.offset.y) * scale).roundToInt() + placed.bearing.y * scale,
+                x + ((penX - x + glyph.offset.x) * scale).roundToInt() + placed.bearing.x * scale,
+                y + ((penY - y - glyph.offset.y) * scale).roundToInt() + placed.bearing.y * scale,
                 charts[placed.chartIndex],
                 placed.source,
                 placed.size,
@@ -144,14 +144,12 @@ private fun Pixel.srcOver(oldPixel: Pixel): Pixel {
     if (a == 0) return oldPixel
     if (oldPixel.a == 0) return this
 
-    val source = a / 255f
-    val destination = oldPixel.a / 255f
-    val inverse = 1f - source
-    val outAlpha = source + destination * inverse
+    // Exact Int arithmetic: Kotlin/JS evaluates Float in double, which would make the float form target-dependent.
+    val n = a * 255 + oldPixel.a * (255 - a)
     return Pixel.rgba(
-        ((r * source + oldPixel.r * destination * inverse) / outAlpha).toInt(),
-        ((g * source + oldPixel.g * destination * inverse) / outAlpha).toInt(),
-        ((b * source + oldPixel.b * destination * inverse) / outAlpha).toInt(),
-        (outAlpha * 255f).toInt(),
+        (r * a * 255 + oldPixel.r * oldPixel.a * (255 - a)) / n,
+        (g * a * 255 + oldPixel.g * oldPixel.a * (255 - a)) / n,
+        (b * a * 255 + oldPixel.b * oldPixel.a * (255 - a)) / n,
+        n / 255,
     )
 }
