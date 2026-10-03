@@ -40,7 +40,15 @@ object GL : GLService by GLService {
 
     // Pixel format
 
+    /** The single-channel pixel format. */
+    const val RED: GLenum = 0x1903
+
     const val RGBA: GLenum = 0x1908
+
+    // Sized internal format
+
+    /** A single-channel, 8-bit normalized texture store. */
+    const val R8: GLenum = 0x8229
 
     // Texture mag filter
 
@@ -53,6 +61,25 @@ object GL : GLService by GLService {
     const val TEXTURE_MIN_FILTER: GLenum = 0x2801
     const val TEXTURE_WRAP_S: GLenum = 0x2802
     const val TEXTURE_WRAP_T: GLenum = 0x2803
+
+    // Texture swizzle
+
+    /** Selects the source of the sampled red component; `texParameteri` only. */
+    const val TEXTURE_SWIZZLE_R: GLenum = 0x8E42
+
+    /** Selects the source of the sampled green component; `texParameteri` only. */
+    const val TEXTURE_SWIZZLE_G: GLenum = 0x8E43
+
+    /** Selects the source of the sampled blue component; `texParameteri` only. */
+    const val TEXTURE_SWIZZLE_B: GLenum = 0x8E44
+
+    /** Selects the source of the sampled alpha component; `texParameteri` only. */
+    const val TEXTURE_SWIZZLE_A: GLenum = 0x8E45
+
+    // Capability query
+
+    /** `getParameter` query: the largest accepted texture side, in texels. */
+    const val MAX_TEXTURE_SIZE: GLenum = 0x0D33
 
     // Texture wrap mode
 

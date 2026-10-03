@@ -37,6 +37,20 @@ kotlin {
             // compiling against this module needs core on its classpath.
             api(project(":kge-core"))
         }
+        webMain.dependencies {
+            // The web handle factories fabricate kotlin-wrappers `web.gl` DOM
+            // handles; the test source sets do not inherit them.
+            implementation(libs.kotlin.browser)
+        }
+        jvmMain.dependencies {
+            // The real-GL test device drives a hidden GLFW window and its GL 3.3
+            // context; the consumer's test runtime supplies the natives through
+            // kge-core, so compile-only is enough.
+            compileOnly(project.dependencies.platform(libs.lwjgl.bom))
+            compileOnly(libs.lwjgl.core)
+            compileOnly(libs.lwjgl.opengl)
+            compileOnly(libs.lwjgl.glfw)
+        }
         commonTest.dependencies {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)

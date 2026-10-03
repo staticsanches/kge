@@ -1,5 +1,7 @@
-package dev.staticsanches.kge.renderer.device
+package dev.staticsanches.kge.testsupport.device
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.renderer.device.GpuDevice
 import dev.staticsanches.kge.renderer.gl.updateGLContext
 import web.dom.document
 import web.gl.ID
@@ -15,11 +17,16 @@ import web.html.HTMLCanvasElement
  * observes a stale context. The canvas stays referenced through the context for
  * the device's lifetime.
  */
+@OptIn(KGESensitiveAPI::class)
 class WebGlTestDevice private constructor(
     private val canvas: HTMLCanvasElement,
-    private val device: WebGpuDevice,
-) : GpuDevice by device,
+    private val context: WebGL2RenderingContext,
+) : GpuDevice,
     AutoCloseable {
+    override fun makeCurrent() = updateGLContext(context)
+
+    override fun present() = Unit
+
     override fun close() = updateGLContext(null)
 
     companion object {
@@ -34,7 +41,7 @@ class WebGlTestDevice private constructor(
                 checkNotNull(canvas.getContext(WebGL2RenderingContext.ID)) {
                     "WebGL2 context unavailable"
                 }
-            return WebGlTestDevice(canvas, WebGpuDevice(context))
+            return WebGlTestDevice(canvas, context)
         }
     }
 }

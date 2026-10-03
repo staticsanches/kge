@@ -6,6 +6,9 @@ import dev.staticsanches.kge.renderer.gl.GLbitfield
 import dev.staticsanches.kge.renderer.gl.GLint
 import dev.staticsanches.kge.renderer.gl.GLsizei
 import dev.staticsanches.kge.renderer.gl.service.GLService
+import dev.staticsanches.kge.testsupport.engine.RecordingDriver
+import dev.staticsanches.kge.testsupport.engine.installDriver
+import dev.staticsanches.kge.testsupport.engine.installGl
 import dev.staticsanches.kge.time.FakeTimeService
 import dev.staticsanches.kge.time.TimeService
 import io.kotest.core.spec.style.FunSpec

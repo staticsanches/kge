@@ -10,11 +10,11 @@ import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.image.SpriteService
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.renderer.decal.Decal
-import dev.staticsanches.kge.renderer.device.WebGlTestDevice
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.renderer.internal.DefaultRenderer
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.testsupport.device.WebGlTestDevice
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotlin.js.ExperimentalWasmJsInterop

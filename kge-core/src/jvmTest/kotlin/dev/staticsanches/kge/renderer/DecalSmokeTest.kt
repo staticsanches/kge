@@ -10,11 +10,11 @@ import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.service.DrawDecalService
-import dev.staticsanches.kge.renderer.device.GlfwTestDevice
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.renderer.internal.DefaultRenderer
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.testsupport.device.GlfwTestDevice
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import org.lwjgl.opengl.GL33

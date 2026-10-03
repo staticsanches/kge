@@ -32,6 +32,8 @@ import web.gl.TEXTURE_BINDING_2D
 import web.gl.WebGLFramebuffer
 import web.gl.WebGLTexture
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.js.JsNumber
+import kotlin.js.toInt
 import js.reflect.unsafeCast as jsUnsafeCast
 
 /**
@@ -275,6 +277,9 @@ internal object WebGLService : GLService {
         width: GLsizei,
         height: GLsizei,
     ) = gl.viewport(x, y, width, height)
+
+    override fun getInteger(pname: GLenum): GLint =
+        checkNotNull(jsUnsafeCast<JsNumber>(gl.getParameter(pname.asGLenum()))).toInt()
 }
 
 private fun Int.asGLenum(): web.gl.GLenum = jsUnsafeCast(this)

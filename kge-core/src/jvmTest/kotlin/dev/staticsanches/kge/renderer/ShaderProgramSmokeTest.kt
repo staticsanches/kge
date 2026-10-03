@@ -1,8 +1,8 @@
 package dev.staticsanches.kge.renderer
 
-import dev.staticsanches.kge.renderer.device.GlfwTestDevice
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.renderer.internal.BuiltInQuad
+import dev.staticsanches.kge.testsupport.device.GlfwTestDevice
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe

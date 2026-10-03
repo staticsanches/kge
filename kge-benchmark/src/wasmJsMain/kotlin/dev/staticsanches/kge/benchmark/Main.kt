@@ -33,15 +33,18 @@ fun main() {
             reportUrl = options.reportUrl
             reportUrl?.let { report(it, "START ${options.workloads.joinToString { workload -> workload.label }}") }
             val results = mutableListOf<BenchmarkResult>()
+            var maxTextureSize: Int? = null
             runSweep(
                 sizes = options.sizes,
                 modes = options.modes,
                 workloads = options.workloads,
                 warmup = options.warmup,
                 measure = options.measure,
+                onCapabilities = { maxTextureSize = it },
             ) { result ->
                 results += result
-                val table = formatTable(results)
+                // The header rides every reported table, the only headless read path.
+                val table = maxTextureSize?.let { "maxTextureSize=$it\n" }.orEmpty() + formatTable(results)
                 output.innerHTML = HtmlSource(formatHtmlTable(results))
                 raw?.textContent = table
                 reportUrl?.let { report(it, table) }

@@ -23,6 +23,7 @@ fun main(args: Array<String>): Unit =
             workloads = options.workloads,
             warmup = options.warmup,
             measure = options.measure,
+            onCapabilities = { maxTextureSize -> println("sweep maxTextureSize=$maxTextureSize") },
         ) { result ->
             results += result
             println(

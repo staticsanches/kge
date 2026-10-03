@@ -3,7 +3,7 @@ package dev.staticsanches.kge.engine
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.rasterizer.Rasterizer
-import dev.staticsanches.kge.renderer.device.GlfwTestDevice
+import dev.staticsanches.kge.testsupport.device.GlfwTestDevice
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import org.lwjgl.system.Platform

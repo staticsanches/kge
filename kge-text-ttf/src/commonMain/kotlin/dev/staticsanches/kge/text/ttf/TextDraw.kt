@@ -3,8 +3,12 @@ package dev.staticsanches.kge.text.ttf
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.image.Sprite
+import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.rasterizer.service.BlitService
+import dev.staticsanches.kge.renderer.decal.Decal
+import dev.staticsanches.kge.renderer.decal.DecalInstance
+import dev.staticsanches.kge.renderer.decal.service.DrawPartialDecalService
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -115,6 +119,48 @@ internal fun drawText(
                 scale,
                 Pixmap.Flip.NONE,
                 tint,
+            )
+        }
+    }
+}
+
+/**
+ * Queues one partial-decal instance per ink glyph of [text] from [position] and
+ * scaled by [scale]; the pens stay line-relative and unsnapped.
+ */
+internal fun drawStringDecalText(
+    font: Font,
+    position: Float2D,
+    text: String,
+    sizePx: Int,
+    color: Pixel,
+    scale: Float2D,
+    tabSizeInSpaces: Int,
+    screenSize: Int2D,
+    decalMode: Decal.Mode,
+    decalStructure: Decal.Structure,
+    collector: (DecalInstance) -> Unit,
+) {
+    font.walkText(text, sizePx, tabSizeInSpaces, 0, 0) { glyph, penX, penY ->
+        val placed = font.glyph(sizePx, glyph.glyphId)
+        if (placed is AtlasGlyph.Placed) {
+            collector(
+                DrawPartialDecalService.drawPartialDecal(
+                    position =
+                        position +
+                            Float2D(
+                                (penX + glyph.offset.x) * scale.x + placed.bearing.x * scale.x,
+                                (penY - glyph.offset.y) * scale.y + placed.bearing.y * scale.y,
+                            ),
+                    decal = font.gpuAtlas(sizePx).decalFor(placed),
+                    sourcePosition = placed.source.toFloat(),
+                    sourceSize = placed.size.toFloat(),
+                    scale = scale,
+                    tint = color,
+                    mode = decalMode,
+                    structure = decalStructure,
+                    viewport = screenSize,
+                ),
             )
         }
     }

@@ -5,7 +5,7 @@ import dev.staticsanches.kge.engine.Driver
 import dev.staticsanches.kge.engine.GlfwDriverService
 import dev.staticsanches.kge.engine.HasDriver
 import dev.staticsanches.kge.engine.WindowConfig
-import dev.staticsanches.kge.renderer.device.GlfwTestDevice
+import dev.staticsanches.kge.testsupport.device.GlfwTestDevice
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import org.lwjgl.system.Platform

@@ -1,8 +1,8 @@
 package dev.staticsanches.kge.engine.addon
 
 import dev.staticsanches.kge.engine.HasLayers
-import dev.staticsanches.kge.engine.installGl
 import dev.staticsanches.kge.engine.layer.LayerStack
+import dev.staticsanches.kge.testsupport.engine.installGl
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 

@@ -5,7 +5,6 @@ import dev.staticsanches.kge.engine.HasLayers
 import dev.staticsanches.kge.engine.HasWindow
 import dev.staticsanches.kge.engine.WindowConfig
 import dev.staticsanches.kge.engine.WindowInfo
-import dev.staticsanches.kge.engine.installGl
 import dev.staticsanches.kge.engine.layer.LayerStack
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
@@ -16,7 +15,8 @@ import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.assertTints
 import dev.staticsanches.kge.renderer.decal.assertUvsCloseTo
 import dev.staticsanches.kge.renderer.decal.assertVerticesCloseTo
-import dev.staticsanches.kge.renderer.gl.RecordingGLService
+import dev.staticsanches.kge.testsupport.engine.installGl
+import dev.staticsanches.kge.testsupport.gl.RecordingGLService
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 

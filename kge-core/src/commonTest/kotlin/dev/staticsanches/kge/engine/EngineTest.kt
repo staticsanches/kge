@@ -5,6 +5,9 @@ import dev.staticsanches.kge.renderer.device.GpuDevice
 import dev.staticsanches.kge.renderer.internal.rendererDefault
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.testsupport.engine.RecordingDriver
+import dev.staticsanches.kge.testsupport.engine.installDriver
+import dev.staticsanches.kge.testsupport.engine.installGl
 import dev.staticsanches.kge.time.FakeTimeService
 import dev.staticsanches.kge.time.TimeService
 import io.kotest.assertions.throwables.shouldThrow

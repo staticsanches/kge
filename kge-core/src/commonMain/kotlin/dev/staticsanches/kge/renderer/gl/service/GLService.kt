@@ -265,6 +265,9 @@ interface GLService : KGEOverridable {
         height: GLsizei,
     )
 
+    /** The integer value of [pname]; only for pnames whose value is an integer. */
+    fun getInteger(pname: GLenum): GLint
+
     companion object :
         KGEOverridable.Proxy<GLService>(GLService::class, glServiceDefault),
         GLService {
@@ -436,6 +439,8 @@ interface GLService : KGEOverridable {
             width: GLsizei,
             height: GLsizei,
         ) = delegate.viewport(x, y, width, height)
+
+        override fun getInteger(pname: GLenum): GLint = delegate.getInteger(pname)
     }
 }
 

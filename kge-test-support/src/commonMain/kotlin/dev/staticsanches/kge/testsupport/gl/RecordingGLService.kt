@@ -1,6 +1,21 @@
-package dev.staticsanches.kge.renderer.gl
+package dev.staticsanches.kge.testsupport.gl
 
 import dev.staticsanches.kge.buffer.ByteBuffer
+import dev.staticsanches.kge.renderer.gl.GLBuffer
+import dev.staticsanches.kge.renderer.gl.GLProgram
+import dev.staticsanches.kge.renderer.gl.GLShader
+import dev.staticsanches.kge.renderer.gl.GLTexture
+import dev.staticsanches.kge.renderer.gl.GLUniformLocation
+import dev.staticsanches.kge.renderer.gl.GLVertexArrayObject
+import dev.staticsanches.kge.renderer.gl.GLbitfield
+import dev.staticsanches.kge.renderer.gl.GLboolean
+import dev.staticsanches.kge.renderer.gl.GLclampf
+import dev.staticsanches.kge.renderer.gl.GLenum
+import dev.staticsanches.kge.renderer.gl.GLint
+import dev.staticsanches.kge.renderer.gl.GLintptr
+import dev.staticsanches.kge.renderer.gl.GLsizei
+import dev.staticsanches.kge.renderer.gl.GLsizeiptr
+import dev.staticsanches.kge.renderer.gl.GLuint
 import dev.staticsanches.kge.renderer.gl.service.GLService
 
 /** One command observed by [RecordingGLService]: the method name and its raw arguments. */
@@ -32,6 +47,9 @@ class RecordingGLService : GLService {
 
     var lastCreatedVertexArray: GLVertexArrayObject? = null
         private set
+
+    /** The value [getInteger] reports, whatever the pname. */
+    var scriptedInteger: GLint = 0
 
     private var nextSeed = 0
 
@@ -262,4 +280,9 @@ class RecordingGLService : GLService {
         width: GLsizei,
         height: GLsizei,
     ) = record("viewport", x, y, width, height)
+
+    override fun getInteger(pname: GLenum): GLint {
+        record("getInteger", pname)
+        return scriptedInteger
+    }
 }

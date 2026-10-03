@@ -58,6 +58,9 @@ kotlin {
             // The `org.khronos.webgl` typed arrays the HarfBuzz payload copy
             // uses; on wasmJs they come from kotlinx-browser, not the stdlib.
             implementation(libs.kotlinx.browser)
+            // The carrier names the `GLTexture` handle, whose web actual is a
+            // kotlin-wrappers `web.gl` DOM type, not a kotlinx browser one.
+            implementation(libs.kotlin.browser)
             implementation(libs.kotlinx.coroutines.core)
             implementation(npm("harfbuzzjs", libs.versions.harfbuzzjs.get()))
             implementation(
@@ -103,6 +106,11 @@ kotlin {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    // macOS/AppKit requires GLFW (and GL context work) on the process's first
+    // thread; without this the JVM GL smoke test aborts in glfwInit.
+    if (System.getProperty("os.name").startsWith("Mac")) {
+        jvmArgs("-XstartOnFirstThread")
+    }
 }
 
 ktlint {

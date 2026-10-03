@@ -7,7 +7,6 @@ import dev.staticsanches.kge.engine.HasResourceScope
 import dev.staticsanches.kge.engine.HasWindow
 import dev.staticsanches.kge.engine.WindowConfig
 import dev.staticsanches.kge.engine.WindowInfo
-import dev.staticsanches.kge.engine.installGl
 import dev.staticsanches.kge.engine.layer.LayerStack
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
@@ -22,6 +21,7 @@ import dev.staticsanches.kge.renderer.decal.assertUvsCloseTo
 import dev.staticsanches.kge.renderer.decal.assertVerticesCloseTo
 import dev.staticsanches.kge.resource.ResourceScope
 import dev.staticsanches.kge.resource.applyClosingIfFailed
+import dev.staticsanches.kge.testsupport.engine.installGl
 import dev.staticsanches.kge.text.DrawStringService
 import dev.staticsanches.kge.text.fontDecal
 import io.kotest.core.spec.style.FunSpec

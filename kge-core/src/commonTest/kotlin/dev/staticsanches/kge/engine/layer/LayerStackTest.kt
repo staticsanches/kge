@@ -1,10 +1,10 @@
 package dev.staticsanches.kge.engine.layer
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.engine.installGl
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.resource.LeakReporterService
+import dev.staticsanches.kge.testsupport.engine.installGl
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe

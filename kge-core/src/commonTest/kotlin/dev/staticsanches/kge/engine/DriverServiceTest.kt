@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.engine
 
+import dev.staticsanches.kge.testsupport.engine.RecordingDriver
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 

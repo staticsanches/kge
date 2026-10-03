@@ -1,4 +1,14 @@
-package dev.staticsanches.kge.renderer.gl
+@file:OptIn(KGESensitiveAPI::class)
+
+package dev.staticsanches.kge.testsupport.gl
+
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.renderer.gl.GLBuffer
+import dev.staticsanches.kge.renderer.gl.GLProgram
+import dev.staticsanches.kge.renderer.gl.GLShader
+import dev.staticsanches.kge.renderer.gl.GLTexture
+import dev.staticsanches.kge.renderer.gl.GLUniformLocation
+import dev.staticsanches.kge.renderer.gl.GLVertexArrayObject
 
 actual fun recordingTextureHandle(seed: Int): GLTexture = GLTexture(seed)
 

@@ -4,7 +4,7 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.Driver
 import dev.staticsanches.kge.engine.GlfwWindow
 import dev.staticsanches.kge.engine.HasDriver
-import dev.staticsanches.kge.engine.RecordingDriver
+import dev.staticsanches.kge.testsupport.engine.RecordingDriver
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe

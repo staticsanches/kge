@@ -1,4 +1,11 @@
-package dev.staticsanches.kge.renderer.gl
+package dev.staticsanches.kge.testsupport.gl
+
+import dev.staticsanches.kge.renderer.gl.GLBuffer
+import dev.staticsanches.kge.renderer.gl.GLProgram
+import dev.staticsanches.kge.renderer.gl.GLShader
+import dev.staticsanches.kge.renderer.gl.GLTexture
+import dev.staticsanches.kge.renderer.gl.GLUniformLocation
+import dev.staticsanches.kge.renderer.gl.GLVertexArrayObject
 
 /**
  * Test-only handle factories: fabricate a handle of one kind without a GL

@@ -48,8 +48,12 @@ class Layer internal constructor(
      */
     var customRender: ((Layer) -> Unit)? = null
 
-    /** Decals queued for this layer in the current frame; flushed by the render step. */
-    internal val decalInstances = mutableListOf<DecalInstance>()
+    /**
+     * Decals queued for this layer this frame; the render step flushes and
+     * clears it each frame, so append only.
+     */
+    @KGESensitiveAPI
+    val decalInstances: MutableList<DecalInstance> = mutableListOf()
 
     /** Installs [other]'s target and decal, marks the layer for upload and releases the previous pair. */
     internal fun replaceWith(other: Layer) {

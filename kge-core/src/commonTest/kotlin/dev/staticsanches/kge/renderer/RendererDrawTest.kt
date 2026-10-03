@@ -15,13 +15,13 @@ import dev.staticsanches.kge.renderer.decal.DecalInstance
 import dev.staticsanches.kge.renderer.decal.verticesOf
 import dev.staticsanches.kge.renderer.device.RecordingGpuDevice
 import dev.staticsanches.kge.renderer.gl.GL
-import dev.staticsanches.kge.renderer.gl.RecordedGLCall
-import dev.staticsanches.kge.renderer.gl.RecordingGLService
 import dev.staticsanches.kge.renderer.gl.resource.Texture
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.renderer.internal.DefaultRenderer
 import dev.staticsanches.kge.renderer.internal.VertexLayout
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.testsupport.gl.RecordedGLCall
+import dev.staticsanches.kge.testsupport.gl.RecordingGLService
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 

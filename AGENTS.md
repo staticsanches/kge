@@ -52,7 +52,10 @@ not a saving.
 Every round runs this sequence:
 
 1. **Touch-point** — design confirmation; open items decided against the three
-   sources of truth (below) and each divergence recorded.
+   sources of truth (below) and each divergence recorded. Parity claims are
+   pinned before they are argued: `jev_extract` + `jev_audit` pick the olc
+   behavior verbatim from the header, not from memory, and web-fetched
+   material is screened (`jev_screen`) before it is read.
 2. **Micro-plan** — 1–2 pages of TDD steps, written just-in-time; its test code
    is the contract.
 3. **Implement — dispatched, never in the orchestrator's context.** Give a
@@ -62,7 +65,9 @@ Every round runs this sequence:
    feature — failing test → run (red) → implement → run (green) — and never
    commits or edits the spec; a wrong or ambiguous plan comes back as a blocker.
    The orchestrator steers, resolves blockers and re-dispatches; it does not take
-   the code over.
+   the code over. A "green" report is verified, not trusted: check its claims
+   with `jev_verify` against the captured test output — the gate's zero-test
+   hole (Rules) is what a bare "green" hides.
 4. **Gate** — `tools/gradle build` (below), once, before the reviews.
 5. **Review** — two axes, two fresh sub-agents in parallel, never the model that
    produced the diff: Standards and Spec conformance, defined by
@@ -71,11 +76,16 @@ Every round runs this sequence:
    the three sources of truth — a plan-conformance review does not catch a defect
    of the plan itself — lists recorded divergences as accepted rather than
    suppressed, and covers the resource, API and scope disciplines below.
-   Findings are fixed in a delta and re-reviewed, or dispositioned in the
-   decisions entry; they are not chased past the round cap.
+   A finding is a claim too: before dispatching a delta, triage it with
+   `jev_verify`/`jev_audit` against the diff and the three sources of truth, so
+   noise is dispositioned before it costs a round. Findings are fixed in a
+   delta and re-reviewed, or dispositioned in the decisions entry; they are not
+   chased past the round cap.
 6. **Decisions entry** — the round's entry (`docs/decisions/phase-1/<n>-<name>.md`
    plus its row in the index), staged with the round **before the review round
-   whose report the marker will name**. The commit gate recomputes
+   whose report the marker will name**. Before staging, `jev_compare` the entry
+   against the staged diff (recorded decision vs implemented behavior) and,
+   where a no-regression claim is made, against `main`. The commit gate recomputes
    `git diff --cached <base> | shasum` and requires that report to carry the
    matching `tree:` line, so an entry staged after the final review round cannot
    be committed with the round — it costs one more review round instead.
@@ -107,6 +117,17 @@ the owner.
   realization medium: respect its constraints (value-class boxing, web `Long`,
   `expect`/`actual`, browser single-threading) and write idiomatic Kotlin rather
   than a C++ re-enactment — olc parity is behavioral, the form is ours.
+- **Jev MCP**: when the session provides the `jev_*` tools, they audit and
+  verify — semantic judgment over supplied evidence. They sit beside the
+  dispatches, never instead of them: implementation stays with the
+  `tdd-developer`, each review axis with a fresh sub-agent, and decisions text
+  stays authored rationale. Arithmetic and hashing stay in `bash`. **Budget by
+  questions, not bytes**: the endpoint takes at most 20 questions per call, so
+  a `jev_verify` call holds 10 claims (6 once the evidence list has more than
+  one item), `jev_audit` 5 records, a per-file `jev_review` 4 files, and
+  `jev_gate` 15 claims. Past that the endpoint answers a bare `400`: split the
+  batch and retry — never a failed claim. The measurements and the per-tool
+  budgets are in `docs/plans/2026-10-02-jev-payload-limits-findings.md`.
 - **Ship concepts whole**: never a slice, and never a provisional API a later
   concept must break — restructure at the concept checkpoint.
 - **Gate**: `tools/gradle build` = `check` + `assemble`, so it covers every

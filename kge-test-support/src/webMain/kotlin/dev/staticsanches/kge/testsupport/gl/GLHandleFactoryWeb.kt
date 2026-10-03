@@ -1,7 +1,13 @@
 @file:OptIn(ExperimentalWasmJsInterop::class)
 
-package dev.staticsanches.kge.renderer.gl
+package dev.staticsanches.kge.testsupport.gl
 
+import dev.staticsanches.kge.renderer.gl.GLBuffer
+import dev.staticsanches.kge.renderer.gl.GLProgram
+import dev.staticsanches.kge.renderer.gl.GLShader
+import dev.staticsanches.kge.renderer.gl.GLTexture
+import dev.staticsanches.kge.renderer.gl.GLUniformLocation
+import dev.staticsanches.kge.renderer.gl.GLVertexArrayObject
 import web.dom.document
 import web.gl.FRAGMENT_SHADER
 import web.gl.ID

@@ -1,9 +1,9 @@
 package dev.staticsanches.kge.text
 
-import dev.staticsanches.kge.engine.installGl
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.testsupport.engine.installGl
 import dev.staticsanches.kge.testsupport.golden.canvas
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec

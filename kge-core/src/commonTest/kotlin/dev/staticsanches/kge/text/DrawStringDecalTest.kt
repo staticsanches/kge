@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.text
 
-import dev.staticsanches.kge.engine.installGl
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Float2D
@@ -12,6 +11,7 @@ import dev.staticsanches.kge.renderer.decal.assertUvsCloseTo
 import dev.staticsanches.kge.renderer.decal.assertVerticesCloseTo
 import dev.staticsanches.kge.renderer.decal.service.DrawPartialDecalService
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.testsupport.engine.installGl
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe

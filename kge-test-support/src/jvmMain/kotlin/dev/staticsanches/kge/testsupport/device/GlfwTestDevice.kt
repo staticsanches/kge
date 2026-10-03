@@ -1,5 +1,6 @@
-package dev.staticsanches.kge.renderer.device
+package dev.staticsanches.kge.testsupport.device
 
+import dev.staticsanches.kge.renderer.device.GpuDevice
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL as LwjglGL
 
@@ -11,14 +12,20 @@ import org.lwjgl.opengl.GL as LwjglGL
  * the real-GL probes skip.
  *
  * It owns the window and releases it on [close]: destroying the window,
- * terminating GLFW and clearing the thread-local capabilities. The device
- * behavior is the shared [GlfwGpuDevice].
+ * terminating GLFW and clearing the thread-local capabilities.
  */
 class GlfwTestDevice private constructor(
     private val window: Long,
-) : GpuDevice by GlfwGpuDevice(window),
+) : GpuDevice,
     AutoCloseable {
     val backend: String = "GLFW hidden window"
+
+    override fun makeCurrent() {
+        GLFW.glfwMakeContextCurrent(window)
+        LwjglGL.createCapabilities()
+    }
+
+    override fun present() = GLFW.glfwSwapBuffers(window)
 
     override fun close() {
         LwjglGL.setCapabilities(null)

@@ -11,10 +11,10 @@ import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.GLenum
 import dev.staticsanches.kge.renderer.gl.GLint
 import dev.staticsanches.kge.renderer.gl.GLsizei
-import dev.staticsanches.kge.renderer.gl.RecordedGLCall
-import dev.staticsanches.kge.renderer.gl.RecordingGLService
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.resource.LeakReporterService
+import dev.staticsanches.kge.testsupport.gl.RecordedGLCall
+import dev.staticsanches.kge.testsupport.gl.RecordingGLService
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe

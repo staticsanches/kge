@@ -14,6 +14,9 @@ import dev.staticsanches.kge.renderer.gl.GLenum
 import dev.staticsanches.kge.renderer.gl.GLint
 import dev.staticsanches.kge.renderer.gl.GLsizei
 import dev.staticsanches.kge.renderer.gl.service.GLService
+import dev.staticsanches.kge.testsupport.engine.RecordingDriver
+import dev.staticsanches.kge.testsupport.engine.installDriver
+import dev.staticsanches.kge.testsupport.engine.installGl
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs

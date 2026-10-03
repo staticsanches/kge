@@ -27,11 +27,17 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":kge-core"))
+            // The TTF text cell draws through the module's addon and loads its
+            // font from the bundled data module.
+            implementation(project(":kge-text-ttf"))
+            implementation(project(":kge-font-roboto"))
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)
+            // The decorator test drives the shared recording GL service.
+            implementation(project(":kge-test-support"))
         }
         jvmTest.dependencies {
             implementation(libs.kotest.runner.junit5)

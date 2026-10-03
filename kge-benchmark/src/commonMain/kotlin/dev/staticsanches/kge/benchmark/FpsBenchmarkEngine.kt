@@ -3,14 +3,17 @@ package dev.staticsanches.kge.benchmark
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.Engine
 import dev.staticsanches.kge.engine.WindowConfig
+import dev.staticsanches.kge.font.roboto.Roboto
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.image.SpriteService
 import dev.staticsanches.kge.renderer.decal.Decal
+import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.resource.ResourceScope
 import dev.staticsanches.kge.text.DrawStringService
+import dev.staticsanches.kge.text.ttf.Font
 import kotlin.time.Duration
 
 /**
@@ -25,11 +28,22 @@ internal class FpsBenchmarkEngine(
     private val workload: BenchmarkWorkload,
 ) : Engine(config),
     SceneTarget,
-    TextSceneTarget {
+    TextSceneTarget,
+    TtfTextSceneTarget {
     private val sampler = FrameSampler(warmup, measure)
     private var sprite: Sprite? = null
 
+    /** Both text addons' default, made explicit because the engine carries both. */
+    override val tabSizeInSpaces: Int get() = 4
+    private var font: Font? = null
+    private var uploads: UploadPolicyGLCalls? = null
+
+    /** The driver's maximum texture side, queried while the context is current. */
+    var maxTextureSize: Int = 0
+        private set
+
     override suspend fun onUserCreate(): Boolean {
+        maxTextureSize = GLService.getInteger(GL.MAX_TEXTURE_SIZE)
         when (workload) {
             BenchmarkWorkload.Render -> sprite = createBlitSprite()
             BenchmarkWorkload.Empty -> Unit
@@ -39,6 +53,8 @@ internal class FpsBenchmarkEngine(
                 decalStructure = Decal.Structure.LIST
                 DrawStringService.override(MergedDrawStringService(DrawStringService.original))
             }
+            BenchmarkWorkload.TextTtfRegion -> loadTtfText(UploadPolicy.REGION)
+            BenchmarkWorkload.TextTtfFull -> loadTtfText(UploadPolicy.FULL)
             BenchmarkWorkload.RendererPassthrough -> installRendererLevers()
             BenchmarkWorkload.RendererBlend -> installRendererLevers(dedupeBlend = true)
             BenchmarkWorkload.RendererDedupe ->
@@ -53,6 +69,23 @@ internal class FpsBenchmarkEngine(
                 )
         }
         return true
+    }
+
+    /** Loads the bundled font and installs the upload-policy decorator of [policy]. */
+    private suspend fun loadTtfText(policy: UploadPolicy) {
+        val loaded = Font.load(Roboto.variableFont)
+        font = loaded
+        val decorator = UploadPolicyGLCalls(GLService.original, policy)
+        try {
+            resourceScope.register(UploadPolicyKey, decorator)
+            GLService.override(decorator)
+            uploads = decorator
+        } catch (failure: Throwable) {
+            decorator.close()
+            loaded.close()
+            font = null
+            throw failure
+        }
     }
 
     /** Runs the per-glyph text scene under the measured renderer levers. */
@@ -82,7 +115,11 @@ internal class FpsBenchmarkEngine(
 
     override suspend fun onUserUpdate(elapsed: Duration): Boolean {
         val blitSource = sprite
-        if (workload.isText) {
+        val textFont = font
+        if (textFont != null) {
+            renderTtfTextScene(this, textFont, window.screenSize.x, window.screenSize.y)
+            uploads?.replayFrame()
+        } else if (workload.isText) {
             renderTextScene(this, window.screenSize.x, window.screenSize.y)
         } else if (blitSource != null) {
             renderScene(this, window.screenSize.x, window.screenSize.y, blitSource)
@@ -95,6 +132,15 @@ internal class FpsBenchmarkEngine(
     }
 
     override suspend fun onUserDestroy(): Boolean {
+        uploads?.let { decorator ->
+            val boxes = decorator.recordedBoxCount
+            println("${workload.label}: replayedBoxes=$boxes touchedCharts=${decorator.touchedChartCount}")
+        }
+        // Closed while the context is current, before the scope releases the
+        // decorator the carrier's textures were created through.
+        font?.close()
+        font = null
+        uploads = null
         sprite?.close()
         sprite = null
         return true
@@ -121,3 +167,6 @@ internal class FpsBenchmarkEngine(
 
 /** The run's lever decorator, so the scope releases its persistent vertex buffer. */
 private object LeverDecoratorKey : ResourceScope.Key<BatchGLCalls>
+
+/** The run's upload-policy decorator, so the scope releases its shadows. */
+private object UploadPolicyKey : ResourceScope.Key<UploadPolicyGLCalls>

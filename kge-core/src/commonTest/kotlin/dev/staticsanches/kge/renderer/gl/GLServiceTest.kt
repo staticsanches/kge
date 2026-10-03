@@ -8,6 +8,14 @@ import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.renderer.gl.service.glServiceDefault
+import dev.staticsanches.kge.testsupport.gl.RecordedGLCall
+import dev.staticsanches.kge.testsupport.gl.RecordingGLService
+import dev.staticsanches.kge.testsupport.gl.recordingBufferHandle
+import dev.staticsanches.kge.testsupport.gl.recordingProgramHandle
+import dev.staticsanches.kge.testsupport.gl.recordingShaderHandle
+import dev.staticsanches.kge.testsupport.gl.recordingTextureHandle
+import dev.staticsanches.kge.testsupport.gl.recordingUniformLocationHandle
+import dev.staticsanches.kge.testsupport.gl.recordingVertexArrayHandle
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -76,6 +84,15 @@ class GLServiceTest :
             }
         }
 
+        test("getInteger returns the scripted value and records the queried pname") {
+            val recorder = RecordingGLService()
+            recorder.scriptedInteger = 16384
+            GLService.override(recorder)
+
+            GL.getInteger(GL.MAX_TEXTURE_SIZE) shouldBe 16384
+            recorder.calls shouldBe listOf(RecordedGLCall("getInteger", listOf(GL.MAX_TEXTURE_SIZE)))
+        }
+
         test("resetAll leaves the platform GL backend as the engine default") {
             GLService.override(RecordingGLService())
             GLService.createTexture()
@@ -98,13 +115,20 @@ class GLServiceTest :
                     GL.TEXTURE_2D to 0x0DE1,
                     GL.UNSIGNED_BYTE to 0x1401,
                     GL.FLOAT to 0x1406,
+                    GL.RED to 0x1903,
                     GL.RGBA to 0x1908,
+                    GL.R8 to 0x8229,
                     GL.NEAREST to 0x2600,
                     GL.LINEAR to 0x2601,
                     GL.TEXTURE_MAG_FILTER to 0x2800,
                     GL.TEXTURE_MIN_FILTER to 0x2801,
                     GL.TEXTURE_WRAP_S to 0x2802,
                     GL.TEXTURE_WRAP_T to 0x2803,
+                    GL.TEXTURE_SWIZZLE_R to 0x8E42,
+                    GL.TEXTURE_SWIZZLE_G to 0x8E43,
+                    GL.TEXTURE_SWIZZLE_B to 0x8E44,
+                    GL.TEXTURE_SWIZZLE_A to 0x8E45,
+                    GL.MAX_TEXTURE_SIZE to 0x0D33,
                     GL.REPEAT to 0x2901,
                     GL.CLAMP_TO_EDGE to 0x812F,
                     GL.FRAGMENT_SHADER to 0x8B30,

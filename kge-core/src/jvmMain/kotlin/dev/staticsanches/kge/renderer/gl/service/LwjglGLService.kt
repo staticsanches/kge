@@ -228,4 +228,6 @@ internal object LwjglGLService : GLService {
         width: GLsizei,
         height: GLsizei,
     ) = GL33.glViewport(x, y, width, height)
+
+    override fun getInteger(pname: GLenum): GLint = GL33.glGetInteger(pname)
 }

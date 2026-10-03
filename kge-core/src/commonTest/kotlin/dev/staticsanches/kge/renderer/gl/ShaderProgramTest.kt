@@ -5,6 +5,8 @@
 package dev.staticsanches.kge.renderer.gl
 
 import dev.staticsanches.kge.renderer.gl.service.GLService
+import dev.staticsanches.kge.testsupport.gl.RecordedGLCall
+import dev.staticsanches.kge.testsupport.gl.RecordingGLService
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 

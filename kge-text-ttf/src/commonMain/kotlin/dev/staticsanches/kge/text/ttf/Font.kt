@@ -18,6 +18,7 @@ class Font private constructor(
     private val face: ResourceWrapper<NativeFace>,
 ) : KGEResource {
     private val atlasesBySizePx = mutableMapOf<Int, GlyphAtlas>()
+    private val gpuAtlasesBySizePx = mutableMapOf<Int, GlyphAtlasGpu>()
 
     /**
      * Shapes [text] as a single left-to-right Latin run at [sizePx] pixels:
@@ -56,10 +57,24 @@ class Font private constructor(
     /** The atlas of [sizePx], null until a glyph has been rasterized at that size. */
     internal fun atlas(sizePx: Int): GlyphAtlas? = atlasesBySizePx[sizePx]
 
+    /** The GPU carrier of [sizePx]'s atlas, created on first use. */
+    internal fun gpuAtlas(sizePx: Int): GlyphAtlasGpu {
+        checkNotReleased()
+        require(sizePx > 0) { "sizePx must be positive: $sizePx" }
+
+        val atlas =
+            checkNotNull(atlasesBySizePx[sizePx]) {
+                "no glyph atlas at ${sizePx}px; rasterize a glyph before drawing it"
+            }
+        return gpuAtlasesBySizePx.getOrPut(sizePx) { GlyphAtlasGpu(atlas) }
+    }
+
     override fun close() {
         val toClose = mutableListOf<KGEResource>()
+        toClose += gpuAtlasesBySizePx.values
         toClose += atlasesBySizePx.values
         toClose += face
+        gpuAtlasesBySizePx.clear()
         atlasesBySizePx.clear()
         toClose.closeAll()
     }

@@ -6,8 +6,9 @@ import kotlin.time.Duration
 
 /**
  * Runs [sizes] x [modes] x [workloads] sequentially, opening one engine per
- * cell, discarding [warmup] then measuring [measure], and reporting each
- * [BenchmarkResult] through [onResult] as it completes.
+ * cell, discarding [warmup] then measuring [measure], reporting the first
+ * cell's driver texture limit through [onCapabilities] and each [BenchmarkResult]
+ * through [onResult] as it completes.
  */
 internal suspend fun runSweep(
     sizes: List<Int2D>,
@@ -15,8 +16,10 @@ internal suspend fun runSweep(
     workloads: List<BenchmarkWorkload>,
     warmup: Duration,
     measure: Duration,
+    onCapabilities: suspend (maxTextureSize: Int) -> Unit = {},
     onResult: suspend (BenchmarkResult) -> Unit,
 ) {
+    var capabilitiesReported = false
     for (size in sizes) {
         for (mode in modes) {
             for (workload in workloads) {
@@ -38,6 +41,10 @@ internal suspend fun runSweep(
                         workload = workload,
                     )
                 engine.start()
+                if (!capabilitiesReported) {
+                    capabilitiesReported = true
+                    onCapabilities(engine.maxTextureSize)
+                }
                 onResult(
                     BenchmarkResult(
                         size = size,

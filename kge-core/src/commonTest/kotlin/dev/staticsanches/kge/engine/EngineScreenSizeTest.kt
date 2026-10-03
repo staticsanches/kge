@@ -3,6 +3,9 @@ package dev.staticsanches.kge.engine
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.testsupport.engine.RecordingDriver
+import dev.staticsanches.kge.testsupport.engine.installDriver
+import dev.staticsanches.kge.testsupport.engine.installGl
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe

@@ -33,6 +33,12 @@ internal enum class BenchmarkWorkload(
 
     /** The per-glyph text with both renderer levers. */
     RendererBatched("renderer-batched"),
+
+    /** The TTF text with the carrier's recorded boxes replayed as region updates. */
+    TextTtfRegion("text-ttf-region"),
+
+    /** The same TTF text with one whole-chart re-upload per touched chart per frame. */
+    TextTtfFull("text-ttf-full"),
 }
 
 /** True for the text loads, which share one scene and differ in submission only. */

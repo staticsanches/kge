@@ -5,9 +5,9 @@ import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.image.SpriteService
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.renderer.gl.GL
-import dev.staticsanches.kge.renderer.gl.RecordingGLService
 import dev.staticsanches.kge.renderer.gl.resource.Texture
 import dev.staticsanches.kge.renderer.gl.service.GLService
+import dev.staticsanches.kge.testsupport.gl.RecordingGLService
 import io.kotest.assertions.withClue
 import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
 import io.kotest.matchers.shouldBe
