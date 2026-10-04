@@ -30,6 +30,13 @@ private const val CARRIER_PROBE_FRAMES = 4
 private class CarrierProbeEngine :
     Engine(WindowConfig(screenWidth = 240, screenHeight = 48)),
     TtfDrawStringAddon {
+    /** Both text roles declare the name; the engine's tab-stop default backs it. */
+    override var tabSizeInSpaces: Int
+        get() = super<Engine>.tabSizeInSpaces
+        set(value) {
+            super<Engine>.tabSizeInSpaces = value
+        }
+
     lateinit var font: Font
     lateinit var gl: RecordingGLService
     val uploadsAtFrameStart = mutableListOf<Int>()

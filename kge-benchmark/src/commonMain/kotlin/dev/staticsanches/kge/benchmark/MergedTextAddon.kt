@@ -1,14 +1,16 @@
 package dev.staticsanches.kge.benchmark
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.engine.addon.ClearAddon
+import dev.staticsanches.kge.engine.addon.TextAddon
 import dev.staticsanches.kge.image.Pixel
-import dev.staticsanches.kge.image.Pixmap
+import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
 import dev.staticsanches.kge.renderer.decal.VerticesInfo
-import dev.staticsanches.kge.resource.ResourceScope
-import dev.staticsanches.kge.text.DrawStringService
+import dev.staticsanches.kge.text.KGEFont
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -39,149 +41,91 @@ internal class FlatVertices(
 }
 
 /**
- * The merged workload's [DrawStringService]: one triangle-list instance per mono
- * run instead of one per glyph; every other operation delegates to [original].
+ * The merged workload's text host: one triangle-list instance per run instead
+ * of one per glyph; every other member forwards to [inner].
  */
-internal class MergedDrawStringService(
-    private val original: DrawStringService,
-) : DrawStringService {
+@OptIn(KGESensitiveAPI::class)
+internal class MergedTextAddon(
+    private val inner: TextSceneTarget,
+) : TextSceneTarget,
+    ClearAddon by inner,
+    TextAddon by inner {
+    /** One cached decal and the font it was probed from, so one lease is retained. */
     private var fontDecal: Decal? = null
+    private var fontDecalFont: KGEFont? = null
 
-    override fun createResources(scope: ResourceScope) = original.createResources(scope)
-
-    override fun getTextSize(
-        text: String,
-        tabSizeInSpaces: Int,
-    ): Int2D = original.getTextSize(text, tabSizeInSpaces)
-
-    override fun getTextSizeProp(
-        text: String,
-        tabSizeInSpaces: Int,
-    ): Int2D = original.getTextSizeProp(text, tabSizeInSpaces)
-
-    override fun drawString(
-        scope: ResourceScope,
-        target: Pixmap.Mutable,
-        x: Int,
-        y: Int,
-        text: String,
-        color: Pixel,
-        scale: Int,
-        tabSizeInSpaces: Int,
-        mode: Pixel.Mode,
-    ) = original.drawString(scope, target, x, y, text, color, scale, tabSizeInSpaces, mode)
-
-    override fun drawStringProp(
-        scope: ResourceScope,
-        target: Pixmap.Mutable,
-        x: Int,
-        y: Int,
-        text: String,
-        color: Pixel,
-        scale: Int,
-        tabSizeInSpaces: Int,
-        mode: Pixel.Mode,
-    ) = original.drawStringProp(scope, target, x, y, text, color, scale, tabSizeInSpaces, mode)
-
-    override fun drawStringPropDecal(
-        scope: ResourceScope,
-        position: Float2D,
-        text: String,
-        color: Pixel,
-        scale: Float2D,
-        tabSizeInSpaces: Int,
-        screenSize: Int2D,
-        decalMode: Decal.Mode,
-        decalStructure: Decal.Structure,
-        decalInstanceCollector: (DecalInstance) -> Unit,
-    ) = original.drawStringPropDecal(
-        scope,
-        position,
-        text,
-        color,
-        scale,
-        tabSizeInSpaces,
-        screenSize,
-        decalMode,
-        decalStructure,
-        decalInstanceCollector,
-    )
-
-    override fun drawStringDecal(
-        scope: ResourceScope,
-        position: Float2D,
-        text: String,
-        color: Pixel,
-        scale: Float2D,
-        tabSizeInSpaces: Int,
-        screenSize: Int2D,
-        decalMode: Decal.Mode,
-        decalStructure: Decal.Structure,
-        decalInstanceCollector: (DecalInstance) -> Unit,
-    ) {
-        require(decalStructure == Decal.Structure.LIST) {
-            "the merged run serves triangle lists, was $decalStructure"
+    override var drawTarget: Sprite?
+        get() = inner.drawTarget
+        set(value) {
+            inner.drawTarget = value
         }
-        val decal = fontDecal ?: probeDecal(scope, position, color, scale, tabSizeInSpaces, screenSize, decalMode)
-        val run = mergedRun(decal, position, text, color, scale, tabSizeInSpaces, screenSize, decalMode)
-        if (run.vertexCount > 0) decalInstanceCollector(run)
+
+    override fun setDrawTarget(
+        index: Int,
+        dirty: Boolean,
+    ) = inner.setDrawTarget(index, dirty)
+
+    override fun drawTextDecal(
+        position: Float2D,
+        text: String,
+        color: Pixel,
+        scale: Float2D,
+        font: KGEFont,
+    ) {
+        require(inner.decalStructure == Decal.Structure.LIST) {
+            "the merged run serves triangle lists, was ${inner.decalStructure}"
+        }
+        val cached = fontDecal
+        val decal = if (cached != null && fontDecalFont === font) cached else probeDecal(position, color, scale, font)
+        val run =
+            DecalInstance(
+                decal = decal,
+                mode = inner.decalMode,
+                structure = Decal.Structure.LIST,
+                vertices =
+                    mergedRunVertices(
+                        spriteWidth = decal.sprite.width,
+                        spriteHeight = decal.sprite.height,
+                        position = position,
+                        text = text,
+                        tint = color,
+                        scale = scale,
+                        tabSizeInSpaces = inner.tabSizeInSpaces,
+                        screenSize = inner.window.screenSize,
+                    ),
+            )
+        if (run.vertexCount > 0) {
+            val instances = inner.layers.target.decalInstances
+            instances.add(run)
+        }
     }
 
     /**
-     * Learns the font decal from one glyph through [original], because the font
-     * holder is not reachable from here; the probe's geometry is discarded.
+     * Learns the font decal from one glyph through [font]; the probe's geometry
+     * is discarded.
      */
     private fun probeDecal(
-        scope: ResourceScope,
         position: Float2D,
         color: Pixel,
         scale: Float2D,
-        tabSizeInSpaces: Int,
-        screenSize: Int2D,
-        decalMode: Decal.Mode,
+        font: KGEFont,
     ): Decal {
         var probe: DecalInstance? = null
-        original.drawStringDecal(
-            scope,
+        font.drawTextDecal(
             position,
             " ",
             color,
             scale,
-            tabSizeInSpaces,
-            screenSize,
-            decalMode,
+            inner.tabSizeInSpaces,
+            inner.window.screenSize,
+            inner.decalMode,
             Decal.Structure.STRIP,
         ) { probe = it }
-        return checkNotNull(probe?.decal) { "the font service produced no decal" }.also { fontDecal = it }
+        return checkNotNull(probe?.decal) { "the font produced no decal" }.also {
+            fontDecal = it
+            fontDecalFont = font
+        }
     }
-
-    /** Builds the whole run as one triangle-list instance. */
-    private fun mergedRun(
-        decal: Decal,
-        position: Float2D,
-        text: String,
-        color: Pixel,
-        scale: Float2D,
-        tabSizeInSpaces: Int,
-        screenSize: Int2D,
-        decalMode: Decal.Mode,
-    ): DecalInstance =
-        DecalInstance(
-            decal = decal,
-            mode = decalMode,
-            structure = Decal.Structure.LIST,
-            vertices =
-                mergedRunVertices(
-                    spriteWidth = decal.sprite.width,
-                    spriteHeight = decal.sprite.height,
-                    position = position,
-                    text = text,
-                    tint = color,
-                    scale = scale,
-                    tabSizeInSpaces = tabSizeInSpaces,
-                    screenSize = screenSize,
-                ),
-        )
 }
 
 /**

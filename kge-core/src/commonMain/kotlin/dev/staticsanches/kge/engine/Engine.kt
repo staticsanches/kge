@@ -1,6 +1,7 @@
 package dev.staticsanches.kge.engine
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.engine.addon.TextAddon
 import dev.staticsanches.kge.engine.input.InputState
 import dev.staticsanches.kge.engine.input.InputTracker
 import dev.staticsanches.kge.engine.layer.LayerStack
@@ -11,7 +12,10 @@ import dev.staticsanches.kge.overridable.KGEOverridable
 import dev.staticsanches.kge.renderer.Renderer
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.resource.ResourceScope
-import dev.staticsanches.kge.text.DrawStringService
+import dev.staticsanches.kge.text.KGECoreFontFamily
+import dev.staticsanches.kge.text.KGECoreFontService
+import dev.staticsanches.kge.text.KGEFont
+import dev.staticsanches.kge.text.fontPx
 import dev.staticsanches.kge.time.FrameAccumulator
 import dev.staticsanches.kge.time.Time
 import kotlinx.coroutines.CoroutineDispatcher
@@ -39,7 +43,8 @@ abstract class Engine(
     HasDrawTarget,
     HasDrawModes,
     HasDriver,
-    HasResourceScope {
+    HasResourceScope,
+    TextAddon {
     private val active = AtomicBoolean(false)
     private val accumulator = FrameAccumulator()
     private val inputTracker = InputTracker()
@@ -115,6 +120,33 @@ abstract class Engine(
     override val resourceScope: ResourceScope
         get() = engineScope ?: error("resourceScope is only available while the engine is running")
 
+    private var engineTextFont: KGEFont? = null
+    private var engineFontFamily: KGECoreFontFamily? = null
+
+    /**
+     * The principal font of the text operations; fails fast when read before
+     * [start] or after it returns.
+     */
+    override var textFont: KGEFont
+        get() = engineTextFont ?: error("textFont is only available while the engine is running")
+        set(value) {
+            engineTextFont = value
+        }
+
+    /**
+     * The built-in family the principal font comes from; fails fast when read
+     * before [start] or after it returns.
+     */
+    val coreFontFamily: KGECoreFontFamily
+        get() = engineFontFamily ?: error("coreFontFamily is only available while the engine is running")
+
+    /** The spaces a tab stop spans; the assignment must be positive. */
+    override var tabSizeInSpaces: Int = 4
+        set(value) {
+            require(value > 0) { "tabSizeInSpaces must be positive, was $value" }
+            field = value
+        }
+
     private var lastFramebufferSize: Int2D? = null
     private var viewportFit: ViewportFit? = null
 
@@ -163,7 +195,9 @@ abstract class Engine(
                 ResourceScope().use { scope ->
                     engineScope = scope
                     Renderer.createResources(driver, scope)
-                    DrawStringService.createResources(scope)
+                    val coreFamily = KGECoreFontService.createResources(scope)
+                    engineFontFamily = coreFamily
+                    engineTextFont = coreFamily.defaultFace.font(scope, 8.fontPx)
                     val layerStack = LayerStack(window.screenSize.x, window.screenSize.y)
                     engineLayers = layerStack
                     scope.register(LayersKey, layerStack)
@@ -175,6 +209,8 @@ abstract class Engine(
             engineLayers = null
             engineDriver = null
             engineScope = null
+            engineTextFont = null
+            engineFontFamily = null
             engineThreadId = null
             KGEOverridable.Proxy.resetAll()
         }

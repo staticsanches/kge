@@ -12,7 +12,6 @@ import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.resource.ResourceScope
-import dev.staticsanches.kge.text.DrawStringService
 import dev.staticsanches.kge.text.ttf.Font
 import kotlin.time.Duration
 
@@ -32,9 +31,15 @@ internal class FpsBenchmarkEngine(
     TtfTextSceneTarget {
     private val sampler = FrameSampler(warmup, measure)
     private var sprite: Sprite? = null
+    private var mergedText: MergedTextAddon? = null
 
     /** Both text addons' default, made explicit because the engine carries both. */
-    override val tabSizeInSpaces: Int get() = 4
+    override var tabSizeInSpaces: Int
+        get() = super<Engine>.tabSizeInSpaces
+        set(value) {
+            super<Engine>.tabSizeInSpaces = value
+        }
+
     private var font: Font? = null
     private var uploads: UploadPolicyGLCalls? = null
 
@@ -51,7 +56,7 @@ internal class FpsBenchmarkEngine(
             BenchmarkWorkload.TextPerGlyphList -> decalStructure = Decal.Structure.LIST
             BenchmarkWorkload.TextMergedList -> {
                 decalStructure = Decal.Structure.LIST
-                DrawStringService.override(MergedDrawStringService(DrawStringService.original))
+                mergedText = MergedTextAddon(this)
             }
             BenchmarkWorkload.TextTtfRegion -> loadTtfText(UploadPolicy.REGION)
             BenchmarkWorkload.TextTtfFull -> loadTtfText(UploadPolicy.FULL)
@@ -120,7 +125,7 @@ internal class FpsBenchmarkEngine(
             renderTtfTextScene(this, textFont, window.screenSize.x, window.screenSize.y)
             uploads?.replayFrame()
         } else if (workload.isText) {
-            renderTextScene(this, window.screenSize.x, window.screenSize.y)
+            renderTextScene(mergedText ?: this, window.screenSize.x, window.screenSize.y)
         } else if (blitSource != null) {
             renderScene(this, window.screenSize.x, window.screenSize.y, blitSource)
         } else {

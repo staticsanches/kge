@@ -731,3 +731,15 @@ the core defines. Option (a′) of that document (a non-owning `TextFont`
 handle-per-size plus `TextService` as a shape, `prop` as a core extension) is
 the starting shape; its "decisions a future touch-point would have to take" is
 that touch-point's agenda, and E3 must have fixed the TTF decal contract first.
+
+**2026-10-04 — rich text deferred until after the text API unification (owner).**
+Inline runs inside one text — colour, weight, font and size changes sharing a
+baseline and a line height, with left/center/right alignment — are a concept of
+their own, to be opened **after** the unification closes, not a slice of it. Its
+ancestor is this document's R6 decision to expose the layout with the olc-shaped
+draws as addons over it (`docs/plans/2026-09-16-r6-text-touchpoint.md`), and the
+unification's touch-point excludes a general typography layer. Reaching it may
+revise settled concepts; that is accepted. One precondition belongs to the
+rounds already planned: a line mixing fonts needs per-font vertical metrics,
+which `KGEFont` does not expose, so U3/U4 is where that surface is decided if
+the later concept is not to reopen them.

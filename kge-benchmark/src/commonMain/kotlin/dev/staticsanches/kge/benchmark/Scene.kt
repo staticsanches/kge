@@ -5,11 +5,11 @@ import dev.staticsanches.kge.engine.addon.DrawCircleAddon
 import dev.staticsanches.kge.engine.addon.DrawLineAddon
 import dev.staticsanches.kge.engine.addon.DrawRectAddon
 import dev.staticsanches.kge.engine.addon.DrawSpriteAddon
-import dev.staticsanches.kge.engine.addon.DrawStringAddon
 import dev.staticsanches.kge.engine.addon.DrawTriangleAddon
 import dev.staticsanches.kge.engine.addon.FillCircleAddon
 import dev.staticsanches.kge.engine.addon.FillRectAddon
 import dev.staticsanches.kge.engine.addon.FillTriangleAddon
+import dev.staticsanches.kge.engine.addon.TextAddon
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
@@ -32,7 +32,7 @@ internal interface SceneTarget :
 /** The draw surface [renderTextScene] paints on: the addons it exercises. */
 internal interface TextSceneTarget :
     ClearAddon,
-    DrawStringAddon
+    TextAddon
 
 /** The draw surface [renderTtfTextScene] paints on: the TTF decal addon. */
 internal interface TtfTextSceneTarget :
@@ -133,7 +133,7 @@ internal fun renderTextScene(
     val columnPitch = width / SCENE_TEXT_COLUMNS
     for (row in 0 until rows) {
         for (column in 0 until SCENE_TEXT_COLUMNS) {
-            target.drawStringDecal(
+            target.drawTextDecal(
                 position = Float2D((4 + column * columnPitch).toFloat(), (2 + row * SCENE_TEXT_LINE_HEIGHT).toFloat()),
                 text = SCENE_TEXT,
                 color = scenePalette[(row + column) % scenePalette.size],

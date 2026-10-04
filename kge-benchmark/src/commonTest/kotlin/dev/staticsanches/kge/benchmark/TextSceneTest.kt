@@ -4,10 +4,14 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.WindowInfo
 import dev.staticsanches.kge.engine.layer.LayerStack
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
+import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
+import dev.staticsanches.kge.renderer.decal.DecalInstance
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.text.KGEFont
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
@@ -18,11 +22,52 @@ private const val TEXT_SCENE_TEST_HEIGHT = 48
 private const val TEXT_SCENE_TEST_LINES = 9
 private const val TEXT_SCENE_TEST_COLUMN_PITCH = 80
 
+/** A font the recording host never touches; only the call's default argument reads it. */
+private object UnusedTextFont : KGEFont {
+    override val face: KGEFont.Face get() = error("unused")
+    override val size: KGEFont.Size get() = error("unused")
+    override val axisCoordinates: Map<KGEFont.Axis.Tag, KGEFont.Axis.Value> get() = error("unused")
+
+    override fun measureText(
+        text: String,
+        tabSizeInSpaces: Int,
+    ): Int2D = error("unused")
+
+    override fun drawText(
+        target: Pixmap.Mutable,
+        x: Int,
+        y: Int,
+        text: String,
+        color: Pixel,
+        scale: Int,
+        tabSizeInSpaces: Int,
+        mode: Pixel.Mode,
+    ) = error("unused")
+
+    override fun drawTextDecal(
+        position: Float2D,
+        text: String,
+        color: Pixel,
+        scale: Float2D,
+        tabSizeInSpaces: Int,
+        screenSize: Int2D,
+        decalMode: Decal.Mode,
+        decalStructure: Decal.Structure,
+        decalInstanceCollector: (DecalInstance) -> Unit,
+    ) = error("unused")
+
+    override fun close() = error("unused")
+}
+
 /** Records what [renderTextScene] queues, with no GL context and no draw target. */
 @OptIn(KGESensitiveAPI::class)
 private class RecordingTextSceneTarget : TextSceneTarget {
     var cleared: Pixel? = null
     val queued = mutableListOf<Pair<Float2D, String>>()
+
+    override var textFont: KGEFont = UnusedTextFont
+
+    override var tabSizeInSpaces: Int = 4
 
     override var drawTarget: Sprite? = null
 
@@ -60,11 +105,12 @@ private class RecordingTextSceneTarget : TextSceneTarget {
         cleared = pixel
     }
 
-    override fun drawStringDecal(
+    override fun drawTextDecal(
         position: Float2D,
         text: String,
         color: Pixel,
         scale: Float2D,
+        font: KGEFont,
     ) {
         queued += position to text
     }

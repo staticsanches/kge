@@ -67,7 +67,11 @@ Every round runs this sequence:
    The orchestrator steers, resolves blockers and re-dispatches; it does not take
    the code over. A "green" report is verified, not trusted: check its claims
    with `jev_verify` against the captured test output — the gate's zero-test
-   hole (Rules) is what a bare "green" hides.
+   hole (Rules) is what a bare "green" hides. Implementation dispatches never
+   overlap: each one runs Gradle in this single workspace, and two Gradle
+   invocations in the same project directory collide on the project lock and on
+   the shared `build/` outputs. The parallel dispatch is the review pair
+   (step 5), which reads the staged diff and never runs the gate.
 4. **Gate** — `tools/gradle build` (below), once, before the reviews.
 5. **Review** — two axes, two fresh sub-agents in parallel, never the model that
    produced the diff: Standards and Spec conformance, defined by

@@ -1,5 +1,6 @@
 package dev.staticsanches.kge.text
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Float2D
@@ -19,29 +20,37 @@ import io.kotest.matchers.shouldBe
 private const val TAB_SIZE = 4
 
 /**
- * The decal text draw: one partial-cell [DecalInstance] per character, anchored
- * by olc's mono/proportional walk and emitted to the caller's collector with the
- * requested mode and structure — this path never resolves the pixel mode.
+ * The decal text draw: one partial-cell instance per character, with the
+ * requested mode and structure — no pixel mode resolution, no tab validation.
  */
-class DrawStringDecalTest :
+@OptIn(KGESensitiveAPI::class)
+class CoreFontDecalTest :
     FunSpec({
-        fun newScope(): ResourceScope {
+        suspend fun withFamily(block: suspend (ResourceScope, KGECoreFontFamily) -> Unit) {
             installGl()
-            return ResourceScope().also { DrawStringService.createResources(it) }
+            ResourceScope().use { scope -> block(scope, KGECoreFontService.createResources(scope)) }
         }
 
-        fun installRecorder(): RecordingPartialDecalService {
-            val recorder = RecordingPartialDecalService(DrawPartialDecalService.original)
+        suspend fun KGEFont.Family.mono(
+            scope: ResourceScope,
+            px: Int = 8,
+        ): KGEFont = defaultFace.font(scope, px.fontPx)
+
+        suspend fun KGECoreFontFamily.prop(
+            scope: ResourceScope,
+            px: Int = 8,
+        ): KGEFont = proportional.font(scope, px.fontPx)
+
+        fun installRecorder(): CoreDecalRecorder {
+            val recorder = CoreDecalRecorder(DrawPartialDecalService.original)
             DrawPartialDecalService.override(recorder)
             return recorder
         }
 
         test("mono decal cell matches the olc partial-decal geometry") {
-            newScope().use { scope ->
-                val decal = fontDecal(scope)
+            withFamily { scope, family ->
                 val instances = mutableListOf<DecalInstance>()
-                DrawStringService.drawStringDecal(
-                    scope,
+                family.mono(scope).drawTextDecal(
                     Float2D(0f, 0f),
                     "A",
                     Colors.WHITE,
@@ -54,7 +63,8 @@ class DrawStringDecalTest :
 
                 instances.size shouldBe 1
                 val instance = instances.single()
-                instance.decal shouldBe decal
+                instance.decal.sprite.width shouldBe 128
+                instance.decal.sprite.height shouldBe 48
                 instance.mode shouldBe Decal.Mode.NORMAL
                 instance.structure shouldBe Decal.Structure.FAN
                 assertVerticesCloseTo(
@@ -79,11 +89,10 @@ class DrawStringDecalTest :
             }
         }
 
-        test("mono cells read the 8x8 source cell and step by 8*scale") {
+        test("mono cells read the 8x8 source cell and step by 8 * effectiveScale") {
             val recorder = installRecorder()
-            newScope().use { scope ->
-                DrawStringService.drawStringDecal(
-                    scope,
+            withFamily { scope, family ->
+                family.mono(scope).drawTextDecal(
                     Float2D(16f, 8f),
                     "Hi",
                     Colors.WHITE,
@@ -98,14 +107,15 @@ class DrawStringDecalTest :
                 recorder.calls.map { it.sourcePosition } shouldBe listOf(Float2D(64f, 16f), Float2D(72f, 32f))
                 recorder.calls.map { it.sourceSize } shouldBe listOf(Float2D(8f, 8f), Float2D(8f, 8f))
                 recorder.calls.map { it.viewport } shouldBe listOf(Int2D(320, 240), Int2D(320, 240))
+                val decals = recorder.calls.map { it.decal }.toSet()
+                decals.size shouldBe 1
             }
         }
 
         test("prop cells use the spacing source column and advance") {
             val recorder = installRecorder()
-            newScope().use { scope ->
-                DrawStringService.drawStringPropDecal(
-                    scope,
+            withFamily { scope, family ->
+                family.prop(scope).drawTextDecal(
                     Float2D(0f, 0f),
                     "Hi",
                     Colors.WHITE,
@@ -124,9 +134,9 @@ class DrawStringDecalTest :
 
         test("newline and tab advance in scaled cells") {
             val recorder = installRecorder()
-            newScope().use { scope ->
-                DrawStringService.drawStringDecal(
-                    scope,
+            withFamily { scope, family ->
+                val mono = family.mono(scope)
+                mono.drawTextDecal(
                     Float2D(0f, 0f),
                     "A\nB",
                     Colors.WHITE,
@@ -137,10 +147,10 @@ class DrawStringDecalTest :
                     Decal.Structure.FAN,
                 ) {}
                 recorder.calls.map { it.position } shouldBe listOf(Float2D(0f, 0f), Float2D(0f, 24f))
+                recorder.calls.map { it.scale } shouldBe listOf(Float2D(2f, 3f), Float2D(2f, 3f))
 
                 recorder.calls.clear()
-                DrawStringService.drawStringDecal(
-                    scope,
+                mono.drawTextDecal(
                     Float2D(0f, 0f),
                     "A\tB",
                     Colors.WHITE,
@@ -155,11 +165,9 @@ class DrawStringDecalTest :
         }
 
         test("the requested mode, structure and tint land in the emitted instances") {
-            newScope().use { scope ->
-                val decal = fontDecal(scope)
+            withFamily { scope, family ->
                 val instances = mutableListOf<DecalInstance>()
-                DrawStringService.drawStringPropDecal(
-                    scope,
+                family.prop(scope).drawTextDecal(
                     Float2D(0f, 0f),
                     "Hi",
                     Colors.YELLOW,
@@ -172,19 +180,74 @@ class DrawStringDecalTest :
 
                 instances.size shouldBe 2
                 instances.forEach { instance ->
-                    instance.decal shouldBe decal
+                    instance.decal.sprite.width shouldBe 128
                     instance.mode shouldBe Decal.Mode.ADDITIVE
                     instance.structure shouldBe Decal.Structure.LIST
                     assertTints(instance.vertices, List(instance.vertexCount) { Colors.YELLOW })
                 }
+                (instances[0].decal === instances[1].decal) shouldBe true
+            }
+        }
+
+        test("degenerate decal scales propagate instead of being normalised or rejected") {
+            withFamily { scope, family ->
+                val mono = family.mono(scope)
+
+                fun emit(scale: Float2D): DecalInstance {
+                    val instances = mutableListOf<DecalInstance>()
+                    mono.drawTextDecal(
+                        Float2D(0f, 0f),
+                        "A",
+                        Colors.WHITE,
+                        scale,
+                        TAB_SIZE,
+                        Int2D(320, 240),
+                        Decal.Mode.NORMAL,
+                        Decal.Structure.FAN,
+                    ) { instances += it }
+                    instances.size shouldBe 1
+                    return instances.single()
+                }
+
+                // The zero-width and inverted runs keep the quantised arithmetic of the
+                // requested sign and magnitude; a clamp or a sign flip would move them.
+                assertVerticesCloseTo(
+                    emit(Float2D(0f, 0f)).vertices,
+                    listOf(
+                        Float2D(-1f, 1f),
+                        Float2D(-1f, 1f),
+                        Float2D(-0.996875f, 1f),
+                        Float2D(-0.996875f, 1f),
+                    ),
+                )
+                assertVerticesCloseTo(
+                    emit(Float2D(-2f, 3f)).vertices,
+                    listOf(
+                        Float2D(-1f, 1f),
+                        Float2D(-1f, 0.8f),
+                        Float2D(-1.096875f, 0.8f),
+                        Float2D(-1.096875f, 1f),
+                    ),
+                )
+
+                val nan = emit(Float2D(Float.NaN, 1f)).vertices
+                nan.x(0) shouldBe -1f
+                nan.x(2).isNaN() shouldBe true
+                nan.x(3).isNaN() shouldBe true
+
+                val positiveInfinity = emit(Float2D(1f, Float.POSITIVE_INFINITY)).vertices
+                positiveInfinity.y(1) shouldBe Float.NEGATIVE_INFINITY
+                positiveInfinity.y(2) shouldBe Float.NEGATIVE_INFINITY
+
+                val negativeInfinity = emit(Float2D(1f, Float.NEGATIVE_INFINITY)).vertices
+                negativeInfinity.y(1) shouldBe Float.POSITIVE_INFINITY
             }
         }
 
         test("an empty string emits no instance") {
-            newScope().use { scope ->
+            withFamily { scope, family ->
                 val instances = mutableListOf<DecalInstance>()
-                DrawStringService.drawStringDecal(
-                    scope,
+                family.mono(scope).drawTextDecal(
                     Float2D(0f, 0f),
                     "",
                     Colors.WHITE,
@@ -200,10 +263,9 @@ class DrawStringDecalTest :
         }
 
         test("a non-positive tab size does not fail on the decal path") {
-            newScope().use { scope ->
+            withFamily { scope, family ->
                 val instances = mutableListOf<DecalInstance>()
-                DrawStringService.drawStringDecal(
-                    scope,
+                family.mono(scope).drawTextDecal(
                     Float2D(0f, 0f),
                     "A\tB",
                     Colors.WHITE,
@@ -218,24 +280,13 @@ class DrawStringDecalTest :
             }
         }
 
-        test("a scope without the registered font fails fast, even for empty text") {
-            ResourceScope().use { scope ->
+        test("a closed font fails fast, even for empty text") {
+            withFamily { scope, family ->
+                val font = family.mono(scope)
+                font.close()
+
                 shouldThrow<IllegalStateException> {
-                    DrawStringService.drawStringDecal(
-                        scope,
-                        Float2D(0f, 0f),
-                        "",
-                        Colors.WHITE,
-                        Float2D(1f, 1f),
-                        TAB_SIZE,
-                        Int2D(320, 240),
-                        Decal.Mode.NORMAL,
-                        Decal.Structure.FAN,
-                    ) {}
-                }
-                shouldThrow<IllegalStateException> {
-                    DrawStringService.drawStringPropDecal(
-                        scope,
+                    font.drawTextDecal(
                         Float2D(0f, 0f),
                         "",
                         Colors.WHITE,
@@ -248,10 +299,56 @@ class DrawStringDecalTest :
                 }
             }
         }
+
+        test("the base size multiplies the emitted scale and the newline/tab advances") {
+            val recorder = installRecorder()
+            withFamily { scope, family ->
+                val mono = family.mono(scope, 16)
+                mono.drawTextDecal(
+                    Float2D(0f, 0f),
+                    "Hi",
+                    Colors.WHITE,
+                    Float2D(1f, 1f),
+                    TAB_SIZE,
+                    Int2D(320, 240),
+                    Decal.Mode.NORMAL,
+                    Decal.Structure.FAN,
+                ) {}
+                recorder.calls.map { it.scale } shouldBe listOf(Float2D(2f, 2f), Float2D(2f, 2f))
+                recorder.calls.map { it.position } shouldBe listOf(Float2D(0f, 0f), Float2D(16f, 0f))
+
+                recorder.calls.clear()
+                mono.drawTextDecal(
+                    Float2D(0f, 0f),
+                    "A\nB",
+                    Colors.WHITE,
+                    Float2D(1f, 1f),
+                    TAB_SIZE,
+                    Int2D(320, 240),
+                    Decal.Mode.NORMAL,
+                    Decal.Structure.FAN,
+                ) {}
+                recorder.calls.map { it.position } shouldBe listOf(Float2D(0f, 0f), Float2D(0f, 16f))
+
+                recorder.calls.clear()
+                mono.drawTextDecal(
+                    Float2D(0f, 0f),
+                    "A\tB",
+                    Colors.WHITE,
+                    Float2D(1f, 1f),
+                    TAB_SIZE,
+                    Int2D(320, 240),
+                    Decal.Mode.NORMAL,
+                    Decal.Structure.FAN,
+                ) {}
+                recorder.calls.map { it.position } shouldBe listOf(Float2D(0f, 0f), Float2D(80f, 0f))
+            }
+        }
     })
 
-private class PartialDecalCall(
+private class CoreDecalCall(
     val position: Float2D,
+    val decal: Decal,
     val sourcePosition: Float2D,
     val sourceSize: Float2D,
     val scale: Float2D,
@@ -261,10 +358,10 @@ private class PartialDecalCall(
     val viewport: Int2D,
 )
 
-private class RecordingPartialDecalService(
+private class CoreDecalRecorder(
     private val delegate: DrawPartialDecalService,
 ) : DrawPartialDecalService {
-    val calls = mutableListOf<PartialDecalCall>()
+    val calls = mutableListOf<CoreDecalCall>()
 
     override fun drawPartialDecal(
         position: Float2D,
@@ -277,7 +374,7 @@ private class RecordingPartialDecalService(
         structure: Decal.Structure,
         viewport: Int2D,
     ): DecalInstance {
-        calls += PartialDecalCall(position, sourcePosition, sourceSize, scale, tint, mode, structure, viewport)
+        calls += CoreDecalCall(position, decal, sourcePosition, sourceSize, scale, tint, mode, structure, viewport)
         return delegate.drawPartialDecal(
             position,
             decal,
