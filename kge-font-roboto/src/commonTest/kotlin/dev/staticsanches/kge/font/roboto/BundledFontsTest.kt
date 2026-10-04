@@ -49,10 +49,10 @@ class BundledFontsTest :
         }
     })
 
-private fun decode(chunks: List<String>): ByteArray = Base64.Default.decode(chunks.joinToString(""))
+fun decode(chunks: List<String>): ByteArray = Base64.Default.decode(chunks.joinToString(""))
 
 /** FNV-1a 64 (offset basis 0xcbf29ce484222325, prime 0x100000001b3). */
-private fun fnv1a64(bytes: ByteArray): Long {
+fun fnv1a64(bytes: ByteArray): Long {
     var hash = -3_750_763_034_362_895_579L
     for (byte in bytes) hash = (hash xor (byte.toLong() and 0xFF)) * 1_099_511_628_211L
     return hash

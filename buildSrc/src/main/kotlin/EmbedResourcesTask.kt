@@ -59,7 +59,17 @@ abstract class EmbedResourcesTask : DefaultTask() {
         spec: EmbeddedFamilySpec,
     ): EmbeddedFontFamily {
         require(spec.accessorName.isNotBlank()) { "family has a blank accessor name: $spec" }
-        val font = read(root, spec.font, spec.accessorName)
+        val fonts =
+            spec.fonts.map { font ->
+                val bytes = read(root, font.path, spec.accessorName)
+                EmbeddedFont(
+                    member = font.member,
+                    path = font.path,
+                    bytes = bytes.size,
+                    sha256 = sha256(bytes),
+                    base64 = Base64.getEncoder().encodeToString(bytes),
+                )
+            }
         val license = read(root, spec.license, spec.accessorName)
         return EmbeddedFontFamily(
             accessorName = spec.accessorName,
@@ -67,10 +77,7 @@ abstract class EmbedResourcesTask : DefaultTask() {
             version = spec.version,
             licenseId = spec.licenseId,
             source = spec.source,
-            fontPath = spec.font,
-            fontBytes = font.size,
-            fontSha256 = sha256(font),
-            fontBase64 = Base64.getEncoder().encodeToString(font),
+            fonts = fonts,
             licensePath = spec.license,
             licenseBytes = license.size,
             licenseSha256 = sha256(license),

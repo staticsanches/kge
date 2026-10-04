@@ -129,6 +129,20 @@ object Roboto {
 The `variableFont` KDoc states the order contract the loader will rely on in U3:
 the roman is the payload a family's `defaultFace` must come from.
 
+### Resolved at dispatch (2026-10-04, orchestrator)
+
+- **The payload pins were re-verified in `bash` before dispatch.** Both italic
+  files, re-fetched from the URLs above, reproduce the table exactly — bytes,
+  sha256, FNV-1a 64, chunk count and last-chunk length — and both are sfnt
+  `00010000`. Both committed romans re-hash byte-identical to their upstream
+  copies, so each roman/italic pair still comes from one revision.
+- **The `variableFont` KDoc is generated, not hand-written.**
+  `renderFamily` emits a one-line KDoc above the *first* payload member (manifest
+  order) recording that a family's `defaultFace` comes from it. Manifest order
+  stays significant: members are emitted in it, never sorted. It is the only
+  place the order-sensitive contract reaches a consumer, and the touch-point
+  requires that contract in the public KDoc.
+
 ## Files
 
 | file | change |

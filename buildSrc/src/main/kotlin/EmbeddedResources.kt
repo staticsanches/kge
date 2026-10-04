@@ -1,5 +1,11 @@
 import java.io.Serializable
 
+/** One payload of a family to embed, with the generated accessor member it renders as. */
+data class EmbeddedFontSpec(
+    val member: String,
+    val path: String,
+) : Serializable
+
 /** A family's file set to embed, with the provenance the generator records. */
 data class EmbeddedFamilySpec(
     val accessorName: String,
@@ -7,9 +13,18 @@ data class EmbeddedFamilySpec(
     val version: String,
     val licenseId: String,
     val source: String,
-    val font: String,
+    val fonts: List<EmbeddedFontSpec>,
     val license: String,
 ) : Serializable
+
+/** One family payload whose bytes were read and hashed, ready to render. */
+data class EmbeddedFont(
+    val member: String,
+    val path: String,
+    val bytes: Int,
+    val sha256: String,
+    val base64: String,
+)
 
 /** A family whose files were read and hashed, ready to render. */
 data class EmbeddedFontFamily(
@@ -18,15 +33,16 @@ data class EmbeddedFontFamily(
     val version: String,
     val licenseId: String,
     val source: String,
-    val fontPath: String,
-    val fontBytes: Int,
-    val fontSha256: String,
-    val fontBase64: String,
+    val fonts: List<EmbeddedFont>,
     val licensePath: String,
     val licenseBytes: Int,
     val licenseSha256: String,
     val licenseText: String,
 )
+
+/** Emitted above a family's first payload member, whose order the loader relies on. */
+private const val DEFAULT_FACE_KDOC =
+    "    /** The family's default face; payload order is significant and the roman comes first. */"
 
 /** Splits [base64] into [chunkSize]-character chunks; the last chunk carries the remainder. */
 fun chunkBase64(
@@ -55,6 +71,21 @@ fun renderEmbeddedFonts(
             .keys
             .sorted()
     check(duplicates.isEmpty()) { "duplicate accessor name(s): $duplicates" }
+    families.forEach { family ->
+        check(family.fonts.isNotEmpty()) { "family ${family.accessorName} has no payloads" }
+        family.fonts.forEach { font ->
+            check(font.member.isNotBlank()) { "family ${family.accessorName} has a blank payload member: ${font.path}" }
+        }
+        val duplicateMembers =
+            family.fonts
+                .groupBy { it.member }
+                .filterValues { it.size > 1 }
+                .keys
+                .sorted()
+        check(duplicateMembers.isEmpty()) {
+            "family ${family.accessorName} has duplicate payload member(s): $duplicateMembers"
+        }
+    }
     val ordered = families.sortedBy { it.accessorName }
 
     return buildString {
@@ -62,7 +93,9 @@ fun renderEmbeddedFonts(
         ordered.forEach { family ->
             appendLine("//")
             appendLine("// ${family.family} ${family.version} (${family.licenseId})")
-            appendLine("//   ${family.fontPath} - ${family.fontBytes} B - sha256 ${family.fontSha256}")
+            family.fonts.forEach { font ->
+                appendLine("//   ${font.path} - ${font.bytes} B - sha256 ${font.sha256}")
+            }
             appendLine("//   ${family.licensePath} - ${family.licenseBytes} B - sha256 ${family.licenseSha256}")
         }
         appendLine()
@@ -86,12 +119,15 @@ private fun renderFamily(
         appendLine("    const val VERSION: String = ${literal(family.version)}")
         appendLine("    const val LICENSE_ID: String = ${literal(family.licenseId)}")
         appendLine("    const val SOURCE: String = ${literal(family.source)}")
-        appendLine("    val variableFont: List<String> =")
-        appendLine("        persistentListOf(")
-        chunkBase64(family.fontBase64, chunkSize).forEach { chunk ->
-            appendLine("            ${literal(chunk)},")
+        family.fonts.forEachIndexed { index, font ->
+            if (index == 0) appendLine(DEFAULT_FACE_KDOC)
+            appendLine("    val ${font.member}: List<String> =")
+            appendLine("        persistentListOf(")
+            chunkBase64(font.base64, chunkSize).forEach { chunk ->
+                appendLine("            ${literal(chunk)},")
+            }
+            appendLine("        )")
         }
-        appendLine("        )")
         appendLine("    val licenseText: String = ${literal(family.licenseText)}")
         appendLine("}")
     }
