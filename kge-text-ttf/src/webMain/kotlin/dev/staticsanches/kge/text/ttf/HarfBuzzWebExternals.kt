@@ -27,7 +27,7 @@ internal external class HarfBuzzFace(
     fun referenceTable(table: String): Uint8Array?
 }
 
-/** The `harfbuzzjs` font; shaping properties such as the scale live on it. */
+/** The `harfbuzzjs` font; shaping properties such as the scale and the variations live on it. */
 @JsName("Font")
 internal external class HarfBuzzFont(
     face: HarfBuzzFace,
@@ -36,6 +36,9 @@ internal external class HarfBuzzFont(
         xScale: Int,
         yScale: Int,
     )
+
+    /** Overrides all existing variations: an axis left out is reset to its default. */
+    fun setVariations(variations: JsArray<HarfBuzzVariation>)
 
     fun hExtents(): HarfBuzzFontExtents
 }
@@ -46,6 +49,13 @@ internal external class HarfBuzzFontExtents : JsAny {
     val descender: Int
     val lineGap: Int
 }
+
+/** One `harfbuzzjs` design-axis value; the value is in user units, not 16.16. */
+@JsName("Variation")
+internal external class HarfBuzzVariation(
+    tag: String,
+    value: Float,
+) : JsAny
 
 /** The `harfbuzzjs` shaping buffer, driven through the explicit direction/script path. */
 @JsName("Buffer")

@@ -17,6 +17,9 @@ internal external fun initFreeType(options: JsAny? = definedExternally): Promise
 /** One initialized module: a wasm instance with its own FreeType library and heap. */
 @JsName("FreeType")
 internal external class FreeType : JsAny {
+    /** The full Emscripten module: the package's documented raw escape hatch. */
+    val module: FreeTypeRawModule
+
     /** Copies [bytes] into the wasm heap; the face stands on that copy, not on the source. */
     fun newFace(
         bytes: Uint8Array,
@@ -27,6 +30,9 @@ internal external class FreeType : JsAny {
 /** One font face in the shared module; its wasm heap copy lives until [destroy]. */
 @JsName("Face")
 internal external class Face : JsAny {
+    /** The wasm32 pointer the raw `ft.module` calls take as the face handle. */
+    val ptr: Int
+
     fun setPixelSize(
         px: Int,
         pyOrZero: Int = definedExternally,

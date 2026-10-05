@@ -60,7 +60,7 @@ suspend fun runCoverageTextureSmoke(device: GpuDevice) {
         )
         GLService.clear(GL.COLOR_BUFFER_BIT)
 
-        Font.load(Roboto.variableFont).use { font ->
+        Font.load(Roboto.romanFont).use { font ->
             val shaped = font.shape("A", SIZE_PX)
             val glyph = shaped.glyphs.single()
             val placed = font.glyph(SIZE_PX, glyph.glyphId).shouldBeInstanceOf<AtlasGlyph.Placed>()

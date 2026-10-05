@@ -1,7 +1,6 @@
 package dev.staticsanches.kge.text.ttf
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.resource.KGECleanAction
 import dev.staticsanches.kge.resource.KGEResource
 import dev.staticsanches.kge.resource.ResourceWrapper
@@ -11,10 +10,11 @@ import kotlin.io.encoding.Base64
 /**
  * A font face backed by a native shaping engine, loaded from its own payload.
  *
- * Close releases every per-size glyph atlas and then the native face and the
- * payload it stands on where the engine allows; use after close fails fast.
+ * Close releases every per-size glyph atlas, then the native face and the payload
+ * it stands on; use after close fails fast.
  */
 class Font private constructor(
+    private val payload: TtfPayload,
     private val face: ResourceWrapper<NativeFace>,
 ) : KGEResource {
     private val atlasesBySizePx = mutableMapOf<Int, GlyphAtlas>()
@@ -43,15 +43,20 @@ class Font private constructor(
     internal fun glyph(
         sizePx: Int,
         glyphId: Int,
-    ): AtlasGlyph {
+    ): AtlasGlyph = atlasFor(sizePx).glyph(glyphId)
+
+    /** The native face behind the release guard; a released font fails fast. */
+    internal val nativeFace: NativeFace
+        get() = checkNotReleased().let { face.resource }
+
+    /** The atlas of [sizePx], created on first use. */
+    internal fun atlasFor(sizePx: Int): GlyphAtlas {
         checkNotReleased()
         require(sizePx > 0) { "sizePx must be positive: $sizePx" }
 
-        val atlas =
-            atlasesBySizePx.getOrPut(sizePx) {
-                GlyphAtlas(sizePx) { face.resource.rasterize(it, sizePx) }
-            }
-        return atlas.glyph(glyphId)
+        return atlasesBySizePx.getOrPut(sizePx) {
+            GlyphAtlas(sizePx) { face.resource.rasterize(it, sizePx) }
+        }
     }
 
     /** The atlas of [sizePx], null until a glyph has been rasterized at that size. */
@@ -74,6 +79,7 @@ class Font private constructor(
         toClose += gpuAtlasesBySizePx.values
         toClose += atlasesBySizePx.values
         toClose += face
+        toClose += payload
         gpuAtlasesBySizePx.clear()
         atlasesBySizePx.clear()
         toClose.closeAll()
@@ -91,38 +97,29 @@ class Font private constructor(
 
     companion object {
         /** Loads a complete font payload. */
-        suspend fun load(bytes: ByteArray): Font = Font(wrapNativeFace(openNativeFace(bytes)))
+        suspend fun load(bytes: ByteArray): Font {
+            // The inline closing guard can not host the suspend face construction.
+            val payload = TtfPayload(bytes)
+            try {
+                return Font(payload, wrapNativeFace(createNativeFace(payload, AxisCoordinates.Empty)))
+            } catch (failure: Throwable) {
+                try {
+                    payload.close()
+                } catch (closeFailure: Throwable) {
+                    failure.addSuppressed(closeFailure)
+                }
+                throw failure
+            }
+        }
 
         /** Loads the chunked base64 a bundled data module emits. */
         suspend fun load(base64: List<String>): Font = load(Base64.decode(base64.joinToString("")))
     }
 }
 
-/**
- * Allocates the payload, copies [bytes] into it and opens the face, closing the
- * payload on any failure: the inline guard can not host a suspend call.
- */
-private suspend fun openNativeFace(bytes: ByteArray): NativeFace {
-    val storage = BufferService.allocate(bytes.size, "font")
-    try {
-        val buffer = storage.resource
-        for (index in bytes.indices) {
-            buffer.put(index, bytes[index])
-        }
-        return createNativeFace(storage)
-    } catch (failure: Throwable) {
-        try {
-            storage.close()
-        } catch (closeFailure: Throwable) {
-            failure.addSuppressed(closeFailure)
-        }
-        throw failure
-    }
-}
-
 /** Creates the resource that owns [face]; a failed hand-off closes [face] instead. */
 @OptIn(KGESensitiveAPI::class)
-private fun wrapNativeFace(face: NativeFace): ResourceWrapper<NativeFace> =
+internal fun wrapNativeFace(face: NativeFace): ResourceWrapper<NativeFace> =
     try {
         ResourceWrapper("font face", face, KGECleanAction { closeNativeFace(face) })
     } catch (failure: Throwable) {
@@ -135,7 +132,7 @@ private fun wrapNativeFace(face: NativeFace): ResourceWrapper<NativeFace> =
     }
 
 /** The text's Unicode code points, pairing a surrogate pair into one. */
-private fun String.toCodePoints(): IntArray {
+internal fun String.toCodePoints(): IntArray {
     val codePoints = ArrayList<Int>(length)
     var index = 0
     while (index < length) {

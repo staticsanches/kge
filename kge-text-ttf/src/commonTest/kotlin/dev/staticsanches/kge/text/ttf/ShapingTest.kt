@@ -17,7 +17,7 @@ class ShapingTest :
             Roboto.FAMILY shouldBe "Roboto"
             Roboto.VERSION shouldBe "3.015"
 
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val glyphs = font.shape("AV To Wave 123", 16).glyphs
 
                 glyphs.map { it.glyphId } shouldBe
@@ -46,7 +46,7 @@ class ShapingTest :
         }
 
         test("kerning is applied by default") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val alone = font.shape("A", 16).glyphs.single()
                 val kerned = font.shape("AV", 16).glyphs.first()
 
@@ -57,7 +57,7 @@ class ShapingTest :
         }
 
         test("an accented character keeps code-point clusters") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val glyphs = font.shape("AéB", 16).glyphs
 
                 glyphs.map { it.glyphId } shouldBe listOf(37, 703, 38)
@@ -66,7 +66,7 @@ class ShapingTest :
         }
 
         test("a non-BMP character is one code point and one cluster") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val glyphs = font.shape("A\uD83D\uDE00B", 16).glyphs
 
                 glyphs.map { it.cluster } shouldBe listOf(0, 1, 2)
@@ -76,13 +76,13 @@ class ShapingTest :
         test("shaping from base64 matches shaping from decoded bytes") {
             val decoded = Font.load(robotoFontBytes()).use { it.shape("AV To Wave 123", 16) }
 
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 font.shape("AV To Wave 123", 16) shouldBe decoded
             }
         }
 
         test("the run carries the pinned 16 px metrics") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val metrics = font.shape("A", 16).metrics
 
                 metrics.ascender shouldBe 14.84375f

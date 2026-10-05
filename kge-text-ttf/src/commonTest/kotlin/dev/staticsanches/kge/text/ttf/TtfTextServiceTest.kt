@@ -15,7 +15,7 @@ import io.kotest.matchers.shouldBe
 class TtfTextServiceTest :
     FunSpec({
         test("createResources makes the scope the owner, and closing it closes the font") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             ResourceScope().use { scope ->
                 TtfTextService.createResources(scope, font)
 
@@ -26,8 +26,8 @@ class TtfTextServiceTest :
         }
 
         test("one scope owns several adopted fonts and closes them all") {
-            val first = Font.load(Roboto.variableFont)
-            val second = Font.load(Roboto.variableFont)
+            val first = Font.load(Roboto.romanFont)
+            val second = Font.load(Roboto.romanFont)
             ResourceScope().use { scope ->
                 TtfTextService.createResources(scope, first)
                 TtfTextService.createResources(scope, second)
@@ -40,8 +40,8 @@ class TtfTextServiceTest :
         }
 
         test("an overriding decorator adopts a different font than the caller passed") {
-            val requested = Font.load(Roboto.variableFont)
-            val adopted = Font.load(Roboto.variableFont)
+            val requested = Font.load(Roboto.romanFont)
+            val adopted = Font.load(Roboto.romanFont)
             TtfTextService.override(
                 object : TtfTextService by TtfTextService.original {
                     override fun createResources(

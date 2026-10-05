@@ -67,7 +67,7 @@ class TtfCarrierUploadTest :
             try {
                 val engine = CarrierProbeEngine()
                 engine.gl = gl
-                engine.font = Font.load(Roboto.variableFont)
+                engine.font = Font.load(Roboto.romanFont)
 
                 engine.start()
 

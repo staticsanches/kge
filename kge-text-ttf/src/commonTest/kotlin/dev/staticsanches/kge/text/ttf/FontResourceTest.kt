@@ -13,48 +13,38 @@ import io.kotest.matchers.string.shouldContain
 
 /**
  * The resource contract on the font: close is idempotent, every use after close
- * fails fast and the face's close releases the payload it was built from. On
- * web, close drops the native references only.
+ * fails fast, and the font releases the atlas, the native face and then the payload.
  */
 @OptIn(KGESensitiveAPI::class)
 class FontResourceTest :
     FunSpec({
         test("close is idempotent") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
 
             font.close()
             font.close()
         }
 
         test("shaping after close fails fast") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             font.close()
 
             val failure = shouldThrow<IllegalStateException> { font.shape("A", 16) }
             failure.message shouldContain "released"
         }
 
-        test("closing the font releases the payload it allocated") {
-            var payload: ResourceWrapper<ByteBuffer>? = null
-            BufferService.override(
-                object : BufferService {
-                    override fun allocate(
-                        sizeInBytes: Int,
-                        name: String?,
-                    ): ResourceWrapper<ByteBuffer> =
-                        BufferService.original.allocate(sizeInBytes, name).also { payload = it }
-                },
-            )
+        test("closing the font releases the engine payload it allocated") {
+            val allocations = mutableListOf<ResourceWrapper<ByteBuffer>>()
+            BufferService.override(recordingAllocations(allocations))
             try {
-                val font = Font.load(Roboto.variableFont)
-                val allocated = checkNotNull(payload) { "load must allocate the payload" }
+                val font = Font.load(Roboto.romanFont)
 
-                // Web copies into wasm memory and releases the staging buffer
-                // during open; JVM holds it until close. Either way the font's
-                // close leaves no payload behind.
+                // One payload buffer on both platforms; a per-face copy would show as a second.
+                allocations.size shouldBe 1
+
                 font.close()
 
-                allocated.cleaned shouldBe true
+                allocations.forEach { it.cleaned shouldBe true }
             } finally {
                 // kge-core resets overrides between its own tests only, so this
                 // module restores the engine default itself.
@@ -63,7 +53,7 @@ class FontResourceTest :
         }
 
         test("each pixel size gets its own lazily created atlas") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val glyphs = font.shape("A", 16).glyphs
                 val glyphId = glyphs.single().glyphId
 
@@ -80,23 +70,19 @@ class FontResourceTest :
 
         test("closing a rasterized font releases the payload and its charts") {
             val allocations = mutableListOf<ResourceWrapper<ByteBuffer>>()
-            BufferService.override(
-                object : BufferService {
-                    override fun allocate(
-                        sizeInBytes: Int,
-                        name: String?,
-                    ): ResourceWrapper<ByteBuffer> =
-                        BufferService.original.allocate(sizeInBytes, name).also { allocations += it }
-                },
-            )
+            BufferService.override(recordingAllocations(allocations))
             try {
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 val glyphs = font.shape("A", 16).glyphs
                 val glyphId = glyphs.single().glyphId
+                // The one payload buffer, allocated on both platforms.
+                val payloadAllocations = allocations.size
+                payloadAllocations shouldBe 1
+
                 font.glyph(16, glyphId)
 
-                // the payload plus the one chart the glyph landed on
-                allocations.size shouldBe 2
+                // Rasterizing adds exactly the one chart the glyph landed on
+                allocations.size shouldBe payloadAllocations + 1
                 val chart = checkNotNull(font.atlas(16)) { "rasterizing must create the atlas" }.charts.single()
 
                 font.close()
@@ -109,7 +95,7 @@ class FontResourceTest :
         }
 
         test("rasterizing after close fails fast") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             font.close()
 
             val failure = shouldThrow<IllegalStateException> { font.glyph(16, 0) }
@@ -117,13 +103,13 @@ class FontResourceTest :
         }
 
         test("a non-positive raster size fails fast") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 shouldThrow<IllegalArgumentException> { font.glyph(0, 0) }
             }
         }
 
         test("shaping is unchanged after rasterizing at the same and a different size") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val before = font.shape("AV To Wave 123", 16)
                 val glyphId = before.glyphs.first().glyphId
 
@@ -134,3 +120,12 @@ class FontResourceTest :
             }
         }
     })
+
+/** Records every engine buffer the module allocates while the override is active. */
+private fun recordingAllocations(allocations: MutableList<ResourceWrapper<ByteBuffer>>): BufferService =
+    object : BufferService {
+        override fun allocate(
+            sizeInBytes: Int,
+            name: String?,
+        ): ResourceWrapper<ByteBuffer> = BufferService.original.allocate(sizeInBytes, name).also { allocations += it }
+    }

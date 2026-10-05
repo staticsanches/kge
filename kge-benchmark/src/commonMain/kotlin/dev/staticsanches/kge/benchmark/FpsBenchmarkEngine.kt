@@ -78,7 +78,7 @@ internal class FpsBenchmarkEngine(
 
     /** Loads the bundled font and installs the upload-policy decorator of [policy]. */
     private suspend fun loadTtfText(policy: UploadPolicy) {
-        val loaded = Font.load(Roboto.variableFont)
+        val loaded = Font.load(Roboto.romanFont)
         font = loaded
         val decorator = UploadPolicyGLCalls(GLService.original, policy)
         try {

@@ -1,12 +1,10 @@
 package dev.staticsanches.kge.text.ttf
 
-import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.resource.ResourceWrapper
 
 /**
- * An open native face standing on an engine-owned font payload, released no
- * later than the face's close. Built by the seam's factory, never by callers.
+ * An open native face over a payload it does not own: closing releases native
+ * handles only, so the payload must outlive the face. Built by the seam's factory.
  */
 internal expect class NativeFace {
     fun shape(
@@ -33,11 +31,27 @@ internal class GlyphCoverage(
     val coverage: ByteArray,
 )
 
-/**
- * Opens [bytes] as its first face and validates it; a payload that is not a
- * usable font is rejected and the face does not own the payload then.
- */
-internal expect suspend fun createNativeFace(bytes: ResourceWrapper<ByteBuffer>): NativeFace
+/** Applied axis coordinates: tags and raw 16.16 values in `fvar` order. */
+internal class AxisCoordinates(
+    val tags: IntArray,
+    val values: IntArray,
+) {
+    val isEmpty: Boolean get() = tags.isEmpty()
 
-/** Releases the native handles; the wrapper runs it at most once. */
+    companion object {
+        /** The default instance: no engine call at all. */
+        val Empty: AxisCoordinates = AxisCoordinates(IntArray(0), IntArray(0))
+    }
+}
+
+/**
+ * Opens [payload] as its first face and applies [coordinates] to both engines
+ * when they are non-empty; a payload that is not a usable font is rejected.
+ */
+internal expect suspend fun createNativeFace(
+    payload: TtfPayload,
+    coordinates: AxisCoordinates,
+): NativeFace
+
+/** Releases the native handles, never the shared payload; the wrapper runs it at most once. */
 internal expect fun closeNativeFace(face: NativeFace)

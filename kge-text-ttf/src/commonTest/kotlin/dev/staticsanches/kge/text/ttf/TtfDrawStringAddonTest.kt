@@ -39,7 +39,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("getTextSize measures with the host's tab size") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 // a one-space stop is 3.96875: A ends at 10.4375, so B starts at 11.90625
                 AddonEngine(tabSizeInSpaces = 1).getTextSize(font, "A\tB", 16) shouldBe Int2D(22, 19)
                 AddonEngine().getTextSize(font, "A\tB", 16) shouldBe Int2D(26, 19)
@@ -47,7 +47,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("a null target is a no-op and both forms forward the host's settings") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             val recorded = mutableListOf<RecordedDraw>()
             TtfTextService.override(RecordingTtfTextService(recorded))
             try {
@@ -94,7 +94,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("the host's pixel mode drives a real draw") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             val shaped = font.shape("A", 16).glyphs.single()
             val placed = font.glyph(16, shaped.glyphId) as AtlasGlyph.Placed
             val host = AddonEngine()
@@ -141,7 +141,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("drawStringDecal queues one instance per ink glyph with the window viewport and the host's modes") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             val engine = AddonEngine()
             var queued: List<DecalInstance> = emptyList()
             engine.onUpdateBody = { e ->
@@ -183,7 +183,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("the render step draws one call per queued instance and empties the queue") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             val engine = AddonEngine()
             var queued = 0
             var queueEmptied = false
@@ -202,7 +202,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("omitting the color and scale queues the same instance as the explicit white and unit scale") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             val engine = AddonEngine()
             var queued: List<DecalInstance> = emptyList()
             engine.onUpdateBody = { e ->
@@ -219,7 +219,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("the addon's decal form forwards a non-default color, scale and sizePx") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             val engine = AddonEngine()
             val tint = Pixel.rgba(10, 20, 30, 40)
             val scale = Float2D(2f, 3f)
@@ -250,7 +250,7 @@ class TtfDrawStringAddonTest :
         }
 
         test("the addon's queue is the layer's list the render step drains") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             val engine = AddonEngine()
             lateinit var queue: MutableList<DecalInstance>
             var queuedVertexCount = 0

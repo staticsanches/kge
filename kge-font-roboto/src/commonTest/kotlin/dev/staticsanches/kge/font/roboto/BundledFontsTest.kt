@@ -7,26 +7,26 @@ import kotlin.io.encoding.Base64
 class BundledFontsTest :
     FunSpec({
         test("Roboto variable font decodes to the pinned bytes") {
-            val bytes = decode(Roboto.variableFont)
+            val bytes = decode(Roboto.romanFont)
             bytes.size shouldBe 488_584
             bytes.copyOfRange(0, 4).map { it.toInt() } shouldBe listOf(0, 1, 0, 0) // sfnt 0x00010000
             fnv1a64(bytes) shouldBe -4_869_763_841_651_235_108L
         }
 
         test("Roboto Mono variable font decodes to the pinned bytes") {
-            val bytes = decode(RobotoMono.variableFont)
+            val bytes = decode(RobotoMono.romanFont)
             bytes.size shouldBe 183_700
             bytes.copyOfRange(0, 4).map { it.toInt() } shouldBe listOf(0, 1, 0, 0)
             fnv1a64(bytes) shouldBe 17_806_645_914_498_892L
         }
 
         test("the payload is chunked at 32768 characters, remainder last") {
-            Roboto.variableFont.size shouldBe 20
-            Roboto.variableFont.dropLast(1).forEach { it.length shouldBe 32_768 }
-            Roboto.variableFont.last().length shouldBe 28_856
-            RobotoMono.variableFont.size shouldBe 8
-            RobotoMono.variableFont.dropLast(1).forEach { it.length shouldBe 32_768 }
-            RobotoMono.variableFont.last().length shouldBe 15_560
+            Roboto.romanFont.size shouldBe 20
+            Roboto.romanFont.dropLast(1).forEach { it.length shouldBe 32_768 }
+            Roboto.romanFont.last().length shouldBe 28_856
+            RobotoMono.romanFont.size shouldBe 8
+            RobotoMono.romanFont.dropLast(1).forEach { it.length shouldBe 32_768 }
+            RobotoMono.romanFont.last().length shouldBe 15_560
         }
 
         test("provenance constants identify the shipped builds") {

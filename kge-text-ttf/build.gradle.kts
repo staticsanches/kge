@@ -44,6 +44,9 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            // The published axis maps are persistent maps behind the public Map
+            // type, so this is not part of the module's ABI.
+            implementation(libs.kotlinx.collections.immutable)
             // The public API names KGEResource and Float2D, so consumers
             // compiling against this module need them on their compile classpath.
             api(project(":kge-core"))

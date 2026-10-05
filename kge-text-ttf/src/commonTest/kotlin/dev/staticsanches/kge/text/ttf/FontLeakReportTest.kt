@@ -30,7 +30,7 @@ class FontLeakReportTest :
             val reports = mutableListOf<String>()
             LeakReporterService.override(reporting(reports))
             try {
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 pinnedLeaks += font
 
                 font.onCollectionObserved()
@@ -48,7 +48,7 @@ class FontLeakReportTest :
             val reports = mutableListOf<String>()
             LeakReporterService.override(reporting(reports))
             try {
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 font.close()
 
                 font.onCollectionObserved()
@@ -63,7 +63,7 @@ class FontLeakReportTest :
             val reports = mutableListOf<String>()
             LeakReporterService.override(reporting(reports))
             try {
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 pinnedLeaks += font
                 val glyphs = font.shape("A", 16).glyphs
                 val glyphId = glyphs.single().glyphId

@@ -26,7 +26,7 @@ class TextDrawTest :
             Roboto.FAMILY shouldBe "Roboto"
             Roboto.VERSION shouldBe "3.015"
 
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 TtfTextService.getTextSize(font, "", 16, 4) shouldBe Int2D(0, 19)
                 TtfTextService.getTextSize(font, "A", 16, 4) shouldBe Int2D(11, 19)
                 TtfTextService.getTextSize(font, " ", 16, 4) shouldBe Int2D(4, 19)
@@ -35,7 +35,7 @@ class TextDrawTest :
         }
 
         test("a newline advances the line height and the box takes the widest line") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 TtfTextService.getTextSize(font, "A\nB", 16, 4) shouldBe Int2D(11, 38)
                 TtfTextService.getTextSize(font, "AAAA\nA", 16, 4) shouldBe Int2D(42, 38)
                 TtfTextService.getTextSize(font, "A\nAAAA", 16, 4) shouldBe Int2D(42, 38)
@@ -44,7 +44,7 @@ class TextDrawTest :
         }
 
         test("a tab is a stop on the line grid, not a fixed step") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 // the isolated space advance makes a four-space step 15.875
                 val space = font.shape(" ", 16).glyphs.single()
                 space.advance.x shouldBe 3.96875f
@@ -60,7 +60,7 @@ class TextDrawTest :
         }
 
         test("the tab grid is measured from the line origin, not the target origin") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val pens = mutableListOf<Float2D>()
                 val box = font.walkText("A\tB", 16, 4, 100, 0) { _, penX, penY -> pens += Float2D(penX, penY) }
 
@@ -71,7 +71,7 @@ class TextDrawTest :
         }
 
         test("measuring never rasterizes") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 TtfTextService.getTextSize(font, "AV", 16, 4)
 
                 font.atlas(16) shouldBe null
@@ -79,7 +79,7 @@ class TextDrawTest :
         }
 
         test("the blit places the pinned box and composites the coverage over a transparent target") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val placed = font.placedOf("A")
                 placed shouldBe AtlasGlyph.Placed(0, Int2D(0, 0), Int2D(11, 12), Int2D(0, -12))
 
@@ -115,7 +115,7 @@ class TextDrawTest :
         }
 
         test("a translucent tint scales the coverage and keeps the tint's color") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val placed = font.placedOf("A")
 
                 emptySprite().use { target ->
@@ -138,7 +138,7 @@ class TextDrawTest :
         }
 
         test("the coverage composites over an opaque destination and leaves zero coverage alone") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val placed = font.placedOf("A")
                 val old = Pixel.rgba(0, 0, 255)
 
@@ -184,7 +184,7 @@ class TextDrawTest :
         }
 
         test("the coverage composites over a translucent destination") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val placed = font.placedOf("A")
                 val old = Pixel.rgba(255, 0, 0, 128)
 
@@ -227,7 +227,7 @@ class TextDrawTest :
         }
 
         test("a Custom mode is tapped only where the glyph has ink") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val placed = font.placedOf("A")
                 val seen = mutableListOf<Pixel>()
                 val custom =
@@ -271,7 +271,7 @@ class TextDrawTest :
         }
 
         test("a space advances the pen without ink and empty text draws nothing") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 TtfTextService.getTextSize(font, "A ", 16, 4) shouldBe Int2D(15, 19)
 
                 emptySprite().use { blank ->
@@ -293,7 +293,7 @@ class TextDrawTest :
         }
 
         test("kerning moves the second glyph to the shaped advance") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 font.pensOf("AV") shouldBe
                     listOf(Float2D(0f, 14.84375f), Float2D(9.765625f, 14.84375f))
 
@@ -303,7 +303,7 @@ class TextDrawTest :
         }
 
         test("a decomposed mark keeps its offset, advances nothing and sits above the base") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val glyphs = font.shape("x\u0301", 16).glyphs
                 glyphs.size shouldBe 2
                 glyphs[1].offset shouldBe Float2D(0.453125f, -0.078125f)
@@ -338,7 +338,7 @@ class TextDrawTest :
         }
 
         test("scale doubles the painted block and the advance") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val placed = font.placedOf("A")
 
                 emptySprite(width = 48, height = 32).use { target ->
@@ -372,7 +372,7 @@ class TextDrawTest :
         }
 
         test("the scale anchors on the line box, not the draw origin") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 emptySprite(width = 48, height = 40).use { target ->
                     draw(font, target, 2, 2, "A", scale = 2)
 
@@ -384,7 +384,7 @@ class TextDrawTest :
         }
 
         test("a scaled newline advances by the scaled line height") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 emptySprite(width = 32, height = 72).use { one ->
                     emptySprite(width = 32, height = 72).use { two ->
                         draw(font, one, 2, 2, "A", scale = 2)
@@ -400,7 +400,7 @@ class TextDrawTest :
         }
 
         test("a non-positive scale paints nothing and skips the other checks") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 emptySprite().use { target ->
                     draw(font, target, 0, 0, "A", scale = 0, tabSizeInSpaces = 0, sizePx = 0)
                     draw(font, target, 0, 0, "A", scale = -1)
@@ -411,7 +411,7 @@ class TextDrawTest :
         }
 
         test("a non-positive size or tab size fails fast") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 shouldThrow<IllegalArgumentException> { TtfTextService.getTextSize(font, "A", 0, 4) }
                 shouldThrow<IllegalStateException> { TtfTextService.getTextSize(font, "A", 16, 0) }
 
@@ -423,7 +423,7 @@ class TextDrawTest :
         }
 
         test("a below mark's negated offset lands under the base") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val glyphs = font.shape("q\u0323", 16).glyphs
                 glyphs.size shouldBe 2
                 glyphs[1].offset shouldBe Float2D(2.734375f, -3.171875f)
@@ -455,7 +455,7 @@ class TextDrawTest :
         }
 
         test("a glyph partly outside the target paints only the inside") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val placed = font.placedOf("A")
                 val chart = font.atlas(16)!!.charts[placed.chartIndex]
 
@@ -490,7 +490,7 @@ class TextDrawTest :
         }
 
         test("a newline draws the next line one line height lower") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 emptySprite(height = 40).use { one ->
                     emptySprite(height = 40).use { two ->
                         draw(font, one, 0, 0, "A")
@@ -506,7 +506,7 @@ class TextDrawTest :
         }
 
         test("the Int2D draw overload lands the same pixels as the raw form") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 emptySprite(width = 48, height = 32).use { raw ->
                     emptySprite(width = 48, height = 32).use { positioned ->
                         draw(font, raw, 3, 4, "A")
@@ -530,7 +530,7 @@ class TextDrawTest :
         }
 
         test("drawing the same text twice adds no chart and reuses the cache") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val shaped = font.shape("A", 16).glyphs.single()
                 val glyphId = shaped.glyphId
 
@@ -554,7 +554,7 @@ class TextDrawTest :
         }
 
         test("drawing after the font is closed fails fast") {
-            val font = Font.load(Roboto.variableFont)
+            val font = Font.load(Roboto.romanFont)
             font.close()
 
             shouldThrow<IllegalStateException> { TtfTextService.getTextSize(font, "A", 16, 4) }

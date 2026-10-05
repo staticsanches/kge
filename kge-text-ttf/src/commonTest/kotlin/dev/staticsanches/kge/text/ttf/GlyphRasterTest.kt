@@ -1,7 +1,5 @@
 package dev.staticsanches.kge.text.ttf
 
-import dev.staticsanches.kge.annotations.KGESensitiveAPI
-import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.font.roboto.Roboto
 import dev.staticsanches.kge.math.vector.Int2D
 import io.kotest.assertions.withClue
@@ -13,7 +11,6 @@ import io.kotest.matchers.shouldBe
  * default instance: the bitmap box, the pen bearing and the total coverage,
  * identical on JVM and both web targets.
  */
-@OptIn(KGESensitiveAPI::class)
 class GlyphRasterTest :
     FunSpec({
         test("the pinned 16 px raster boxes") {
@@ -115,29 +112,18 @@ private data class PinnedRaster(
 private val GlyphCoverage.coverageAlpha: Int
     get() = coverage.sumOf { it.toInt() and 0xFF }
 
-/** The seam owns the payload; the face releases it, and a failed open releases it here. */
-@OptIn(KGESensitiveAPI::class)
+/** One shared payload behind the face; the face owns none of it, so this closes both. */
 private suspend fun <T> withRobotoFace(block: (NativeFace) -> T): T {
-    val bytes = robotoFontBytes()
-    val storage = BufferService.allocate(bytes.size, "raster test")
+    val payload = TtfPayload(robotoFontBytes())
     try {
-        val buffer = storage.resource
-        for (index in bytes.indices) {
-            buffer.put(index, bytes[index])
-        }
-        val face = createNativeFace(storage)
+        val face = createNativeFace(payload, AxisCoordinates.Empty)
         try {
             return block(face)
         } finally {
             closeNativeFace(face)
         }
-    } catch (failure: Throwable) {
-        try {
-            storage.close()
-        } catch (closeFailure: Throwable) {
-            failure.addSuppressed(closeFailure)
-        }
-        throw failure
+    } finally {
+        payload.close()
     }
 }
 

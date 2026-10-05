@@ -29,7 +29,7 @@ class BundledItalicFontsTest :
         }
 
         test("each family ships two distinct faces, not one payload twice") {
-            decode(Roboto.italicFont).contentEquals(decode(Roboto.variableFont)) shouldBe false
-            decode(RobotoMono.italicFont).contentEquals(decode(RobotoMono.variableFont)) shouldBe false
+            decode(Roboto.italicFont).contentEquals(decode(Roboto.romanFont)) shouldBe false
+            decode(RobotoMono.italicFont).contentEquals(decode(RobotoMono.romanFont)) shouldBe false
         }
     })

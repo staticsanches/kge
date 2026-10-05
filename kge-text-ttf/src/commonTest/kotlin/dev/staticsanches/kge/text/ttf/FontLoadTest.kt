@@ -16,7 +16,7 @@ class FontLoadTest :
         }
 
         test("the bundled Roboto fixture loads from the chunked base64") {
-            Font.load(Roboto.variableFont).use { }
+            Font.load(Roboto.romanFont).use { }
         }
 
         test("bytes that are not a font fail fast") {

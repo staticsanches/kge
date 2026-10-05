@@ -106,7 +106,7 @@ val generateEmbeddedFonts =
                     source = "https://github.com/google/fonts/tree/main/ofl/roboto",
                     fonts =
                         listOf(
-                            EmbeddedFontSpec(member = "variableFont", path = "roboto/Roboto[wdth,wght].ttf"),
+                            EmbeddedFontSpec(member = "romanFont", path = "roboto/Roboto[wdth,wght].ttf"),
                             EmbeddedFontSpec(member = "italicFont", path = "roboto/Roboto-Italic[wdth,wght].ttf"),
                         ),
                     license = "roboto/OFL.txt",
@@ -119,7 +119,7 @@ val generateEmbeddedFonts =
                     source = "https://github.com/google/fonts/tree/main/ofl/robotomono",
                     fonts =
                         listOf(
-                            EmbeddedFontSpec(member = "variableFont", path = "roboto-mono/RobotoMono[wght].ttf"),
+                            EmbeddedFontSpec(member = "romanFont", path = "roboto-mono/RobotoMono[wght].ttf"),
                             EmbeddedFontSpec(member = "italicFont", path = "roboto-mono/RobotoMono-Italic[wght].ttf"),
                         ),
                     license = "roboto-mono/OFL.txt",

@@ -3,21 +3,20 @@ package dev.staticsanches.kge.text.ttf
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.resource.ResourceWrapper
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.util.freetype.FT_Face
 import org.lwjgl.util.freetype.FreeType
 import org.lwjgl.util.harfbuzz.HarfBuzz
 import org.lwjgl.util.harfbuzz.hb_font_extents_t
+import org.lwjgl.util.harfbuzz.hb_variation_t
 import kotlin.math.abs
 
 /**
- * JVM face over LWJGL HarfBuzz and FreeType: both reference the engine buffer
- * read-only, so the face owns the payload and releases it after the handles.
+ * JVM face over LWJGL HarfBuzz and FreeType: both read the shared engine buffer
+ * and the face owns neither, so closing it never releases the payload.
  */
 internal actual class NativeFace(
-    private val payload: ResourceWrapper<ByteBuffer>,
     private val blob: Long,
     private val face: Long,
     private val font: Long,
@@ -133,18 +132,20 @@ internal actual class NativeFace(
         return GlyphCoverage(width, height, bearing, coverage)
     }
 
-    /** Destroys the FreeType face, the HarfBuzz handles, then the payload they stood on. */
+    /** Destroys the FreeType face and the HarfBuzz handles, never the payload. */
     internal fun release() {
         FreeType.FT_Done_Face(ftFace)
         HarfBuzz.hb_font_destroy(font)
         HarfBuzz.hb_face_destroy(face)
         HarfBuzz.hb_blob_destroy(blob)
-        payload.close()
     }
 }
 
-internal actual suspend fun createNativeFace(bytes: ResourceWrapper<ByteBuffer>): NativeFace {
-    val buffer = bytes.resource
+internal actual suspend fun createNativeFace(
+    payload: TtfPayload,
+    coordinates: AxisCoordinates,
+): NativeFace {
+    val buffer = payload.buffer.resource
     val blob = HarfBuzz.hb_blob_create(buffer, HarfBuzz.HB_MEMORY_MODE_READONLY, MemoryUtil.NULL, null)
     check(blob != MemoryUtil.NULL) { "HarfBuzz could not map the font payload" }
 
@@ -162,7 +163,8 @@ internal actual suspend fun createNativeFace(bytes: ResourceWrapper<ByteBuffer>)
         font = HarfBuzz.hb_font_create(face)
         check(font != MemoryUtil.NULL) { "HarfBuzz could not create a font from the face" }
         ftFace = openFreeTypeFace(buffer)
-        return NativeFace(bytes, blob, face, font, ftFace)
+        setDesignCoordinates(font, ftFace, coordinates)
+        return NativeFace(blob, face, font, ftFace)
     } catch (e: Throwable) {
         if (ftFace != null) FreeType.FT_Done_Face(ftFace)
         if (font != MemoryUtil.NULL) HarfBuzz.hb_font_destroy(font)
@@ -174,6 +176,35 @@ internal actual suspend fun createNativeFace(bytes: ResourceWrapper<ByteBuffer>)
 
 internal actual fun closeNativeFace(face: NativeFace) {
     face.release()
+}
+
+/**
+ * Pushes the whole coordinate set into both engines: neither reads the other's
+ * store, and HarfBuzz resets every axis a partial set omits.
+ */
+private fun setDesignCoordinates(
+    font: Long,
+    ftFace: FT_Face,
+    coordinates: AxisCoordinates,
+) {
+    if (coordinates.isEmpty) return
+    MemoryStack.stackPush().use { stack ->
+        val variations = hb_variation_t.calloc(coordinates.tags.size, stack)
+        for (index in coordinates.tags.indices) {
+            val variation = variations[index]
+            variation.tag(coordinates.tags[index])
+            variation.value(coordinates.values[index] / DESIGN_COORDINATE_SCALE)
+        }
+        HarfBuzz.hb_font_set_variations(font, variations)
+    }
+    MemoryStack.stackPush().use { stack ->
+        // FT_Fixed is a C long: 8 bytes on LP64, 4 on Windows, so never an IntBuffer.
+        val values = stack.mallocCLong(coordinates.values.size)
+        for (value in coordinates.values) values.put(value.toLong())
+        values.flip()
+        val error = FreeType.FT_Set_Var_Design_Coordinates(ftFace, values)
+        check(error == FreeType.FT_Err_Ok) { "FreeType could not apply the design coordinates: $error" }
+    }
 }
 
 /** Opens the payload as a FreeType face; FreeType does not copy the bytes. */
@@ -200,3 +231,6 @@ private val freeTypeLibrary: Long by lazy {
 
 /** Positions are 26.6 fixed point: `sizePx` scales by [FIXED_POINT_SCALE]. */
 private const val FIXED_POINT_SCALE: Int = 64
+
+/** Design coordinates are 16.16 fixed point: HarfBuzz takes their plain value. */
+private const val DESIGN_COORDINATE_SCALE: Float = 65536f

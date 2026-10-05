@@ -9,33 +9,35 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
- * The web-only face behavior: `harfbuzzjs` copies the payload into wasm memory,
- * so the engine buffer is staging and is released as soon as the face exists.
+ * The web-only payload behavior: the bytes live in one core engine buffer the
+ * wasm engines copy out of, and the font's close releases it.
  */
 @OptIn(KGESensitiveAPI::class)
 class WebNativeFaceTest :
     FunSpec({
-        test("loading releases the staging payload before the font is closed") {
-            var payload: ResourceWrapper<ByteBuffer>? = null
+        test("loading stages one tracked engine buffer for the payload") {
+            val allocations = mutableListOf<ResourceWrapper<ByteBuffer>>()
             BufferService.override(
                 object : BufferService {
                     override fun allocate(
                         sizeInBytes: Int,
                         name: String?,
                     ): ResourceWrapper<ByteBuffer> =
-                        BufferService.original.allocate(sizeInBytes, name).also { payload = it }
+                        BufferService.original.allocate(sizeInBytes, name).also { allocations += it }
                 },
             )
             try {
-                val font = Font.load(Roboto.variableFont)
-                try {
-                    // No close yet: the staging buffer is already gone because
-                    // the bytes live in wasm memory.
-                    val allocated = checkNotNull(payload) { "load must allocate the payload" }
-                    allocated.cleaned shouldBe true
-                } finally {
-                    font.close()
+                Font.load(Roboto.romanFont).use { font ->
+                    // The payload is one core buffer while the font holds it.
+                    allocations.size shouldBe 1
+                    allocations.single().cleaned shouldBe false
+
+                    val glyph = font.shape("A", 16).glyphs.single()
+                    glyph.advance.x shouldBe 10.4375f
                 }
+
+                // The font's close releases the payload buffer it owns.
+                allocations.single().cleaned shouldBe true
             } finally {
                 // kge-core resets overrides between its own tests only, so this
                 // module restores the engine default itself.

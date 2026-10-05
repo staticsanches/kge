@@ -12,7 +12,7 @@ import io.kotest.matchers.shouldBe
 class MetricsTest :
     FunSpec({
         test("the metrics scale with sizePx") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 val small = font.shape("A", 16).metrics
                 val large = font.shape("A", 32).metrics
 
@@ -25,7 +25,7 @@ class MetricsTest :
         }
 
         test("a non-positive size is rejected") {
-            Font.load(Roboto.variableFont).use { font ->
+            Font.load(Roboto.romanFont).use { font ->
                 shouldThrow<IllegalArgumentException> { font.shape("A", 0) }
                 shouldThrow<IllegalArgumentException> { font.shape("A", -8) }
             }

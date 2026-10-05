@@ -28,7 +28,7 @@ class GlyphAtlasGpuTest :
     FunSpec({
         test("the first decal creates the chart texture and uploads the placed box") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 try {
                     val placed = placeGlyph(font, "A", 16)
                     gl.clear()
@@ -47,7 +47,7 @@ class GlyphAtlasGpuTest :
 
         test("a repeated placement uploads nothing") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 try {
                     val placed = placeGlyph(font, "A", 16)
                     val gpu = font.gpuAtlas(16)
@@ -65,7 +65,7 @@ class GlyphAtlasGpuTest :
 
         test("a newly placed glyph uploads only its own box and never re-specifies the texture") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 try {
                     val first = placeGlyph(font, "A", 16)
                     val second = placeGlyph(font, "V", 16)
@@ -132,7 +132,7 @@ class GlyphAtlasGpuTest :
             )
             try {
                 withRecordingGl { gl ->
-                    val font = Font.load(Roboto.variableFont)
+                    val font = Font.load(Roboto.romanFont)
                     val placed = placeGlyph(font, "A", 16)
                     allocations.clear()
 
@@ -153,7 +153,7 @@ class GlyphAtlasGpuTest :
 
         test("drawing a decal after Font.close fails fast") {
             withRecordingGl {
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 val placed = placeGlyph(font, "A", 16)
                 val gpu = font.gpuAtlas(16)
 
@@ -168,7 +168,7 @@ class GlyphAtlasGpuTest :
 
         test("a font that never draws a decal allocates no GPU object") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.variableFont)
+                val font = Font.load(Roboto.romanFont)
                 try {
                     placeGlyph(font, "A", 16)
                     font.gpuAtlas(16)

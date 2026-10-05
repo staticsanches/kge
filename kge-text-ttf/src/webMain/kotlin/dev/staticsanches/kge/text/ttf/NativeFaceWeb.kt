@@ -1,12 +1,9 @@
 package dev.staticsanches.kge.text.ttf
 
-import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
-import dev.staticsanches.kge.resource.ResourceWrapper
-import org.khronos.webgl.DataView
-import org.khronos.webgl.Uint8Array
 import org.khronos.webgl.get
+import org.khronos.webgl.set
 import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.toJsArray
 import kotlin.js.toJsNumber
@@ -14,9 +11,8 @@ import kotlin.js.toList
 import kotlin.math.abs
 
 /**
- * Web face: `harfbuzzjs` and the FreeType module each copy the payload into wasm
- * memory, so the engine buffer is staging and is released once both faces exist.
- * Release drops the HarfBuzz reference and destroys the FreeType face.
+ * Web face: `harfbuzzjs` and the FreeType module each copy the shared payload
+ * into wasm memory. Release drops the HarfBuzz reference and destroys the FreeType face.
  */
 @OptIn(ExperimentalWasmJsInterop::class)
 internal actual class NativeFace internal constructor(
@@ -114,36 +110,69 @@ internal actual class NativeFace internal constructor(
     }
 }
 
-internal actual suspend fun createNativeFace(bytes: ResourceWrapper<ByteBuffer>): NativeFace {
-    val buffer = bytes.resource
-    val data = Uint8Array(buffer.capacity())
-    val view = DataView(data.buffer)
-    for (index in 0 until buffer.capacity()) {
-        view.setUint8(index, buffer.get(index))
-    }
-
+internal actual suspend fun createNativeFace(
+    payload: TtfPayload,
+    coordinates: AxisCoordinates,
+): NativeFace {
+    val data = payload.buffer.resource.nativeBytes
     val face = HarfBuzzFace(HarfBuzzBlob(data), 0)
     if (face.referenceTable("cmap") == null) {
         throw IllegalArgumentException("the face has no cmap table: the payload is not a usable font")
     }
     // The shared module copies the bytes into its own heap, as HarfBuzz's blob does.
-    val freeTypeFace = freeTypeModule().newFace(data)
-    val native: NativeFace
+    val freeType = freeTypeModule()
+    val freeTypeFace = freeType.newFace(data)
     try {
-        native = NativeFace(HarfBuzzFont(face), freeTypeFace)
+        val font = HarfBuzzFont(face)
+        setDesignCoordinates(font, freeType.module, freeTypeFace.ptr, coordinates)
+        return NativeFace(font, freeTypeFace)
     } catch (failure: Throwable) {
         // Only Face.destroy() frees the FreeType heap copy; no finalizer will.
         freeTypeFace.destroy()
         throw failure
     }
-    // The bytes now live in wasm memory: the staging buffer is done.
-    bytes.close()
-    return native
 }
 
 internal actual fun closeNativeFace(face: NativeFace) {
     face.release()
 }
+
+/**
+ * Pushes the whole coordinate set into both engines: neither reads the other's
+ * store, and HarfBuzz resets every axis a partial set omits.
+ */
+private fun setDesignCoordinates(
+    font: HarfBuzzFont,
+    module: FreeTypeRawModule,
+    facePointer: Int,
+    coordinates: AxisCoordinates,
+) {
+    if (coordinates.isEmpty) return
+    val variations =
+        coordinates.tags.indices.map { index ->
+            HarfBuzzVariation(axisTag(coordinates.tags[index]), coordinates.values[index] / DESIGN_COORDINATE_SCALE)
+        }
+    font.setVariations(variations.toJsArray())
+
+    val size = coordinates.values.size
+    val coords = module.malloc(size * Int.SIZE_BYTES)
+    check(coords != 0) { "FreeType could not allocate the coordinate array" }
+    try {
+        // The 16.16 values are wasm32 ints, and the heap view moves whenever the heap grows.
+        val heap = module.heap32
+        for (index in 0 until size) heap[(coords ushr 2) + index] = coordinates.values[index]
+        val error = module.setVarDesignCoordinates(facePointer, size, coords)
+        check(error == FT_ERR_OK) { "FreeType could not apply the design coordinates: $error" }
+    } finally {
+        module.free(coords)
+    }
+}
+
+/** The tag's four characters, most significant byte first. */
+private fun axisTag(tag: Int): String =
+    buildString(4) {
+        for (shift in 24 downTo 0 step 8) append(((tag ushr shift) and 0xFF).toChar())
+    }
 
 /**
  * A plain JS object literal: the `js-plain-objects` compiler plugin that builds
@@ -154,3 +183,9 @@ private fun loadGlyphOptions(index: Int): LoadGlyphOptions = js("({ index: index
 
 /** Positions are 26.6 fixed point: `sizePx` scales by [FIXED_POINT_SCALE]. */
 private const val FIXED_POINT_SCALE: Int = 64
+
+/** Design coordinates are 16.16 fixed point: HarfBuzz takes their plain value. */
+private const val DESIGN_COORDINATE_SCALE: Float = 65536f
+
+/** `FT_Err_Ok`; the package's `FT` object does not carry it. */
+private const val FT_ERR_OK: Int = 0

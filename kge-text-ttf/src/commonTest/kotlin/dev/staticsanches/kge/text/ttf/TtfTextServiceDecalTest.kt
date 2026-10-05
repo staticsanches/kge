@@ -24,7 +24,7 @@ class TtfTextServiceDecalTest :
     FunSpec({
         test("the collected instance matches the hand-derived worked example") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     val collected = drawDecal(font, "A")
 
                     collected.size shouldBe 1
@@ -41,7 +41,7 @@ class TtfTextServiceDecalTest :
 
         test("a non-uniform scale multiplies the pen and the bearing per axis") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     val scale = Float2D(2f, 3f)
 
                     // round D: "A" 11x12 bearing (0, -12); round C: the 16 px ascender is
@@ -69,7 +69,7 @@ class TtfTextServiceDecalTest :
 
         test("a blank glyph is skipped and its advance still moves the pen") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     val collected = drawDecal(font, "A 1")
 
                     // three shaped glyphs, two with ink
@@ -92,7 +92,7 @@ class TtfTextServiceDecalTest :
 
         test("the decal mode, structure and viewport reach the instance unchanged") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     val viewport = Int2D(64, 48)
                     val collected =
                         drawDecal(
@@ -125,7 +125,7 @@ class TtfTextServiceDecalTest :
 
         test("empty text collects nothing and a multi-glyph draw collects in walk order") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     drawDecal(font, "").size shouldBe 0
 
                     val collected = drawDecal(font, "AV")
@@ -147,7 +147,7 @@ class TtfTextServiceDecalTest :
 
         test("the tint reaches the instance's vertices unchanged") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     val tint = Pixel.rgba(0x3366CCFFu)
 
                     val collected = drawDecal(font, "A", color = tint).single()
@@ -165,7 +165,7 @@ class TtfTextServiceDecalTest :
 
         test("the tab size moves the following glyph to its hand-derived stop") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     // round C: "A" advances 10.4375 and the isolated space 3.96875; E1's tab
                     // stop is pen = (floor(pen / step) + 1) * step with step = tab * 3.96875.
                     // tab 4: step 15.875, floor(10.4375 / 15.875) = 0 -> pen 15.875
@@ -185,7 +185,7 @@ class TtfTextServiceDecalTest :
 
         test("a different sizePx draws from that size's atlas at that size's advance") {
             withRecordingGl {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     val viewport = Int2D(64, 48)
 
                     // round D: "A" at 32 px is 21x23 at bearing (0, -23); round C scales the
@@ -214,7 +214,7 @@ class TtfTextServiceDecalTest :
         test("updating a collected instance's decal re-specifies the chart as RGBA") {
             val gl = installGl()
             try {
-                Font.load(Roboto.variableFont).use { font ->
+                Font.load(Roboto.romanFont).use { font ->
                     val decal = drawDecal(font, "A").single().decal
                     // the carrier's own creation: one channel under the swizzle where the platform stores one
                     gl.calls.single { it.name == "texImage2D" }.arguments[2] shouldBe
