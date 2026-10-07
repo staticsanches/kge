@@ -1,6 +1,9 @@
 package dev.staticsanches.kge.text.ttf
 
+import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.math.vector.Int2D
+import dev.staticsanches.kge.resource.KGECleanAction
+import dev.staticsanches.kge.resource.ResourceWrapper
 
 /**
  * An open native face over a payload it does not own: closing releases native
@@ -55,3 +58,39 @@ internal expect suspend fun createNativeFace(
 
 /** Releases the native handles, never the shared payload; the wrapper runs it at most once. */
 internal expect fun closeNativeFace(face: NativeFace)
+
+/** Creates the resource that owns [face]; a failed hand-off closes [face] instead. */
+@OptIn(KGESensitiveAPI::class)
+internal fun wrapNativeFace(face: NativeFace): ResourceWrapper<NativeFace> =
+    try {
+        ResourceWrapper("font face", face, KGECleanAction { closeNativeFace(face) })
+    } catch (failure: Throwable) {
+        try {
+            closeNativeFace(face)
+        } catch (closeFailure: Throwable) {
+            failure.addSuppressed(closeFailure)
+        }
+        throw failure
+    }
+
+/** The text's Unicode code points, pairing a surrogate pair into one. */
+internal fun String.toCodePoints(): IntArray {
+    val codePoints = ArrayList<Int>(length)
+    var index = 0
+    while (index < length) {
+        val high = this[index]
+        if (high.isHighSurrogate() && index + 1 < length && this[index + 1].isLowSurrogate()) {
+            codePoints +=
+                SUPPLEMENTARY_CODE_POINT_OFFSET +
+                ((high.code - Char.MIN_HIGH_SURROGATE.code) shl 10) +
+                (this[index + 1].code - Char.MIN_LOW_SURROGATE.code)
+            index += 2
+        } else {
+            codePoints += high.code
+            index++
+        }
+    }
+    return codePoints.toIntArray()
+}
+
+private const val SUPPLEMENTARY_CODE_POINT_OFFSET = 0x10000

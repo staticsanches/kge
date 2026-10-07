@@ -209,6 +209,101 @@ class TtfFontAddonTest :
                 engine.drawText(0, 0, "A", font = font)
             }
         }
+
+        test("the host's tab size drives the measurement") {
+            val engine = AddonHost()
+            engine.onUpdateBody = {
+                val font = loadFont(robotoFontBytes()).defaultFace.font(resourceScope, SIZE_PX.fontPx)
+
+                // a one-space stop is 3.96875: A ends at 10.4375, so B starts at 11.90625
+                tabSizeInSpaces = 1
+                measureText("A\tB", font = font) shouldBe Int2D(22, 19)
+                tabSizeInSpaces = 4
+                measureText("A\tB", font = font) shouldBe Int2D(26, 19)
+            }
+            runAddonFrame(engine)
+        }
+
+        test("the host's pixel mode drives a real draw") {
+            val engine = AddonHost()
+            engine.onUpdateBody = {
+                textFont = loadFont(robotoFontBytes()).defaultFace.font(resourceScope, SIZE_PX.fontPx)
+                val target = checkNotNull(drawTarget)
+
+                target.clear(Colors.TRANSPARENT)
+                drawText(Int2D(0, 0), "A")
+                val ink = target.inkCells()
+                (ink.isNotEmpty()) shouldBe true
+
+                pixelMode =
+                    object : Pixel.Mode.Custom {
+                        override fun apply(
+                            x: Int,
+                            y: Int,
+                            newPixel: Pixel,
+                            oldPixel: Pixel,
+                        ): Pixel = Colors.RED
+                    }
+                target.clear(Colors.TRANSPARENT)
+                drawText(Int2D(0, 0), "A")
+
+                // the mode is tapped for the ink cells only; the rest keeps the cleared target
+                for (y in 0 until target.height) {
+                    for (x in 0 until target.width) {
+                        target.get(x, y) shouldBe if (Int2D(x, y) in ink) Colors.RED else Colors.TRANSPARENT
+                    }
+                }
+            }
+            runAddonFrame(engine)
+        }
+
+        test("omitting the color and scale queues the same instance as the explicit white and unit scale") {
+            val engine = AddonHost()
+            lateinit var queued: List<DecalInstance>
+            engine.onUpdateBody = {
+                textFont = loadFont(robotoFontBytes()).defaultFace.font(resourceScope, SIZE_PX.fontPx)
+
+                drawTextDecal(Float2D(2f, 3f), "A")
+                drawTextDecal(Float2D(2f, 3f), "A", Colors.WHITE, Float2D(1f, 1f))
+                queued = layers.target.decalInstances.toList()
+            }
+            runAddonFrame(engine)
+
+            queued.size shouldBe 2
+            assertSameInstance(queued[0], queued[1])
+            queued[0].vertices.tint(0) shouldBe Colors.WHITE
+        }
+
+        test("the addon forwards a non-default color and scale at the lease's size") {
+            val engine = AddonHost()
+            val tint = Pixel.rgba(10, 20, 30, 40)
+            val scale = Float2D(2f, 3f)
+            lateinit var queued: List<DecalInstance>
+            lateinit var expected: DecalInstance
+
+            engine.onUpdateBody = {
+                textFont = loadFont(robotoFontBytes()).defaultFace.font(resourceScope, 32.fontPx)
+
+                drawTextDecal(Float2D(2f, 3f), "A", tint, scale)
+                queued = layers.target.decalInstances.toList()
+                // "A" at 32 px is 21x23 at bearing (0, -23); the 16 px ascender 14.84375
+                // scaled by two gives y = 3 + (29.6875 - 23) * 3 = 23.0625
+                expected =
+                    expectedInstance(
+                        "A",
+                        Float2D(2f, 23.0625f),
+                        sizePx = 32,
+                        scale = scale,
+                        color = tint,
+                        screenSize = window.screenSize,
+                    )
+            }
+            runAddonFrame(engine)
+
+            val instance = queued.single()
+            instance.vertices.tint(0) shouldBe tint
+            assertSameQuad(instance, expected)
+        }
     })
 
 /** The addon over a headless engine; the callback body runs on the engine thread. */
@@ -247,6 +342,17 @@ private fun Pixmap.snapshot(): List<Pixel> {
     return pixels
 }
 
+/** The cells with ink, in reading order. */
+private fun Pixmap.inkCells(): List<Int2D> {
+    val cells = mutableListOf<Int2D>()
+    for (y in 0 until height) {
+        for (x in 0 until width) {
+            if (get(x, y).a > 0) cells += Int2D(x, y)
+        }
+    }
+    return cells
+}
+
 /** Draws "A" through [this] at an explicit viewport and returns the instances in walk order. */
 private fun KGEFont.collectDecal(
     position: Float2D,
@@ -283,6 +389,21 @@ private fun assertSameInstance(
         actual.vertices.y(index) shouldBe expected.vertices.y(index)
         actual.vertices.u(index) shouldBe expected.vertices.u(index)
         actual.vertices.v(index) shouldBe expected.vertices.v(index)
+        actual.vertices.tint(index) shouldBe expected.vertices.tint(index)
+    }
+}
+
+/** The quantised destination and the caller's parameters; the carrier owns the decal. */
+private fun assertSameQuad(
+    actual: DecalInstance,
+    expected: DecalInstance,
+) {
+    actual.mode shouldBe expected.mode
+    actual.structure shouldBe expected.structure
+    actual.vertexCount shouldBe expected.vertexCount
+    for (index in 0 until expected.vertexCount) {
+        actual.vertices.x(index) shouldBe expected.vertices.x(index)
+        actual.vertices.y(index) shouldBe expected.vertices.y(index)
         actual.vertices.tint(index) shouldBe expected.vertices.tint(index)
     }
 }

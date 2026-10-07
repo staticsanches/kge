@@ -4,13 +4,14 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.font.roboto.Roboto
+import dev.staticsanches.kge.resource.ResourceScope
 import dev.staticsanches.kge.resource.ResourceWrapper
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 
 /**
  * The web-only payload behavior: the bytes live in one core engine buffer the
- * wasm engines copy out of, and the font's close releases it.
+ * wasm engines copy out of, and the loading scope's close releases it.
  */
 @OptIn(KGESensitiveAPI::class)
 class WebNativeFaceTest :
@@ -27,17 +28,21 @@ class WebNativeFaceTest :
                 },
             )
             try {
-                Font.load(Roboto.romanFont).use { font ->
-                    // The payload is one core buffer while the font holds it.
+                ResourceScope().use { scope ->
+                    KGETtfFontService.createResources(scope, Roboto.romanFont)
+
+                    // The payload is one core buffer while the family holds it.
                     allocations.size shouldBe 1
                     allocations.single().cleaned shouldBe false
-
-                    val glyph = font.shape("A", 16).glyphs.single()
-                    glyph.advance.x shouldBe 10.4375f
                 }
 
-                // The font's close releases the payload buffer it owns.
+                // The scope's close releases the payload buffer the family owned.
                 allocations.single().cleaned shouldBe true
+
+                withRobotoFace { face ->
+                    val glyph = face.shape("A".toCodePoints(), 16).single()
+                    glyph.advance.x shouldBe 10.4375f
+                }
             } finally {
                 // kge-core resets overrides between its own tests only, so this
                 // module restores the engine default itself.

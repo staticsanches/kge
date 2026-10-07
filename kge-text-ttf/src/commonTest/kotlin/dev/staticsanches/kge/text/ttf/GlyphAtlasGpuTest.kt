@@ -6,7 +6,6 @@ import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.buffer.byteAt
-import dev.staticsanches.kge.font.roboto.Roboto
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.gl.GL
@@ -28,48 +27,41 @@ class GlyphAtlasGpuTest :
     FunSpec({
         test("the first decal creates the chart texture and uploads the placed box") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.romanFont)
-                try {
-                    val placed = placeGlyph(font, "A", 16)
+                withRobotoAtlas { anchor ->
+                    val placed = anchor.placed("A")
                     gl.clear()
 
-                    val decal = font.gpuAtlas(16).decalFor(placed)
+                    val decal = anchor.decal("A")
 
                     gl.calls.map { it.name } shouldBe creationCallNames()
                     assertCreationParameters(gl.calls)
-                    decal.sprite.name shouldBe chartOf(font, 16, placed).name
-                    assertUpload(gl, placed, chartOf(font, 16, placed))
-                } finally {
-                    font.close()
+                    decal.sprite.name shouldBe anchor.chart(placed).name
+                    assertUpload(gl, placed, anchor.chart(placed))
                 }
             }
         }
 
         test("a repeated placement uploads nothing") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.romanFont)
-                try {
-                    val placed = placeGlyph(font, "A", 16)
-                    val gpu = font.gpuAtlas(16)
+                withRobotoAtlas { anchor ->
+                    val placed = anchor.placed("A")
+                    val gpu = anchor.gpu
                     gpu.decalFor(placed)
                     gl.clear()
 
                     gpu.decalFor(placed)
 
                     gl.calls shouldBe emptyList()
-                } finally {
-                    font.close()
                 }
             }
         }
 
         test("a newly placed glyph uploads only its own box and never re-specifies the texture") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.romanFont)
-                try {
-                    val first = placeGlyph(font, "A", 16)
-                    val second = placeGlyph(font, "V", 16)
-                    val gpu = font.gpuAtlas(16)
+                withRobotoAtlas { anchor ->
+                    val first = anchor.placed("A")
+                    val second = anchor.placed("V")
+                    val gpu = anchor.gpu
                     gpu.decalFor(first)
                     gl.clear()
 
@@ -80,8 +72,6 @@ class GlyphAtlasGpuTest :
                     upload.arguments.slice(2..5) shouldBe
                         listOf(second.source.x, second.source.y, second.size.x, second.size.y)
                     gl.calls.none { it.name == "texImage2D" } shouldBe true
-                } finally {
-                    font.close()
                 }
             }
         }
@@ -132,50 +122,50 @@ class GlyphAtlasGpuTest :
             )
             try {
                 withRecordingGl { gl ->
-                    val font = Font.load(Roboto.romanFont)
-                    val placed = placeGlyph(font, "A", 16)
-                    allocations.clear()
+                    withRobotoAtlas { anchor ->
+                        // the chart's own buffer is packed before the counter starts
+                        anchor.placed("A")
+                        allocations.clear()
 
-                    font.gpuAtlas(16).decalFor(placed)
-                    val scratch = allocations.single()
-                    scratch.cleaned shouldBe false
+                        anchor.decal("A")
+                        val scratch = allocations.single()
+                        scratch.cleaned shouldBe false
 
-                    font.close()
+                        anchor.gpu.close()
 
-                    scratch.cleaned shouldBe true
-                    val deleted = gl.calls.single { it.name == "deleteTexture" }
-                    deleted.arguments.single() shouldBe gl.lastCreatedTexture
+                        scratch.cleaned shouldBe true
+                        val deleted = gl.calls.single { it.name == "deleteTexture" }
+                        deleted.arguments.single() shouldBe gl.lastCreatedTexture
+                    }
                 }
             } finally {
                 BufferService.override(BufferService.original)
             }
         }
 
-        test("drawing a decal after Font.close fails fast") {
+        test("drawing a decal after the carrier is closed fails fast") {
             withRecordingGl {
-                val font = Font.load(Roboto.romanFont)
-                val placed = placeGlyph(font, "A", 16)
-                val gpu = font.gpuAtlas(16)
+                withRobotoAtlas { anchor ->
+                    val glyphId = anchor.glyphs("A").single().glyphId
+                    val placed = anchor.placed("A")
 
-                font.close()
+                    anchor.gpu.close()
 
-                shouldThrow<IllegalStateException> { gpu.decalFor(placed) }
-                    .message shouldContain "released"
-                shouldThrow<IllegalStateException> { font.gpuAtlas(16) }
-                    .message shouldContain "released"
+                    shouldThrow<IllegalStateException> { anchor.gpu.decalFor(placed) }
+                        .message shouldContain "released"
+                    anchor.atlas.close()
+                    shouldThrow<IllegalStateException> { anchor.atlas.glyph(glyphId) }
+                        .message shouldContain "released"
+                }
             }
         }
 
-        test("a font that never draws a decal allocates no GPU object") {
+        test("a carrier that never draws a decal allocates no GPU object") {
             withRecordingGl { gl ->
-                val font = Font.load(Roboto.romanFont)
-                try {
-                    placeGlyph(font, "A", 16)
-                    font.gpuAtlas(16)
+                withRobotoAtlas { anchor ->
+                    anchor.placed("A")
 
                     gl.calls shouldBe emptyList()
-                } finally {
-                    font.close()
                 }
             }
         }
@@ -282,23 +272,6 @@ private inline fun withRecordingGl(block: (RecordingGLService) -> Unit) {
         GLService.override(GLService.original)
     }
 }
-
-/** Shapes [text] at [sizePx] and rasterizes its single glyph into the atlas. */
-private suspend fun placeGlyph(
-    font: Font,
-    text: String,
-    sizePx: Int,
-): AtlasGlyph.Placed {
-    val glyph = font.shape(text, sizePx).glyphs.single()
-    return font.glyph(sizePx, glyph.glyphId) as AtlasGlyph.Placed
-}
-
-/** The chart [placed] landed on, reached through the atlas's public surface. */
-private fun chartOf(
-    font: Font,
-    sizePx: Int,
-    placed: AtlasGlyph.Placed,
-): Sprite = checkNotNull(font.atlas(sizePx)) { "the glyph must have created an atlas" }.charts[placed.chartIndex]
 
 private fun creationCallNames(): List<String> =
     buildList {

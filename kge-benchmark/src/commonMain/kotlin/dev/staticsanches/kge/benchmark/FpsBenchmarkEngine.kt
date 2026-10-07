@@ -12,7 +12,8 @@ import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.gl.GL
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.resource.ResourceScope
-import dev.staticsanches.kge.text.ttf.Font
+import dev.staticsanches.kge.text.fontPx
+import dev.staticsanches.kge.text.ttf.TtfFontAddon
 import kotlin.time.Duration
 
 /**
@@ -28,19 +29,11 @@ internal class FpsBenchmarkEngine(
 ) : Engine(config),
     SceneTarget,
     TextSceneTarget,
-    TtfTextSceneTarget {
+    TtfFontAddon {
     private val sampler = FrameSampler(warmup, measure)
     private var sprite: Sprite? = null
     private var mergedText: MergedTextAddon? = null
 
-    /** Both text addons' default, made explicit because the engine carries both. */
-    override var tabSizeInSpaces: Int
-        get() = super<Engine>.tabSizeInSpaces
-        set(value) {
-            super<Engine>.tabSizeInSpaces = value
-        }
-
-    private var font: Font? = null
     private var uploads: UploadPolicyGLCalls? = null
 
     /** The driver's maximum texture side, queried while the context is current. */
@@ -76,19 +69,16 @@ internal class FpsBenchmarkEngine(
         return true
     }
 
-    /** Loads the bundled font and installs the upload-policy decorator of [policy]. */
+    /** Loads the bundled font as the principal text font and installs the decorator of [policy]. */
     private suspend fun loadTtfText(policy: UploadPolicy) {
-        val loaded = Font.load(Roboto.romanFont)
-        font = loaded
         val decorator = UploadPolicyGLCalls(GLService.original, policy)
         try {
             resourceScope.register(UploadPolicyKey, decorator)
             GLService.override(decorator)
+            textFont = loadFontBase64(Roboto.romanFont).defaultFace.font(resourceScope, TTF_TEXT_SIZE_PX.fontPx)
             uploads = decorator
         } catch (failure: Throwable) {
             decorator.close()
-            loaded.close()
-            font = null
             throw failure
         }
     }
@@ -120,9 +110,8 @@ internal class FpsBenchmarkEngine(
 
     override suspend fun onUserUpdate(elapsed: Duration): Boolean {
         val blitSource = sprite
-        val textFont = font
-        if (textFont != null) {
-            renderTtfTextScene(this, textFont, window.screenSize.x, window.screenSize.y)
+        if (workload.isTtfText) {
+            renderTextScene(this, window.screenSize.x, window.screenSize.y)
             uploads?.replayFrame()
         } else if (workload.isText) {
             renderTextScene(mergedText ?: this, window.screenSize.x, window.screenSize.y)
@@ -141,10 +130,6 @@ internal class FpsBenchmarkEngine(
             val boxes = decorator.recordedBoxCount
             println("${workload.label}: replayedBoxes=$boxes touchedCharts=${decorator.touchedChartCount}")
         }
-        // Closed while the context is current, before the scope releases the
-        // decorator the carrier's textures were created through.
-        font?.close()
-        font = null
         uploads = null
         sprite?.close()
         sprite = null
@@ -175,3 +160,10 @@ private object LeverDecoratorKey : ResourceScope.Key<BatchGLCalls>
 
 /** The run's upload-policy decorator, so the scope releases its shadows. */
 private object UploadPolicyKey : ResourceScope.Key<UploadPolicyGLCalls>
+
+/** The lease size of the two TTF cells, in pixels. */
+private const val TTF_TEXT_SIZE_PX = 16
+
+/** True for the two TTF cells, whose carrier uploads the decorator replays. */
+private val BenchmarkWorkload.isTtfText: Boolean
+    get() = this == BenchmarkWorkload.TextTtfRegion || this == BenchmarkWorkload.TextTtfFull

@@ -112,21 +112,6 @@ private data class PinnedRaster(
 private val GlyphCoverage.coverageAlpha: Int
     get() = coverage.sumOf { it.toInt() and 0xFF }
 
-/** One shared payload behind the face; the face owns none of it, so this closes both. */
-private suspend fun <T> withRobotoFace(block: (NativeFace) -> T): T {
-    val payload = TtfPayload(robotoFontBytes())
-    try {
-        val face = createNativeFace(payload, AxisCoordinates.Empty)
-        try {
-            return block(face)
-        } finally {
-            closeNativeFace(face)
-        }
-    } finally {
-        payload.close()
-    }
-}
-
 private fun NativeFace.raster(
     glyph: String,
     sizePx: Int,

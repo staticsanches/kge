@@ -1,6 +1,5 @@
 package dev.staticsanches.kge.text.ttf
 
-import dev.staticsanches.kge.font.roboto.Roboto
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -12,9 +11,9 @@ import io.kotest.matchers.shouldBe
 class MetricsTest :
     FunSpec({
         test("the metrics scale with sizePx") {
-            Font.load(Roboto.romanFont).use { font ->
-                val small = font.shape("A", 16).metrics
-                val large = font.shape("A", 32).metrics
+            withRobotoFace { face ->
+                val small = face.metrics(16)
+                val large = face.metrics(32)
 
                 large.ascender shouldBe 29.6875f
                 large.descender shouldBe -7.8125f
@@ -25,9 +24,10 @@ class MetricsTest :
         }
 
         test("a non-positive size is rejected") {
-            Font.load(Roboto.romanFont).use { font ->
-                shouldThrow<IllegalArgumentException> { font.shape("A", 0) }
-                shouldThrow<IllegalArgumentException> { font.shape("A", -8) }
+            withRobotoFace { face ->
+                // the surviving size guard sits at the text walk's entry
+                shouldThrow<IllegalArgumentException> { measureText(face, "A", 0, 1) }
+                shouldThrow<IllegalArgumentException> { measureText(face, "A", -8, 1) }
             }
         }
     })

@@ -74,16 +74,6 @@ internal inline fun NativeFace.walkText(
     return Int2D(ceil(widest).toInt(), lines * lineHeight)
 }
 
-/** The legacy [Font] form of [walkText]. */
-internal inline fun Font.walkText(
-    text: String,
-    sizePx: Int,
-    tabSizeInSpaces: Int,
-    x: Int,
-    y: Int,
-    place: (glyph: ShapedGlyph, penX: Float, penY: Float) -> Unit,
-): Int2D = nativeFace.walkText(text, sizePx, tabSizeInSpaces, x, y, place)
-
 /** The pixel box of [text] at [sizePx] with tab stops of [tabSizeInSpaces] spaces. */
 internal fun measureText(
     face: NativeFace,
@@ -91,14 +81,6 @@ internal fun measureText(
     sizePx: Int,
     tabSizeInSpaces: Int,
 ): Int2D = face.walkText(text, sizePx, tabSizeInSpaces, 0, 0) { _, _, _ -> }
-
-/** The legacy [Font] form of [measureText]. */
-internal fun measureText(
-    font: Font,
-    text: String,
-    sizePx: Int,
-    tabSizeInSpaces: Int,
-): Int2D = measureText(font.nativeFace, text, sizePx, tabSizeInSpaces)
 
 /**
  * Blits [text] into [target] from the ([x], [y]) line-box top-left, tinted by
@@ -145,24 +127,6 @@ internal fun drawText(
     }
 }
 
-/** The legacy [Font] form of [drawText]. */
-internal fun drawText(
-    font: Font,
-    target: Pixmap.Mutable,
-    x: Int,
-    y: Int,
-    text: String,
-    sizePx: Int,
-    color: Pixel,
-    scale: Int,
-    tabSizeInSpaces: Int,
-    mode: Pixel.Mode,
-) {
-    // A non-positive scale skips the font, as it did before the font took a face.
-    if (scale <= 0) return
-    drawText(font.nativeFace, font::atlasFor, target, x, y, text, sizePx, color, scale, tabSizeInSpaces, mode)
-}
-
 /**
  * Queues one partial-decal instance per ink glyph of [text] from [position] and
  * scaled by [scale]; the pens stay line-relative and unsnapped.
@@ -207,35 +171,6 @@ internal fun drawStringDecalText(
         }
     }
 }
-
-/** The legacy [Font] form of [drawStringDecalText]. */
-internal fun drawStringDecalText(
-    font: Font,
-    position: Float2D,
-    text: String,
-    sizePx: Int,
-    color: Pixel,
-    scale: Float2D,
-    tabSizeInSpaces: Int,
-    screenSize: Int2D,
-    decalMode: Decal.Mode,
-    decalStructure: Decal.Structure,
-    collector: (DecalInstance) -> Unit,
-) = drawStringDecalText(
-    font.nativeFace,
-    font::atlasFor,
-    font::gpuAtlas,
-    position,
-    text,
-    sizePx,
-    color,
-    scale,
-    tabSizeInSpaces,
-    screenSize,
-    decalMode,
-    decalStructure,
-    collector,
-)
 
 /** The isolated space run every tab stop is measured from. */
 private val SPACE_RUN: IntArray = intArrayOf(' '.code)

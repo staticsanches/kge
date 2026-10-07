@@ -3,7 +3,6 @@ package dev.staticsanches.kge.text.ttf
 import dev.staticsanches.kge.buffer.BufferService
 import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.buffer.byteAt
-import dev.staticsanches.kge.font.roboto.Roboto
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.math.vector.Float2D
@@ -19,7 +18,6 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.math.abs
 
 /** The square viewport the smoke draws and reads back; the device must be at least this large. */
@@ -60,10 +58,8 @@ suspend fun runCoverageTextureSmoke(device: GpuDevice) {
         )
         GLService.clear(GL.COLOR_BUFFER_BIT)
 
-        Font.load(Roboto.romanFont).use { font ->
-            val shaped = font.shape("A", SIZE_PX)
-            val glyph = shaped.glyphs.single()
-            val placed = font.glyph(SIZE_PX, glyph.glyphId).shouldBeInstanceOf<AtlasGlyph.Placed>()
+        withRobotoAtlas(SIZE_PX) { anchor ->
+            val placed = anchor.placed("A")
             val origin = Int2D(4, 4)
             val boxRight = origin.x + placed.size.x
             val boxBottom = origin.y + placed.size.y
@@ -73,7 +69,7 @@ suspend fun runCoverageTextureSmoke(device: GpuDevice) {
                 scope,
                 DrawPartialDecalService.drawPartialDecal(
                     position = Float2D(origin.x.toFloat(), origin.y.toFloat()),
-                    decal = font.gpuAtlas(SIZE_PX).decalFor(placed),
+                    decal = anchor.decal("A"),
                     sourcePosition = Float2D(placed.source.x.toFloat(), placed.source.y.toFloat()),
                     sourceSize = Float2D(placed.size.x.toFloat(), placed.size.y.toFloat()),
                     scale = Float2D(1f, 1f),
@@ -123,7 +119,8 @@ suspend fun runCoverageTextureSmoke(device: GpuDevice) {
                                 continue
                             }
                             val coverage =
-                                chart(font, placed)
+                                anchor
+                                    .chart(placed)
                                     .get(
                                         placed.source.x + x - origin.x,
                                         placed.source.y + y - origin.y,
@@ -144,8 +141,3 @@ suspend fun runCoverageTextureSmoke(device: GpuDevice) {
         scope.close()
     }
 }
-
-private fun chart(
-    font: Font,
-    placed: AtlasGlyph.Placed,
-) = font.atlas(SIZE_PX)!!.charts[placed.chartIndex]

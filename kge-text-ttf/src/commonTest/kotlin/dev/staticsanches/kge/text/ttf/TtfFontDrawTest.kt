@@ -315,6 +315,99 @@ class TtfFontDrawTest :
                 }
             }
         }
+
+        test("the tab grid is measured from the line origin, not the draw origin") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                emptySprite(width = 140, height = 24).use { reference ->
+                    emptySprite(width = 140, height = 24).use { shifted ->
+                        font.drawText(reference, 0, 0, "A\tB", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+                        font.drawText(shifted, 100, 0, "A\tB", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+
+                        // the stop is 100 + 15.875, not the absolute grid multiple 111.125
+                        assertClipped(reference, shifted, 100, 0)
+                    }
+                }
+            }
+        }
+
+        test("the scale anchors on the line box, not the draw origin") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                emptySprite(width = 48, height = 40).use { target ->
+                    font.drawText(target, 2, 2, "A", Colors.WHITE, 2, TAB_SIZE, Pixel.Mode.Normal)
+
+                    // (2 + round(0 * 2) + 0, 2 + round(14.84375 * 2) - 12 * 2) = (2, 8), 11x12 at 2x
+                    target.inkCells().bounds() shouldBe (Int2D(2, 8) to Int2D(23, 31))
+                    target.alphaSum() shouldBe 39932
+                }
+            }
+        }
+
+        test("scaled text advances by the scaled line height and the scaled advance") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                emptySprite(width = 32, height = 72).use { one ->
+                    emptySprite(width = 32, height = 72).use { two ->
+                        font.drawText(one, 2, 2, "A", Colors.WHITE, 2, TAB_SIZE, Pixel.Mode.Normal)
+                        font.drawText(two, 2, 2, "A\nA", Colors.WHITE, 2, TAB_SIZE, Pixel.Mode.Normal)
+
+                        // (2 + round((19 + 14.84375) * 2) - 24) = 46, one scaled line height below line 1
+                        val second = two.diffFrom(one)
+                        second.bounds() shouldBe (Int2D(2, 46) to Int2D(23, 69))
+                        second.sumOf { two.get(it.x, it.y).a } shouldBe 39932
+                    }
+                }
+
+                emptySprite(width = 48, height = 32).use { target ->
+                    font.drawText(target, 0, 0, "AA", Colors.WHITE, 2, TAB_SIZE, Pixel.Mode.Normal)
+
+                    // the second A at round(10.4375 * 2) = 21, so the pair spans 0..42
+                    target.inkCells().bounds() shouldBe (Int2D(0, 6) to Int2D(42, 29))
+                }
+            }
+        }
+
+        test("a decomposed above mark keeps its shaped offset") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                emptySprite().use { plain ->
+                    emptySprite().use { paired ->
+                        font.drawText(plain, 0, 0, "x", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+                        font.drawText(paired, 0, 0, "x\u0301", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+
+                        // (round(7.9375 + 0.453125) - 6, round(14.84375 + 0.078125) - 12)
+                        val markCells = paired.diffFrom(plain)
+                        markCells.bounds() shouldBe (Int2D(2, 3) to Int2D(6, 4))
+                        markCells.sumOf { paired.get(it.x, it.y).a } shouldBe 736
+                        (markCells.maxOf { it.y } < plain.inkCells().minOf { it.y }) shouldBe true
+                    }
+                }
+            }
+        }
+
+        test("a below mark's negated offset lands under the base") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                emptySprite().use { plain ->
+                    emptySprite().use { paired ->
+                        font.drawText(plain, 0, 0, "q", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+                        font.drawText(paired, 0, 0, "q\u0323", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+
+                        // (round(9.09375 + 2.734375) - 6, round(14.84375 + 3.171875) + 1) = (6, 19)
+                        val markCells = paired.diffFrom(plain)
+                        markCells.bounds() shouldBe (Int2D(6, 19) to Int2D(8, 20))
+                        markCells.sumOf { paired.get(it.x, it.y).a } shouldBe 518
+                        (markCells.minOf { it.y } > plain.inkCells().maxOf { it.y }) shouldBe true
+                    }
+                }
+            }
+        }
     })
 
 /** A cleared surface; a failed construction closes it. */
@@ -348,6 +441,21 @@ private fun Pixmap.inkCells(): List<Int2D> {
     }
     return cells
 }
+
+/** The cells where this surface and [other] differ. */
+private fun Pixmap.diffFrom(other: Pixmap): List<Int2D> {
+    val cells = mutableListOf<Int2D>()
+    for (y in 0 until height) {
+        for (x in 0 until width) {
+            if (get(x, y) != other.get(x, y)) cells += Int2D(x, y)
+        }
+    }
+    return cells
+}
+
+/** The top-left and bottom-right corners of [this] cells. */
+private fun List<Int2D>.bounds(): Pair<Int2D, Int2D> =
+    Int2D(minOf { it.x }, minOf { it.y }) to Int2D(maxOf { it.x }, maxOf { it.y })
 
 /** The straight-alpha source-over of a coverage-weighted [tint] over [old], exact in Int. */
 private fun sourceOver(

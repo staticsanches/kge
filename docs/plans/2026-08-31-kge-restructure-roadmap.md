@@ -743,3 +743,12 @@ revise settled concepts; that is accepted. One precondition belongs to the
 rounds already planned: a line mixing fonts needs per-font vertical metrics,
 which `KGEFont` does not expose, so U3/U4 is where that surface is decided if
 the later concept is not to reopen them.
+
+**2026-10-05 — U4 absorbs U5: the legacy TTF surface retires in one round
+(owner).** U3 shipped the unified `KGEFont` draws, so the planned "U4 CPU
+draw"/"U5 decal draw" rounds had no work left but the retirement. Because
+`Font` anchors both legacy paths *and* the shaping/atlas/resource specs, one
+round deletes `Font`/`TtfTextService`/`TtfDrawStringAddon` and re-anchors their
+pins on the module's existing `internal` declarations; the benchmark's TTF
+cells move to the unified path, and the family/lease leak contract stays U6.
+Touch-point: `docs/plans/2026-10-05-text-api-unification-u4-touchpoint.md`.

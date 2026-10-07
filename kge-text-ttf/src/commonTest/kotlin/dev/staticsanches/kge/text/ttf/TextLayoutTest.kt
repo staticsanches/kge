@@ -6,9 +6,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 /**
- * The public shaped-run layout: a glyph pairs the post-shaping id and the code
- * point cluster with a [Float2D] offset/advance, a run carries its glyphs and
- * the metrics, and all three are structural value types.
+ * The shaped-layout values: a glyph pairs the post-shaping id and code point
+ * cluster with a [Float2D] offset/advance, and the metrics are structural.
  */
 class TextLayoutTest :
     FunSpec({
@@ -23,18 +22,6 @@ class TextLayoutTest :
             glyph.advance shouldBe advance
             glyph shouldBe ShapedGlyph(37, 0, offset, advance)
             glyph.copy(cluster = 2).cluster shouldBe 2
-        }
-
-        test("a shaped run carries its glyphs and its metrics") {
-            val metrics = TextMetrics(ascender = 14.84375f, descender = -3.90625f, lineGap = 0f)
-            val glyph = ShapedGlyph(4, 1, Float2D(0f, 0f), Float2D(3.65625f, 0f))
-            val run = ShapedRun(listOf(glyph), metrics)
-
-            run.glyphs shouldBe listOf(glyph)
-            run.metrics shouldBe metrics
-            val (glyphs, runMetrics) = run
-            glyphs shouldBe listOf(glyph)
-            runMetrics shouldBe metrics
         }
 
         test("text metrics are a structural value") {

@@ -9,9 +9,8 @@ import dev.staticsanches.kge.renderer.decal.DecalInstance
 import dev.staticsanches.kge.renderer.decal.service.DrawPartialDecalService
 import io.kotest.matchers.shouldBe
 
-/** The instance the partial-decal service builds for the glyph at [index] of [glyph] and [destination]. */
-fun expectedInstance(
-    font: Font,
+/** The anchor-built instance for [glyph]'s glyph [index] at [sizePx]; the fixture owns the carrier. */
+suspend fun expectedInstance(
     glyph: String,
     destination: Float2D,
     index: Int = 0,
@@ -21,20 +20,21 @@ fun expectedInstance(
     screenSize: Int2D = Int2D(30, 24),
     decalMode: Decal.Mode = Decal.Mode.NORMAL,
     decalStructure: Decal.Structure = Decal.Structure.FAN,
-): DecalInstance {
-    val placed = font.placedOf(glyph, index, sizePx)
-    return DrawPartialDecalService.drawPartialDecal(
-        position = destination,
-        decal = font.gpuAtlas(sizePx).decalFor(placed),
-        sourcePosition = placed.source.toFloat(),
-        sourceSize = placed.size.toFloat(),
-        scale = scale,
-        tint = color,
-        mode = decalMode,
-        structure = decalStructure,
-        viewport = screenSize,
-    )
-}
+): DecalInstance =
+    withRobotoAtlas(sizePx) { anchor ->
+        val placed = anchor.placed(glyph, index)
+        DrawPartialDecalService.drawPartialDecal(
+            position = destination,
+            decal = anchor.decal(glyph, index),
+            sourcePosition = placed.source.toFloat(),
+            sourceSize = placed.size.toFloat(),
+            scale = scale,
+            tint = color,
+            mode = decalMode,
+            structure = decalStructure,
+            viewport = screenSize,
+        )
+    }
 
 /** The full instance geometry, not just the quantised anchor. */
 fun assertSameGeometry(
@@ -52,14 +52,4 @@ fun assertSameGeometry(
         actual.vertices.v(index) shouldBe expected.vertices.v(index)
         actual.vertices.tint(index) shouldBe expected.vertices.tint(index)
     }
-}
-
-/** The atlas entry of [index] in the run [glyph] shaped at [sizePx]. */
-private fun Font.placedOf(
-    glyph: String,
-    index: Int,
-    sizePx: Int,
-): AtlasGlyph.Placed {
-    val shaped = shape(glyph, sizePx).glyphs[index]
-    return glyph(sizePx, shaped.glyphId) as AtlasGlyph.Placed
 }

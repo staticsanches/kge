@@ -1,14 +1,18 @@
 package dev.staticsanches.kge.text.ttf
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
+import dev.staticsanches.kge.buffer.BufferService
+import dev.staticsanches.kge.buffer.ByteBuffer
 import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
+import dev.staticsanches.kge.image.Pixmap
 import dev.staticsanches.kge.math.vector.Float2D
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.decal.Decal
 import dev.staticsanches.kge.renderer.decal.DecalInstance
 import dev.staticsanches.kge.renderer.gl.service.GLService
 import dev.staticsanches.kge.resource.ResourceScope
+import dev.staticsanches.kge.resource.ResourceWrapper
 import dev.staticsanches.kge.testsupport.engine.installGl
 import dev.staticsanches.kge.testsupport.golden.canvas
 import dev.staticsanches.kge.text.KGEFont
@@ -248,7 +252,114 @@ class TtfFontMeasureTest :
                 GLService.override(GLService.original)
             }
         }
+
+        test("the 32 px box and the widest line on either side") {
+            ResourceScope().use { scope ->
+                val face = robotoFace(scope)
+
+                face.font(scope, 32.fontPx).measureText("A", TAB_SIZE) shouldBe Int2D(21, 38)
+
+                val font = face.font(scope, SIZE_PX.fontPx)
+                font.measureText("AAAA\nA", TAB_SIZE) shouldBe Int2D(42, 38)
+                font.measureText("A\nAAAA", TAB_SIZE) shouldBe Int2D(42, 38)
+            }
+        }
+
+        test("a trailing space advances the pen and kerning narrows the pair") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                font.measureText("A ", TAB_SIZE) shouldBe Int2D(15, 19)
+                font.measureText("AV", TAB_SIZE) shouldBe Int2D(20, 19)
+                font.measureText("AA", TAB_SIZE) shouldBe Int2D(21, 19)
+            }
+        }
+
+        test("blank and empty draws paint nothing while a trailing space changes no pixel") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                canvas(32, 24).use { blank ->
+                    font.drawText(blank, 0, 0, " ", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+                    font.drawText(blank, 0, 0, "", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+
+                    blank.alphaSum() shouldBe 0
+                }
+
+                canvas(32, 24).use { spaced ->
+                    canvas(32, 24).use { plain ->
+                        font.drawText(spaced, 0, 0, "A ", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+                        font.drawText(plain, 0, 0, "A", Colors.WHITE, 1, TAB_SIZE, Pixel.Mode.Normal)
+
+                        spaced.pixels() shouldBe plain.pixels()
+                        spaced.alphaSum() shouldBe 9983
+                    }
+                }
+            }
+        }
+
+        test("a non-positive tab size fails fast on measure and on draw") {
+            ResourceScope().use { scope ->
+                val font = configured(scope)
+
+                for (tabSize in listOf(0, -1)) {
+                    shouldThrow<IllegalStateException> { font.measureText("A", tabSize) }
+                    canvas(32, 24).use { target ->
+                        shouldThrow<IllegalStateException> {
+                            font.drawText(target, 0, 0, "A", Colors.WHITE, 1, tabSize, Pixel.Mode.Normal)
+                        }
+                    }
+                }
+            }
+        }
+
+        test("measuring never rasterizes") {
+            val gl = installGl()
+            try {
+                ResourceScope().use { scope ->
+                    val font = configured(scope)
+                    val allocations = mutableListOf<ResourceWrapper<ByteBuffer>>()
+                    BufferService.override(recordingAllocations(allocations))
+                    try {
+                        gl.clear()
+
+                        font.measureText("AV", TAB_SIZE) shouldBe Int2D(20, 19)
+
+                        gl.calls shouldBe emptyList()
+                        allocations shouldBe emptyList()
+                    } finally {
+                        // kge-core resets overrides between its own tests only, so this
+                        // module restores the engine default itself.
+                        BufferService.override(BufferService.original)
+                    }
+                }
+            } finally {
+                GLService.override(GLService.original)
+            }
+        }
     })
+
+/** The surface's cells in reading order. */
+private fun Pixmap.pixels(): List<Pixel> {
+    val pixels = mutableListOf<Pixel>()
+    for (y in 0 until height) {
+        for (x in 0 until width) {
+            pixels += get(x, y)
+        }
+    }
+    return pixels
+}
+
+private fun Pixmap.alphaSum(): Int = pixels().sumOf { it.a }
+
+/** Records every engine buffer the module allocates while the override is active. */
+private fun recordingAllocations(allocations: MutableList<ResourceWrapper<ByteBuffer>>): BufferService =
+    object : BufferService {
+        override fun allocate(
+            sizeInBytes: Int,
+            name: String?,
+        ): ResourceWrapper<ByteBuffer> = BufferService.original.allocate(sizeInBytes, name).also { allocations += it }
+    }
 
 /** Roboto's descriptors in `fvar` record order, as the reader reports them. */
 private val ROBOTO_AXES: List<KGEFont.Axis> =

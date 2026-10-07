@@ -14,8 +14,6 @@ import dev.staticsanches.kge.image.Colors
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
 import dev.staticsanches.kge.math.vector.Float2D
-import dev.staticsanches.kge.text.ttf.Font
-import dev.staticsanches.kge.text.ttf.TtfDrawStringAddon
 
 /** The draw surface [renderScene] paints on: the addons it exercises. */
 internal interface SceneTarget :
@@ -34,16 +32,8 @@ internal interface TextSceneTarget :
     ClearAddon,
     TextAddon
 
-/** The draw surface [renderTtfTextScene] paints on: the TTF decal addon. */
-internal interface TtfTextSceneTarget :
-    ClearAddon,
-    TtfDrawStringAddon
-
 /** The side of the sprite every rendered frame blits, in pixels. */
 internal const val SCENE_SPRITE_SIZE = 32
-
-/** The glyph size the TTF text cell draws at, in pixels. */
-internal const val SCENE_TTF_TEXT_SIZE = 16
 
 /** The glyph line the text workload queues, identical from frame to frame. */
 internal const val SCENE_TEXT = "SCORE 123456  FPS 60  TIME 12:34  HEALTH 100"
@@ -136,33 +126,6 @@ internal fun renderTextScene(
             target.drawTextDecal(
                 position = Float2D((4 + column * columnPitch).toFloat(), (2 + row * SCENE_TEXT_LINE_HEIGHT).toFloat()),
                 text = SCENE_TEXT,
-                color = scenePalette[(row + column) % scenePalette.size],
-            )
-        }
-    }
-}
-
-/**
- * Paints one frame of the TTF text cell: clear to [SCENE_BACKGROUND], then queue
- * [SCENE_TEXT] [SCENE_TEXT_COLUMNS] times per [SCENE_TEXT_LINE_HEIGHT] row at
- * [SCENE_TTF_TEXT_SIZE], the same block [renderTextScene] queues.
- */
-internal fun renderTtfTextScene(
-    target: TtfTextSceneTarget,
-    font: Font,
-    width: Int,
-    height: Int,
-) {
-    target.clear(SCENE_BACKGROUND)
-    val rows = ((height - 4) / SCENE_TEXT_LINE_HEIGHT).coerceAtLeast(1)
-    val columnPitch = width / SCENE_TEXT_COLUMNS
-    for (row in 0 until rows) {
-        for (column in 0 until SCENE_TEXT_COLUMNS) {
-            target.drawStringDecal(
-                font = font,
-                position = Float2D((4 + column * columnPitch).toFloat(), (2 + row * SCENE_TEXT_LINE_HEIGHT).toFloat()),
-                text = SCENE_TEXT,
-                sizePx = SCENE_TTF_TEXT_SIZE,
                 color = scenePalette[(row + column) % scenePalette.size],
             )
         }

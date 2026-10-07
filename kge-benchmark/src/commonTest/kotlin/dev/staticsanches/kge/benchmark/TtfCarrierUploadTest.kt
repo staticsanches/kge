@@ -14,8 +14,8 @@ import dev.staticsanches.kge.testsupport.engine.RecordingDriver
 import dev.staticsanches.kge.testsupport.engine.installDriver
 import dev.staticsanches.kge.testsupport.engine.installGl
 import dev.staticsanches.kge.testsupport.gl.RecordingGLService
-import dev.staticsanches.kge.text.ttf.Font
-import dev.staticsanches.kge.text.ttf.TtfDrawStringAddon
+import dev.staticsanches.kge.text.fontPx
+import dev.staticsanches.kge.text.ttf.TtfFontAddon
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration
@@ -23,35 +23,30 @@ import kotlin.time.Duration
 /** The real cell's line, so the premise is pinned on the load the benchmark measures. */
 private const val CARRIER_PROBE_TEXT = "SCORE 123456  FPS 60  TIME 12:34  HEALTH 100"
 
+/** The real cell's glyph size, in pixels. */
+private const val CARRIER_PROBE_SIZE_PX = 16
+
 /** One build frame plus three steady-state frames. */
 private const val CARRIER_PROBE_FRAMES = 4
 
 /** Draws the TTF line once per frame and snapshots the carrier's upload count at each frame start. */
 private class CarrierProbeEngine :
     Engine(WindowConfig(screenWidth = 240, screenHeight = 48)),
-    TtfDrawStringAddon {
-    /** Both text roles declare the name; the engine's tab-stop default backs it. */
-    override var tabSizeInSpaces: Int
-        get() = super<Engine>.tabSizeInSpaces
-        set(value) {
-            super<Engine>.tabSizeInSpaces = value
-        }
-
-    lateinit var font: Font
+    TtfFontAddon {
     lateinit var gl: RecordingGLService
     val uploadsAtFrameStart = mutableListOf<Int>()
     private var frames = 0
 
-    override suspend fun onUserUpdate(elapsed: Duration): Boolean {
-        uploadsAtFrameStart += gl.calls.count { it.name == "texSubImage2D" }
-        drawStringDecal(font, Float2D(2f, 2f), CARRIER_PROBE_TEXT, 16)
-        frames++
-        return frames < CARRIER_PROBE_FRAMES
+    override suspend fun onUserCreate(): Boolean {
+        textFont = loadFontBase64(Roboto.romanFont).defaultFace.font(resourceScope, CARRIER_PROBE_SIZE_PX.fontPx)
+        return true
     }
 
-    override suspend fun onUserDestroy(): Boolean {
-        font.close()
-        return true
+    override suspend fun onUserUpdate(elapsed: Duration): Boolean {
+        uploadsAtFrameStart += gl.calls.count { it.name == "texSubImage2D" }
+        drawTextDecal(Float2D(2f, 2f), CARRIER_PROBE_TEXT)
+        frames++
+        return frames < CARRIER_PROBE_FRAMES
     }
 }
 
@@ -67,7 +62,6 @@ class TtfCarrierUploadTest :
             try {
                 val engine = CarrierProbeEngine()
                 engine.gl = gl
-                engine.font = Font.load(Roboto.romanFont)
 
                 engine.start()
 
