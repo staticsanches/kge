@@ -4,11 +4,13 @@ import dev.staticsanches.kge.engine.input.KeyboardKey
 import dev.staticsanches.kge.engine.input.Modifiers
 import dev.staticsanches.kge.engine.input.MouseButton
 import dev.staticsanches.kge.engine.input.RawInput
+import dev.staticsanches.kge.engine.input.editForKey
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.device.GlfwGpuDevice
 import dev.staticsanches.kge.renderer.device.GpuDevice
 import dev.staticsanches.kge.resource.letClosingIfFailed
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFWCharCallback
 import org.lwjgl.glfw.GLFWCursorPosCallback
 import org.lwjgl.glfw.GLFWKeyCallback
 import org.lwjgl.glfw.GLFWMouseButtonCallback
@@ -84,6 +86,7 @@ private class GlfwDriver(
     private val height = IntArray(1)
 
     private var keyCallback: GLFWKeyCallback? = null
+    private var charCallback: GLFWCharCallback? = null
     private var mouseButtonCallback: GLFWMouseButtonCallback? = null
     private var cursorPosCallback: GLFWCursorPosCallback? = null
     private var scrollCallback: GLFWScrollCallback? = null
@@ -98,6 +101,8 @@ private class GlfwDriver(
     fun installCallbacks() {
         keyCallback =
             GLFWKeyCallback.create { _, key, _, action, mods -> input.applyKey(key, action, mods) }.set(window)
+        charCallback =
+            GLFWCharCallback.create { _, codePoint -> input.applyCharacter(codePoint) }.set(window)
         mouseButtonCallback =
             GLFWMouseButtonCallback
                 .create {
@@ -147,6 +152,7 @@ private class GlfwDriver(
         GL.setCapabilities(null)
         GLFW.glfwDestroyWindow(window)
         keyCallback?.free()
+        charCallback?.free()
         mouseButtonCallback?.free()
         cursorPosCallback?.free()
         scrollCallback?.free()
@@ -155,7 +161,15 @@ private class GlfwDriver(
     }
 }
 
-/** Applies a GLFW key event; `GLFW_REPEAT` keeps the key down without a new edge. */
+/** Applies a GLFW character event; the platform reports a code point, never a key code. */
+internal fun RawInput.applyCharacter(codePoint: Int) {
+    typedCharacter(codePoint)
+}
+
+/**
+ * Applies a GLFW key event; `GLFW_REPEAT` keeps the key down without a new
+ * edge but repeats an edit press.
+ */
 internal fun RawInput.applyKey(
     glfwKey: Int,
     action: Int,
@@ -163,7 +177,12 @@ internal fun RawInput.applyKey(
 ) {
     modifiers = glfwModifiers(mods)
     when (action) {
-        GLFW.GLFW_PRESS, GLFW.GLFW_REPEAT -> setKeyDown(KeyboardKey[glfwKey], true)
+        GLFW.GLFW_PRESS, GLFW.GLFW_REPEAT -> {
+            val key = KeyboardKey[glfwKey]
+            setKeyDown(key, true)
+            editForKey(key)?.let { pressedEdit(it) }
+        }
+
         GLFW.GLFW_RELEASE -> setKeyDown(KeyboardKey[glfwKey], false)
     }
 }

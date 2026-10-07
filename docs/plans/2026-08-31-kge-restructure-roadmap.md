@@ -763,3 +763,15 @@ next request for the same key; the lease becomes a tracked resource so an
 abandoned one is reported without GC ever running the release; the bitmap family
 stays uncached. Touch-point:
 `docs/plans/2026-10-06-text-api-unification-u6-touchpoint.md`.
+
+**2026-10-07 — the developer console is scheduled before rich text (owner).**
+The built-in console olc ships — an editable entry plus a transcript, a command
+hook and an optional frame-time suspension — is a surface `main` never carried
+over, and the owner brings it in ahead of the deferred rich-text concept. It is
+one concept, because the console cannot exist without the text entry; characters
+come from platform character events rather than olc's single-layout key table,
+stdout capture is dropped for want of a common KMP equivalent, and the console
+draws into layer 0 without stealing the user's draw target. Parity is otherwise
+claimed fact by fact against the v2.30 header. Touch-point:
+`docs/plans/2026-10-07-console-touchpoint.md`; micro-plan:
+`docs/plans/2026-10-07-console-microplan.md`.

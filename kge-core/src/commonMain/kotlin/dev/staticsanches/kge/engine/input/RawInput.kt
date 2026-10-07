@@ -13,6 +13,27 @@ import dev.staticsanches.kge.math.vector.Int2D
 class RawInput {
     private val keyDown = PackedBits(KeyboardKey.entries.size)
     private val mouseButtonDown = PackedBits(MouseButton.entries.size)
+    private val textInput = mutableListOf<TextInputEvent>()
+
+    /** Enqueues a platform character event, in report order. */
+    @KGESensitiveAPI
+    fun typedCharacter(codePoint: Int) {
+        textInput += TextInputEvent.Character(codePoint)
+    }
+
+    /** Enqueues an edit-key press, in report order. */
+    @KGESensitiveAPI
+    fun pressedEdit(edit: TextInputEvent.Edit) {
+        textInput += edit
+    }
+
+    /** Takes every queued event, in report order, and empties the queue. */
+    internal fun drainTextInput(): List<TextInputEvent> {
+        if (textInput.isEmpty()) return emptyList()
+        val drained = textInput.toList()
+        textInput.clear()
+        return drained
+    }
 
     /** Whether [key] is currently down. */
     fun isKeyDown(key: KeyboardKey): Boolean = keyDown[key.ordinal]

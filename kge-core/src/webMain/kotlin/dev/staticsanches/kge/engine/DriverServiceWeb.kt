@@ -4,6 +4,7 @@ import dev.staticsanches.kge.engine.input.KeyboardKey
 import dev.staticsanches.kge.engine.input.Modifiers
 import dev.staticsanches.kge.engine.input.MouseButton
 import dev.staticsanches.kge.engine.input.RawInput
+import dev.staticsanches.kge.engine.input.editForKey
 import dev.staticsanches.kge.math.vector.Int2D
 import dev.staticsanches.kge.renderer.device.WebGpuDevice
 import dev.staticsanches.kge.renderer.gl.updateGLContext
@@ -140,6 +141,7 @@ private class WebDriver(
         down: Boolean,
     ) {
         input.applyKey(event.code.toString(), event.webModifiers(), down)
+        if (down) input.applyTextKey(key = event.key, code = event.code.toString(), repeat = event.repeat)
     }
 
     private fun onMouseButton(
@@ -215,6 +217,30 @@ internal fun RawInput.applyKey(
 ) {
     this.modifiers = modifiers
     setKeyDown(KeyboardKey[code], down)
+}
+
+/**
+ * Applies the text-input side of a DOM keydown: an edit key repeats on repeat,
+ * while a character is typed once — the edit codes are not characters.
+ */
+internal fun RawInput.applyTextKey(
+    key: String,
+    code: String,
+    repeat: Boolean,
+) {
+    editForKey(KeyboardKey[code])?.let { pressedEdit(it) }
+    if (!repeat) singleCodePointOrNull(key)?.let { typedCharacter(it) }
+}
+
+/** The one code point [text] holds, or `null` when it does not hold exactly one. */
+private fun singleCodePointOrNull(text: String): Int? {
+    if (text.isEmpty()) return null
+    val first = text[0]
+    if (first.isHighSurrogate()) {
+        if (text.length != 2 || !text[1].isLowSurrogate()) return null
+        return 0x10000 + ((first.code - 0xD800) shl 10) + (text[1].code - 0xDC00)
+    }
+    return if (text.length == 1 && !first.isLowSurrogate()) first.code else null
 }
 
 /** Applies a DOM mouse button event to the raw input; an unknown button is ignored. */

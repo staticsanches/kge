@@ -4,6 +4,7 @@ import dev.staticsanches.kge.engine.input.KeyboardKey
 import dev.staticsanches.kge.engine.input.Modifiers
 import dev.staticsanches.kge.engine.input.MouseButton
 import dev.staticsanches.kge.engine.input.RawInput
+import dev.staticsanches.kge.engine.input.TextInputEvent
 import dev.staticsanches.kge.math.vector.Int2D
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
@@ -85,6 +86,26 @@ class WebDriverInputTest :
             fitCanvasSize(Int2D(320, 240), Int2D(640, 640)) shouldBe Int2D(640, 480)
             fitCanvasSize(Int2D(320, 240), Int2D(160, 240)) shouldBe Int2D(160, 120)
             fitCanvasSize(Int2D(320, 240), Int2D(0, 0)) shouldBe Int2D(320, 240)
+        }
+
+        test("a DOM keydown enqueues a printable character once and repeats an edit") {
+            val raw = RawInput()
+
+            raw.applyTextKey(key = "a", code = "KeyA", repeat = false)
+            raw.applyTextKey(key = "a", code = "KeyA", repeat = true)
+            raw.applyTextKey(key = " ", code = "Space", repeat = false)
+            raw.applyTextKey(key = "Enter", code = "Enter", repeat = false)
+            raw.applyTextKey(key = "ArrowLeft", code = "ArrowLeft", repeat = false)
+            raw.applyTextKey(key = "ArrowLeft", code = "ArrowLeft", repeat = true)
+
+            raw.drainTextInput() shouldBe
+                listOf(
+                    TextInputEvent.Character('a'.code),
+                    TextInputEvent.Character(' '.code),
+                    TextInputEvent.Edit.ENTER,
+                    TextInputEvent.Edit.LEFT,
+                    TextInputEvent.Edit.LEFT,
+                )
         }
 
         test("a resize event re-lays out the owned canvas preserving the aspect") {

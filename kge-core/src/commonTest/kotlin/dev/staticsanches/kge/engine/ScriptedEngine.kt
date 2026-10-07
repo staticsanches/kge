@@ -10,6 +10,8 @@ class ScriptedEngine(
     private val onCreate: suspend (ScriptedEngine) -> Boolean = { true },
     private val onUpdate: suspend (ScriptedEngine, Duration) -> Boolean = { _, _ -> true },
     private val onDestroy: suspend (ScriptedEngine) -> Boolean = { true },
+    private val onCommand: suspend (String) -> Boolean = { false },
+    private val onComplete: suspend (String) -> Unit = {},
 ) : Engine(config) {
     var createCount = 0
         private set
@@ -31,4 +33,8 @@ class ScriptedEngine(
         destroyCount++
         return onDestroy(this)
     }
+
+    override suspend fun onConsoleCommand(command: String): Boolean = onCommand(command)
+
+    override suspend fun onTextEntryComplete(text: String) = onComplete(text)
 }

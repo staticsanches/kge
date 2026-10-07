@@ -2,8 +2,12 @@ package dev.staticsanches.kge.engine
 
 import dev.staticsanches.kge.annotations.KGESensitiveAPI
 import dev.staticsanches.kge.engine.addon.TextAddon
+import dev.staticsanches.kge.engine.console.Console
+import dev.staticsanches.kge.engine.console.TextEntry
 import dev.staticsanches.kge.engine.input.InputState
 import dev.staticsanches.kge.engine.input.InputTracker
+import dev.staticsanches.kge.engine.input.RawInput
+import dev.staticsanches.kge.engine.input.TextInputEvent
 import dev.staticsanches.kge.engine.layer.LayerStack
 import dev.staticsanches.kge.image.Pixel
 import dev.staticsanches.kge.image.Sprite
@@ -121,6 +125,7 @@ abstract class Engine(
         get() = engineScope ?: error("resourceScope is only available while the engine is running")
 
     private var engineTextFont: KGEFont? = null
+    private var engineConsoleFont: KGEFont? = null
     private var engineFontFamily: KGECoreFontFamily? = null
 
     /**
@@ -140,6 +145,10 @@ abstract class Engine(
     val coreFontFamily: KGECoreFontFamily
         get() = engineFontFamily ?: error("coreFontFamily is only available while the engine is running")
 
+    /** The console's own face: the built-in default at 8px, independent of [textFont]. */
+    private val consoleFont: KGEFont
+        get() = engineConsoleFont ?: error("consoleFont is only available while the engine is running")
+
     /** The spaces a tab stop spans; the assignment must be positive. */
     override var tabSizeInSpaces: Int = 4
         set(value) {
@@ -158,6 +167,13 @@ abstract class Engine(
     override val input: InputState
         get() = inputTracker.state
 
+    /** The engine's single editable line; [Console.show] enables it. */
+    val textEntry: TextEntry = TextEntry { requireEngineThread() }
+
+    /** The built-in console over [textEntry]. */
+    val console: Console =
+        Console(textEntry, input, { onConsoleCommand(it) }, { onTextEntryComplete(it) }) { requireEngineThread() }
+
     /**
      * The dispatcher confined to the thread that called [start]; every callback
      * runs on it. Fails fast when read before [start].
@@ -170,6 +186,12 @@ abstract class Engine(
 
     /** Called once per frame with the time elapsed since the previous frame. */
     open suspend fun onUserUpdate(elapsed: Duration): Boolean = true
+
+    /** Called when Enter completes the line while the console is hidden. */
+    open suspend fun onTextEntryComplete(text: String) {}
+
+    /** Called with a submitted console command; returning `true` records it in the history. */
+    open suspend fun onConsoleCommand(command: String): Boolean = false
 
     /**
      * Called when the loop stops; `false` vetoes a platform close request
@@ -198,6 +220,7 @@ abstract class Engine(
                     val coreFamily = KGECoreFontService.createResources(scope)
                     engineFontFamily = coreFamily
                     engineTextFont = coreFamily.defaultFace.font(scope, 8.fontPx)
+                    engineConsoleFont = coreFamily.defaultFace.font(scope, 8.fontPx)
                     val layerStack = LayerStack(window.screenSize.x, window.screenSize.y)
                     engineLayers = layerStack
                     scope.register(LayersKey, layerStack)
@@ -210,6 +233,7 @@ abstract class Engine(
             engineDriver = null
             engineScope = null
             engineTextFont = null
+            engineConsoleFont = null
             engineFontFamily = null
             engineThreadId = null
             KGEOverridable.Proxy.resetAll()
@@ -273,7 +297,15 @@ abstract class Engine(
                 }
                 val fit = checkNotNull(viewportFit)
                 inputTracker.latch(driver.input, window.screenSize, fit, window.windowSize, framebufferSize)
-                if (!onUserUpdate(elapsed)) active.store(false)
+                applyTextInput(driver.input)
+                val userElapsed = if (console.isTimeSuspended) Duration.ZERO else elapsed
+                if (!onUserUpdate(userElapsed)) active.store(false)
+                if (console.isShowing) {
+                    console.update(fit.size)
+                    if (console.isShowing) {
+                        console.draw(fit.size, window.screenSize, scope, layers, consoleFont)
+                    }
+                }
                 renderFrame(scope, driver, fit)
                 frame = FrameInfo(elapsed, accumulator.fps, accumulator.frameCount, framebufferSize)
             }
@@ -282,6 +314,22 @@ abstract class Engine(
             if (destroyed) break
             if (closing) driver.cancelClose()
             active.store(true)
+        }
+    }
+
+    /** Drains the frame's platform text input; the entry's step runs it only while it is enabled. */
+    private suspend fun applyTextInput(raw: RawInput) {
+        val events = raw.drainTextInput()
+        if (!textEntry.isEnabled) return
+        for (event in events) {
+            when (event) {
+                TextInputEvent.Edit.UP,
+                TextInputEvent.Edit.DOWN,
+                TextInputEvent.Edit.ENTER,
+                -> console.handleEdit(event)
+
+                else -> textEntry.apply(event)
+            }
         }
     }
 
