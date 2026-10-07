@@ -47,6 +47,9 @@ kotlin {
             // The published axis maps are persistent maps behind the public Map
             // type, so this is not part of the module's ABI.
             implementation(libs.kotlinx.collections.immutable)
+            // The family's configuration cache is a Mutex in common code; no
+            // coroutines type enters the module's public API.
+            implementation(libs.kotlinx.coroutines.core)
             // The public API names KGEResource and Float2D, so consumers
             // compiling against this module need them on their compile classpath.
             api(project(":kge-core"))
@@ -54,6 +57,8 @@ kotlin {
         commonTest.dependencies {
             implementation(libs.kotest.framework)
             implementation(libs.kotest.assertions)
+            // The cache spec names the coroutines API directly.
+            implementation(libs.kotlinx.coroutines.core)
             implementation(project(":kge-font-roboto"))
             implementation(project(":kge-test-support"))
         }
@@ -103,6 +108,8 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(libs.kotest.runner.junit5)
+            // The JVM race test names the coroutines API directly.
+            implementation(libs.kotlinx.coroutines.core)
         }
     }
 }

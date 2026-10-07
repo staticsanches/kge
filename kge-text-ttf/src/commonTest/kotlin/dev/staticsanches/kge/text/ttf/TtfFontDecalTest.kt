@@ -48,7 +48,7 @@ class TtfFontDecalTest :
                         collected.single(),
                         expectedInstance("A", Float2D(2f, 5.84375f)),
                     )
-                    // the carrier is the configured font's own, kept across its draws
+                    // the shared configuration keeps one carrier across the font's draws
                     collected.single().decal shouldBeSameInstanceAs font.collectDecal("A").single().decal
                 }
             }

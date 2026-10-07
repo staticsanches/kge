@@ -752,3 +752,14 @@ round deletes `Font`/`TtfTextService`/`TtfDrawStringAddon` and re-anchors their
 pins on the module's existing `internal` declarations; the benchmark's TTF
 cells move to the unified path, and the family/lease leak contract stays U6.
 Touch-point: `docs/plans/2026-10-05-text-api-unification-u4-touchpoint.md`.
+
+**2026-10-06 — U6 direction: the configuration cache keeps a resource-free
+tombstone (owner).** The last unification round adds the per-family
+configuration cache, its `Mutex` single-flight and the lease leak contract U4
+recorded as missing. Because `KGEResource.close()` is not `suspend`, the
+reference count lives in a common atomic and the 1 → 0 transition releases the
+entry in place while the map keeps a resource-free tombstone, rebuilt on the
+next request for the same key; the lease becomes a tracked resource so an
+abandoned one is reported without GC ever running the release; the bitmap family
+stays uncached. Touch-point:
+`docs/plans/2026-10-06-text-api-unification-u6-touchpoint.md`.

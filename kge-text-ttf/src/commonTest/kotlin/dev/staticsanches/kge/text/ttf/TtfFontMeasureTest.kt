@@ -27,7 +27,7 @@ private const val SIZE_PX = 16
 
 /**
  * The configured TrueType font: the canonical axis map, the pinned measurement
- * boxes, the per-lease lifecycle and the two draws over the same face.
+ * boxes, the shared configuration's lease count and the two draws over the same face.
  */
 @OptIn(KGESensitiveAPI::class)
 class TtfFontMeasureTest :
